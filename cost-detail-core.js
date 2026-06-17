@@ -16,108 +16,224 @@
   function totalRows(result, pricing, helpers) {
     const { formatFactor } = formatters(helpers);
     return [
-      ["表面处理", result.surfaceTreatmentCost],
-      ["成本小计（不含税）", result.subtotal],
-      [`税额（x${formatFactor(pricing.fittingTaxDivisor)}）`, result.tax],
-      ["含税成本", result.factoryCost],
-      ["68%成交价", result.discountedPrice],
-      ["面价（17折基准）", result.facePrice]
+      ["表面处理", "按报价参数选择的表面处理方式计算", result.surfaceTreatmentCost],
+      ["成本小计（不含税）", "材料、配件、加工、退火、管理、包材、表面处理合计", result.subtotal],
+      [`税额（x${formatFactor(pricing.fittingTaxDivisor)}）`, "不含税成本统一乘含税系数后的税差", result.tax],
+      ["含税成本", "成本小计（不含税）x 含税系数", result.factoryCost],
+      ["68%成交价", "含税成本 / 0.68", result.discountedPrice],
+      ["面价（17折基准）", "含税成本 / 0.68 / 0.17", result.facePrice]
     ];
   }
 
   function managementLabel(result, helpers) {
     const { formatNumber } = formatters(helpers);
     return result.hasFlange
-      ? `制造管理（法兰件按${formatNumber(result.annealingWeightKg)} kg）`
-      : "制造管理（加工费x2.14）";
+      ? `制造管理（带法兰，按扣除法兰后的重量 ${formatNumber(result.annealingWeightKg)} kg）`
+      : "制造管理（加工费 x 2.14）";
+  }
+
+  function fittingNote(detail, helpers) {
+    const { formatFactor, money } = formatters(helpers);
+    if (!detail) return "按配件价格表取值；若为316L，再乘316L配件系数；进入成本前去税";
+    return [
+      `表格取径 D${detail.priceDiameter}`,
+      `含税表价 ${money(detail.taxIncludedPrice)}`,
+      `去税 ÷ ${formatFactor(detail.taxDivisor)}`,
+      `材质系数 x ${formatFactor(detail.materialFactor)}`,
+      `计入成本 ${money(detail.cost)}`
+    ].join("；");
+  }
+
+  function fittingDetailRows(items, config, helpers = {}) {
+    const { fittingCost, fittingCostDetail, fittingLabel, isNoFitting } = helpers;
+    return items
+      .filter(item => item.fitting && !isNoFitting(item.fitting))
+      .map(item => {
+        const detail = typeof fittingCostDetail === "function"
+          ? fittingCostDetail(item.fitting, item.diameter, config.material, config.tubeSeries)
+          : null;
+        const amount = detail ? detail.cost : fittingCost(item.fitting, item.diameter, config.material, config.tubeSeries);
+        return [
+          `${item.label} ${fittingLabel(item.fitting)} D${item.diameter}`,
+          fittingNote(detail, helpers),
+          amount
+        ];
+      });
+  }
+
+  function processDetailRows(items, processType, helpers = {}) {
+    const { processCostDetail, fittingLabel, isNoFitting } = helpers;
+    const { money } = formatters(helpers);
+    if (typeof processCostDetail !== "function") return [];
+    return items
+      .filter(item => item.fitting && !isNoFitting(item.fitting))
+      .map(item => {
+        const detail = processCostDetail(processType, item.fitting, item.diameter);
+        return [
+          `${item.label} ${fittingLabel(item.fitting)} D${item.diameter} 加工`,
+          `加工费表格取径 D${detail.processDiameter}；表格取值 ${money(detail.processCost)}；该项先汇总，再乘成型/难度系数`,
+          detail.processCost
+        ];
+      });
+  }
+
+  function manifoldProcessRows(config, result, pricing, helpers = {}) {
+    const { formatFactor, formatNumber, money } = formatters(helpers);
+    const extraBranches = Math.max(0, config.branchCount - 2);
+    const heightBranches = config.branches.filter(branch => branch.height > 0).length;
+    const baseCost = pricing.processBaseForTwoBranches;
+    const extraCost = extraBranches * pricing.processPerExtraBranch;
+    const heightCost = heightBranches * pricing.heightProcessPerBranch;
+    const baseProcessCost = baseCost + extraCost + heightCost;
+    const rows = [
+      ["加工基础", `2口基础加工费 ${money(baseCost)}；1口产品也按2口基础加工费起算`, baseCost]
+    ];
+    if (extraBranches > 0) {
+      rows.push(["增加支路加工", `${extraBranches}口 x ${money(pricing.processPerExtraBranch)}`, extraCost]);
+    }
+    if (heightBranches > 0) {
+      rows.push(["加高支路加工", `${heightBranches}路 x ${money(pricing.heightProcessPerBranch)}`, heightCost]);
+    }
+    if (result.largeDiameterHoleProcessCost > 0) {
+      rows.push(["大规格开孔加工", `${config.branchCount}孔 x ${money(15)}，适用于主管133/159/219`, result.largeDiameterHoleProcessCost]);
+    }
+    rows.push([
+      "加工合计",
+      `(基础 ${formatNumber(baseProcessCost)} x 规格系数 ${formatFactor(result.processMultiplier)} + 开孔 ${formatNumber(result.largeDiameterHoleProcessCost)}) x 难度 ${formatFactor(result.difficultyFactor)}`,
+      result.processCost
+    ]);
+    return rows;
+  }
+
+  function nonNegative(value) {
+    return Math.max(0, Number(value) || 0);
   }
 
   function manifoldRows(config, result, pricing, helpers = {}) {
-    const { fittingCost, fittingLabel, isNoFitting } = helpers;
-    const { formatFactor, formatNumber, money } = formatters(helpers);
-    const fittingDetails = [
-      { label: `进水端 ${fittingLabel(config.mainFitting)} D${config.mainDiameter}`, fitting: config.mainFitting, diameter: config.mainDiameter },
-      { label: `末尾 ${fittingLabel(config.tailFitting)} D${config.mainDiameter}`, fitting: config.tailFitting, diameter: config.mainDiameter },
+    const { formatFactor, formatNumber } = formatters(helpers);
+    const fittingDetails = fittingDetailRows([
+      { label: "进水端", fitting: config.mainFitting, diameter: config.mainDiameter },
+      { label: "末尾", fitting: config.tailFitting, diameter: config.mainDiameter },
       ...config.branches.map((branch, index) => ({
-        label: `${index + 1}路 ${fittingLabel(branch.fitting)} D${branch.diameter}`,
+        label: `${index + 1}路`,
         fitting: branch.fitting,
         diameter: branch.diameter
       }))
-    ]
-      .filter(item => !isNoFitting(item.fitting))
-      .map(item => [
-        item.label,
-        `已计入配件：${money(fittingCost(item.fitting, item.diameter, config.material, config.tubeSeries))}`
-      ]);
+    ], config, helpers);
     const holeText = result.largeDiameterHoleProcessCost > 0
-      ? ` / 大规格开孔+${formatNumber(result.largeDiameterHoleProcessCost)}`
+      ? ` / 大规格开孔 ${formatNumber(result.largeDiameterHoleProcessCost)}`
       : "";
     return [
-      [`主管材料（${formatNumber(result.mainTubeWeightKg)} kg）`, result.mainTubeCost],
-      ["支管材料", result.branchTubeCost],
-      ["配件", result.fittingCost],
+      [`主管材料（${formatNumber(result.mainTubeWeightKg)} kg）`, "主管长度 x 主管米重 x 管材不含税材料单价", result.mainTubeCost],
+      ["支管材料", "仅加高支管计入支管材料；不加高支管不计管材", result.branchTubeCost],
+      ["配件", "下方逐项展开：表格含税价、去税、材质系数、计入成本金额", result.fittingCost],
       ...fittingDetails,
-      [`加工（规格x${result.processMultiplier}${holeText} / 难度x${formatFactor(result.difficultyFactor)}）`, result.processCost],
-      [`退火（${formatNumber(result.totalTubeWeightKg)} kg）`, result.annealingCost],
-      [`制造管理（${formatNumber(result.totalTubeWeightKg)} kg）`, result.managementCost],
-      [`包材（${formatNumber(result.totalTubeWeightKg)} kg）`, result.packagingCost],
+      [`加工（规格x${result.processMultiplier}${holeText} / 难度x${formatFactor(result.difficultyFactor)}）`, "分水器独立加工规则汇总", result.processCost],
+      ...manifoldProcessRows(config, result, pricing, helpers),
+      ["重量明细", `主管 ${formatNumber(result.mainTubeWeightKg)} kg + 支管 ${formatNumber(result.branchTubeWeightKg)} kg`, `${formatNumber(result.totalTubeWeightKg)} kg`],
+      [`退火（${formatNumber(result.totalTubeWeightKg)} kg）`, "分水器按管材总重量计退火；法兰不进退火重量", result.annealingCost],
+      [`制造管理（${formatNumber(result.totalTubeWeightKg)} kg）`, "分水器按管材总重量 x 制造管理费单价", result.managementCost],
+      [`包材（${formatNumber(result.totalTubeWeightKg)} kg）`, "分水器按管材总重量 x 包材单价", result.packagingCost],
       ...totalRows(result, pricing, helpers)
     ];
   }
 
   function dockingRows(config, result, pricing, helpers) {
     const { formatFactor, formatNumber, money } = formatters(helpers);
+    const endProcessItems = [
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB }
+    ];
+    const middleProcessItems = (config.middleItems || [])
+      .filter(item => item.type === "中接")
+      .map((item, index) => ({ label: `中间${index + 1}`, fitting: "中接", diameter: config.diameter }));
+    const middleFittingItems = (config.middleItems || [])
+      .filter(item => item.type === "中接")
+      .map((item, index) => ({ label: `中间${index + 1}`, fitting: "中接", diameter: config.diameter }));
     return [
-      [`直管材料（${formatNumber(result.productTubeWeightKg)} kg）`, result.productTubeCost],
-      ["A/B端配件", result.endFittingCost],
-      ["中接配件", result.middleFittingCost],
-      ["A/B端加工（表格取值）", `已计入合计：${money(result.endProcessCost)}`],
-      ["中接加工（表格取值）", `已计入合计：${money(result.middleProcessCost)}`],
-      [`对接加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, result.processCost],
-      ["配件理论重量", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
-      ["法兰不退火重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
-      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, result.annealingCost],
-      [managementLabel(result, helpers), result.managementCost],
-      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, result.packagingCost],
+      [`直管材料（${formatNumber(result.productTubeWeightKg)} kg）`, "中间直管长度 x 管材米重 x 管材不含税材料单价", result.productTubeCost],
+      ["A/B端配件", "两端配件逐项展开；无配件不计价、不显示明细", result.endFittingCost],
+      ...fittingDetailRows(endProcessItems, config, helpers),
+      ["中接配件", "启用中间段且类型为中接时计入；直管只计管材", result.middleFittingCost],
+      ...fittingDetailRows(middleFittingItems, config, helpers),
+      ["A/B端加工（表格取值）", `两端加工基础合计 ${money(result.endProcessCost)}`, ""],
+      ...processDetailRows(endProcessItems, "docking", helpers),
+      ["中接加工（表格取值）", `中接加工基础合计 ${money(result.middleProcessCost)}`, ""],
+      ...processDetailRows(middleProcessItems, "docking", helpers),
+      [`对接加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中接加工，汇总后乘成型加工系数和难度系数", result.processCost],
+      ["配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
+      ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
+      ["退火/包材重量", `直管 ${formatNumber(result.productTubeWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.productTubeWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],
+      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, "退火重量 x 退火费单价", result.annealingCost],
+      [managementLabel(result, helpers), result.hasFlange ? "带法兰时按产品重量 x 4.13；不带法兰时按加工费 x 2.14" : "不带法兰按加工费 x 2.14", result.managementCost],
+      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, "包材重量同退火重量", result.packagingCost],
       ...totalRows(result, pricing, helpers)
     ];
   }
 
   function teeRows(config, result, pricing, helpers) {
     const { formatFactor, formatNumber, money } = formatters(helpers);
+    const endProcessItems = [
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+      { label: "C端", fitting: config.fittingC, diameter: config.diameterC }
+    ];
+    const middleProcessItems = [
+      { label: "A端中接", fitting: config.middleA === "中接" ? "中接" : "无配件", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterA) },
+      { label: "C端中接", fitting: config.middleC === "中接" ? "中接" : "无配件", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterC) }
+    ];
     return [
-      [`三通体/直管材料（${formatNumber(result.productTubeWeightKg)} kg）`, result.productTubeCost],
-      ["A/B/C端配件", result.endFittingCost],
-      ["中接配件", result.middleFittingCost],
-      ["A/B/C端加工（表格取值）", `已计入合计：${money(result.endProcessCost)}`],
-      ["中间段加工（表格取值）", `已计入合计：${money(result.middleProcessCost)}`],
-      [`三通加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, result.processCost],
-      ["配件理论重量", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
-      ["法兰不退火重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
-      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, result.annealingCost],
-      [managementLabel(result, helpers), result.managementCost],
-      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, result.packagingCost],
+      [`三通体/直管材料（${formatNumber(result.productTubeWeightKg)} kg）`, "三通体直管 + B端直管等实际管材重量 x 管材不含税材料单价", result.productTubeCost],
+      ["A/B/C端配件", "三端配件逐项展开；无配件不计价、不显示明细", result.endFittingCost],
+      ...fittingDetailRows(endProcessItems, config, helpers),
+      ["中接配件", "A/C端中间段为中接时计入；B端直管只计管材", result.middleFittingCost],
+      ...fittingDetailRows(middleProcessItems, config, helpers),
+      ["A/B/C端加工（表格取值）", `三端加工基础合计 ${money(result.endProcessCost)}`, ""],
+      ...processDetailRows(endProcessItems, "tee", helpers),
+      ["中间段加工（表格取值）", `中间段加工基础合计 ${money(result.middleProcessCost)}`, ""],
+      ...processDetailRows(middleProcessItems, "tee", helpers),
+      [`三通加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中间段加工，汇总后乘成型加工系数和难度系数", result.processCost],
+      ["配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
+      ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
+      ["退火/包材重量", `三通体/直管 ${formatNumber(result.productTubeWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.productTubeWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],
+      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, "退火重量 x 退火费单价", result.annealingCost],
+      [managementLabel(result, helpers), result.hasFlange ? "带法兰时按产品重量 x 4.13；不带法兰时按加工费 x 2.14" : "不带法兰按加工费 x 2.14", result.managementCost],
+      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, "包材重量同退火重量", result.packagingCost],
       ...totalRows(result, pricing, helpers)
     ];
   }
 
   function elbowRows(config, result, pricing, helpers) {
     const { formatFactor, formatNumber, money } = formatters(helpers);
+    const endProcessItems = [
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB }
+    ];
+    const middleProcessItems = [
+      { label: "A端中接", fitting: config.middleA === "中接" ? "中接" : "无配件", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterA) },
+      { label: "B端中接", fitting: config.middleB === "中接" ? "中接" : "无配件", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterB) }
+    ];
     return [
-      [`${result.elbowBodyName}本体（表格取值）`, result.productTubeCost],
-      [`A/B端直管（${formatNumber(result.middleStraightWeightKg)} kg）`, result.middleStraightCost],
-      ["A/B端配件", result.endFittingCost],
-      ["变径中接配件", result.middleFittingCost],
-      ["A/B端加工（表格取值）", `已计入合计：${money(result.endProcessCost)}`],
-      ["中接加工（表格取值）", `已计入合计：${money(result.middleProcessCost)}`],
-      [`弯头加工合计（角度x${formatFactor(result.angleFactor)} / 系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, result.processCost],
-      ["弯头本体理论重量", `${formatNumber(result.elbowBodyWeightKg)} kg`],
-      ["A/B及中间配件理论重量", `${formatNumber(result.accessoryTheoreticalWeightKg)} kg`],
-      ["弯头理论重量合计", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
-      ["法兰不退火重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
-      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, result.annealingCost],
-      [managementLabel(result, helpers), result.managementCost],
-      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, result.packagingCost],
+      [`${result.elbowBodyName}本体（表格取值）`, "弯头本体按配件价格表取值；进入成本前去税并应用材质系数", result.productTubeCost],
+      ...fittingDetailRows([{ label: "弯头本体", fitting: result.elbowBodyName, diameter: config.bodyDiameter || config.diameter }], config, helpers),
+      [`A/B端直管（${formatNumber(result.middleStraightWeightKg)} kg）`, "A/B中间段选择直管时，按输入长度计管材重量和材料费", result.middleStraightCost],
+      ["A/B端配件", "两端配件逐项展开；无配件不计价、不显示明细", result.endFittingCost],
+      ...fittingDetailRows(endProcessItems, config, helpers),
+      ["变径中接配件", "A/B中间段选择中接时计入；直管只计管材", result.middleFittingCost],
+      ...fittingDetailRows(middleProcessItems, config, helpers),
+      ["A/B端加工（表格取值）", `两端加工基础合计 ${money(result.endProcessCost)}`, ""],
+      ...processDetailRows(endProcessItems, "elbow", helpers),
+      ["中接加工（表格取值）", `中接加工基础合计 ${money(result.middleProcessCost)}`, ""],
+      ...processDetailRows(middleProcessItems, "elbow", helpers),
+      [`弯头加工合计（角度x${formatFactor(result.angleFactor)} / 系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中接加工，汇总后乘45/90角度系数、成型加工系数和难度系数", result.processCost],
+      ["弯头本体理论重量", "用于退火/包材重量，不用于弯头本体价格；料长按中心高度H相关规则折算", `${formatNumber(result.elbowBodyWeightKg)} kg`],
+      ["A/B及中间配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.accessoryTheoreticalWeightKg)} kg`],
+      ["弯头理论重量合计", "弯头本体理论重量 + A/B及中间配件理论重量", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
+      ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
+      ["退火/包材重量", `弯头本体 ${formatNumber(result.elbowBodyWeightKg)} kg + 直管 ${formatNumber(result.middleStraightWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.elbowBodyWeightKg - result.middleStraightWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],
+      [`退火（${formatNumber(result.annealingWeightKg)} kg）`, "退火重量 x 退火费单价", result.annealingCost],
+      [managementLabel(result, helpers), result.hasFlange ? "带法兰时按产品重量 x 4.13；不带法兰时按加工费 x 2.14" : "不带法兰按加工费 x 2.14", result.managementCost],
+      [`包材（${formatNumber(result.annealingWeightKg)} kg）`, "包材重量同退火重量", result.packagingCost],
       ...totalRows(result, pricing, helpers)
     ];
   }

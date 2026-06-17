@@ -61,7 +61,7 @@
       labelY: dimensionY - 12,
       fontSize: 16
     }) : "";
-    return `
+    const content = `
       ${hasMiddleItems ? assembly.svg : ""}
       ${inlineFittingSvg(config.fittingA, config.diameterA, leftConnectionX, 280, pipeA, "left")}
       ${inlineFittingSvg(config.fittingB, config.diameterB, rightConnectionX, 280, pipeB, "right")}
@@ -75,6 +75,20 @@
         <text x="${rightLabelX}" y="${specLabelY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
       ` : ""}
     `;
+    const bounds = {
+      left: Math.min(dimensionLeft, leftLabelX - 72),
+      right: Math.max(dimensionRight, rightLabelX + 72),
+      top: specLabelY - 24,
+      bottom: dimensionY + 24
+    };
+    return typeof DrawingCore.fitContent === "function"
+      ? DrawingCore.fitContent({
+        bounds,
+        box: { left: 150, right: 1050, top: 145, bottom: 455 },
+        content,
+        minScale: 0.62
+      })
+      : content;
   }
 
   return { render };

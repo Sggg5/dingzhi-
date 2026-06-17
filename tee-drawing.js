@@ -45,7 +45,7 @@
       ${config.middleC === "中接" ? reducerSegmentSvg(rightX, fittingCX, mainY, bodyHeight, pipeC) : ""}
       ${config.middleB === "直管" ? `<rect x="${centerX - pipeB / 2}" y="${fittingBY}" width="${pipeB}" height="${branchTopY - fittingBY}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>` : ""}
     `;
-    return `
+    const content = `
       <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>
       ${middleSvg}
       ${inlineFittingSvg(config.fittingA, config.diameterA, fittingAX, mainY, pipeA, "left")}
@@ -72,6 +72,20 @@
         labelY: 390, fontSize: 18
       })}
     `;
+    const bounds = {
+      left: Math.min(dimensionLeft, fittingACenterX - 84),
+      right: Math.max(dimensionRight, fittingCCenterX + 84),
+      top: Math.min(bSpecY - 24, fittingBY - bFittingHeight - 12, sideSpecY - 24),
+      bottom: 430
+    };
+    return typeof DrawingCore.fitContent === "function"
+      ? DrawingCore.fitContent({
+        bounds,
+        box: { left: 145, right: 1055, top: 130, bottom: 455 },
+        content,
+        minScale: 0.58
+      })
+      : content;
   }
   return { render };
 });

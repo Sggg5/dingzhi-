@@ -259,5 +259,35 @@
     `;
   }
 
-  return { arrowMarker, bomBox, engineeringFrame, horizontalDimension, infoBox, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
+  function fitContent(options) {
+    const {
+      bounds,
+      box,
+      content = "",
+      minScale = 0.55,
+      maxScale = 1,
+      fitOnlyOnOverflow = false
+    } = options;
+    const width = Math.max(1, bounds.right - bounds.left);
+    const height = Math.max(1, bounds.bottom - bounds.top);
+    const boxWidth = Math.max(1, box.right - box.left);
+    const boxHeight = Math.max(1, box.bottom - box.top);
+    if (fitOnlyOnOverflow
+      && bounds.left >= box.left
+      && bounds.right <= box.right
+      && bounds.top >= box.top
+      && bounds.bottom <= box.bottom) {
+      return content;
+    }
+    const scale = Math.max(minScale, Math.min(maxScale, boxWidth / width, boxHeight / height));
+    const sourceCenterX = (bounds.left + bounds.right) / 2;
+    const sourceCenterY = (bounds.top + bounds.bottom) / 2;
+    const targetCenterX = (box.left + box.right) / 2;
+    const targetCenterY = (box.top + box.bottom) / 2;
+    const translateX = targetCenterX - sourceCenterX * scale;
+    const translateY = targetCenterY - sourceCenterY * scale;
+    return `<g transform="translate(${translateX.toFixed(2)} ${translateY.toFixed(2)}) scale(${scale.toFixed(4)})">${content}</g>`;
+  }
+
+  return { arrowMarker, bomBox, engineeringFrame, fitContent, horizontalDimension, infoBox, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
 });

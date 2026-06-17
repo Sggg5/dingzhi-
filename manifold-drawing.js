@@ -57,6 +57,8 @@
       extensionStart: { fromY: y - 18, toY: longStart ? y + 47 : y + 12 },
       extensionEnd: { fromY: y - 18, toY: longEnd ? y + 47 : y + 12 }
     });
+    let contentTop = mainY - mainHeight / 2;
+    let contentBottom = totalDimensionY + 18;
     const branches = config.branches.map((branch, index) => {
       const x = branchXs[index];
       const isBottom = config.manifoldType !== "单排" && index % 2 === 1;
@@ -70,6 +72,8 @@
       const extraLift = branch.fitting === "双卡" ? 10 : 0;
       const labelY = isBottom ? fittingY + fittingSize.height + labelLift + extraLift : Math.max(18, fittingY - labelLift - extraLift);
       const numberY = isBottom ? labelY + 28 : labelY - 28;
+      contentTop = Math.min(contentTop, fittingY - 6, labelY - 18, numberY - 14);
+      contentBottom = Math.max(contentBottom, fittingY + fittingSize.height + 6, labelY + 18, numberY + 14);
       const heightLabel = branch.height > 0
         ? `<text x="${x}" y="${isBottom ? labelY - 15 : labelY + 15}" text-anchor="middle" font-size="10" fill="${drawingColors.mutedLabel}">加高 ${branch.height}</text>`
         : "";
@@ -85,9 +89,7 @@
         ${heightLabel}
       `;
     }).join("");
-    return `
-      <defs>${DrawingCore.arrowMarker(drawingColors.dimension)}</defs>
-      ${DrawingCore.engineeringFrame(config.quoteNo)}
+    const mainContent = `
       <rect x="${mainLeft}" y="${mainY - mainHeight / 2}" width="${mainRight - mainLeft}" height="${mainHeight}" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>
       <line x1="${mainLeft - 40}" y1="${mainY}" x2="${dimensionRight + 8}" y2="${mainY}" stroke="${drawingColors.dimension}" stroke-width="1" stroke-dasharray="7 6"/>
       ${branches}
@@ -100,6 +102,25 @@
       <text x="${(startX + endX) / 2}" y="${mainY + 5}" text-anchor="middle" font-size="14" fill="${drawingColors.label}">主管 ${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text>
       <text x="${mainFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="13" fill="${drawingColors.mutedLabel}">${config.mainDiameter}${config.mainFitting === "直管" ? "" : ` ${config.mainFitting}`}</text>
       <text x="${tailFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="13" fill="${drawingColors.mutedLabel}">${config.mainDiameter}${config.tailFitting === "直管" ? "" : ` ${fittingLabel(config.tailFitting)}`}</text>
+    `;
+    const fittedMainContent = typeof DrawingCore.fitContent === "function"
+      ? DrawingCore.fitContent({
+        bounds: {
+          left: Math.min(dimensionLeft, mainFittingLabelX - 72),
+          right: Math.max(dimensionRight, tailFittingLabelX + 72),
+          top: Math.min(contentTop, mainFittingLabelY - 18),
+          bottom: contentBottom
+        },
+        box: { left: 132, right: 1160, top: 110, bottom: infoBoxY - 38 },
+        content: mainContent,
+        minScale: 0.58,
+        fitOnlyOnOverflow: true
+      })
+      : mainContent;
+    return `
+      <defs>${DrawingCore.arrowMarker(drawingColors.dimension)}</defs>
+      ${DrawingCore.engineeringFrame(config.quoteNo)}
+      ${fittedMainContent}
       ${DrawingCore.infoBox({ x: 180, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "尺寸说明", content: `<text x="18" y="56" font-size="13" fill="${drawingColors.label}">L：进水端尺寸</text><text x="18" y="78" font-size="13" fill="${drawingColors.label}">P：支管间距</text><text x="18" y="100" font-size="13" fill="${drawingColors.label}">E：末尾尺寸</text>` })}
       ${DrawingCore.infoBox({ x: 500, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "技术参数", content: `<text x="18" y="58" font-size="13" fill="${drawingColors.label}">主管：D${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text><text x="18" y="82" font-size="13" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text><text x="18" y="104" font-size="13" fill="${drawingColors.label}">单位：mm</text>` })}
       ${DrawingCore.bomBox({ x: 820, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, rows: bomRows, labelColor: drawingColors.label, lineHeight: Math.min(15, Math.max(11, (infoBoxHeight - 56) / Math.max(1, bomRows.length))), fontSize: 11 })}

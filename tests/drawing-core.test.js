@@ -83,4 +83,13 @@ assert(projected45.includes('x1="200" y1="0"'));
 assert(projected45.includes("rotate(-45"));
 assert(projected45.includes("H=140 mm"));
 
+const fitted = DrawingCore.fitContent({
+  bounds: { left: 0, right: 200, top: 0, bottom: 100 },
+  box: { left: 100, right: 300, top: 100, bottom: 200 },
+  content: "<rect/>"
+});
+assert(fitted.includes("<rect/>"));
+assert(fitted.includes("scale(1.0000)"));
+assert(fitted.includes("translate(100.00 100.00)"));
+
 console.log("drawing core tests passed");

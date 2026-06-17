@@ -93,7 +93,7 @@
       });
     })() : "";
 
-    return `
+    const content = `
       ${elbowRoundBodySvg(elbowStartX, elbowStartY, elbowEndX, elbowEndY, elbowPipe, config.angle)}
       ${elbowMiddleSvg}
       ${inlineFittingSvg(config.fittingA, config.diameterA, elbowFittingAX, elbowStartY, elbowAHeight, "left")}
@@ -124,6 +124,26 @@
       ${elbowVerticalDimensionSvg}
       <text x="${(elbowFittingAX - elbowALength + elbowDimensionRight) / 2}" y="${elbowDimensionY + 34}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness} ${config.angle}°弯头</text>
     `;
+    const bDimensionRight = config.angle === 45
+      ? elbowEndX + (elbowMiddleBLength + elbowBLength + elbowBDimensionExtension + 36) / Math.sqrt(2)
+      : elbowEndX + elbowBEnvelopeHeight / 2 + elbowBDimensionExtension + 34;
+    const bDimensionTop = config.angle === 45
+      ? elbowEndY - (elbowMiddleBLength + elbowBLength + elbowBDimensionExtension + 36) / Math.sqrt(2)
+      : elbowEndY - elbowMiddleBLength - elbowBLength - 24;
+    const bounds = {
+      left: Math.min(elbowFittingAX - elbowALength - 26, elbowASpecX - 90),
+      right: Math.max(bDimensionRight, elbowBSpecDynamicX + 90, elbowDimensionRight + 24),
+      top: Math.min(bDimensionTop, elbowBSpecDynamicY - 30, elbowASpecY - 24),
+      bottom: Math.max(elbowDimensionY + 58, elbowStartY + elbowPipe / 2 + 24)
+    };
+    return typeof DrawingCore.fitContent === "function"
+      ? DrawingCore.fitContent({
+        bounds,
+        box: { left: 145, right: 1055, top: 125, bottom: 455 },
+        content,
+        minScale: 0.5
+      })
+      : content;
   }
   return { render };
 });

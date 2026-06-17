@@ -4,6 +4,14 @@
   }
 
   function costRowDisplay(row, money) {
+    if (row.length >= 3) {
+      const [name, note, amount] = row;
+      return {
+        name,
+        note: String(note ?? ""),
+        amount: isAmount(amount) ? money(amount) : String(amount ?? "")
+      };
+    }
     const [name, value] = row;
     return {
       name,

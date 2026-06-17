@@ -15,6 +15,12 @@ assert.deepStrictEqual(DisplayCore.costRowDisplay(["加工", "已计入合计：
   amount: ""
 });
 
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["1路 外丝 D20", "含税表价¥2.65 ÷ 1.13 x 材质系数1.50", 3.5177], money), {
+  name: "1路 外丝 D20",
+  note: "含税表价¥2.65 ÷ 1.13 x 材质系数1.50",
+  amount: "¥3.52"
+});
+
 assert.strictEqual(DisplayCore.topProductTitle({ productType: "分水器类", mainDiameter: 88.9 }), "88.9 分水器");
 assert.strictEqual(DisplayCore.topProductTitle({ productType: "对接类", diameterA: 40, diameterB: 50.8 }), "40 - 50.8 对接");
 assert.strictEqual(DisplayCore.topProductTitle({ productType: "三通类", bodyDiameter: 76.1 }), "76.1 三通");

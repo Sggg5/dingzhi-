@@ -599,6 +599,24 @@ function fittingCost(fittingName, diameter, material, series = currentTubeSeries
   });
 }
 
+function fittingCostDetail(fittingName, diameter, material, series = currentTubeSeries()) {
+  if (isNoFitting(fittingName)) {
+    return { priceDiameter: diameter, taxIncludedPrice: 0, taxDivisor: 1, materialFactor: 0, cost: 0 };
+  }
+  const table = fittingSeriesTable(series);
+  const priceDiameter = fittingPriceDiameter(diameter, series);
+  const taxIncludedPrice = Number(table[fittingName]?.[priceDiameter]) || 0;
+  const taxDivisor = Math.max(1, Number(pricing.fittingTaxDivisor) || 1);
+  const materialFactor = Number(pricing.fittingMaterialFactor[material]) || 0;
+  return {
+    priceDiameter,
+    taxIncludedPrice,
+    taxDivisor,
+    materialFactor,
+    cost: taxIncludedPrice / taxDivisor * materialFactor
+  };
+}
+
 function finalizeCost(subtotal, config) {
   return QuoteCore.finalizeCost(subtotal, config, pricing.fittingTaxDivisor);
 }
@@ -659,6 +677,28 @@ function elbowProcessCost(fittingName, diameter) {
     standardDiameters: processStandardDiameters,
     isNoFitting
   });
+}
+
+function nearestProcessDiameter(diameter) {
+  const numericDiameter = Number(diameter);
+  if (processStandardDiameters.includes(numericDiameter)) return numericDiameter;
+  return processStandardDiameters.reduce((best, item) =>
+    Math.abs(item - numericDiameter) < Math.abs(best - numericDiameter) ? item : best
+  , processStandardDiameters[0]);
+}
+
+function processCostDetail(processType, fittingName, diameter) {
+  const tableMap = {
+    docking: pricing.dockingProcessByDiameter,
+    tee: pricing.teeProcessByDiameter,
+    elbow: pricing.elbowProcessByDiameter
+  };
+  if (isNoFitting(fittingName)) {
+    return { processDiameter: diameter, processCost: 0 };
+  }
+  const processDiameter = nearestProcessDiameter(diameter);
+  const processCost = Number(tableMap[processType]?.[fittingName]?.[processDiameter]) || 0;
+  return { processDiameter, processCost };
 }
 
 function fittingLengthMm(fittingName, diameter, series = currentTubeSeries()) {
@@ -1315,7 +1355,7 @@ function calculateDocking(config) {
 }
 
 function costDetailHelpers() {
-  return { fittingCost, fittingLabel, formatFactor, formatNumber, isNoFitting, money };
+  return { fittingCost, fittingCostDetail, fittingLabel, formatFactor, formatNumber, isNoFitting, money, processCostDetail };
 }
 
 function quoteTubeHelpers() {
