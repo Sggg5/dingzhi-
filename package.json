@@ -1,0 +1,22 @@
+{
+  "name": "manifold-quote-system",
+  "version": "1.0.0",
+  "description": "分水器出图报价系统",
+  "main": "main.js",
+  "author": "FRANTA",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "serve": "node server.js",
+    "test": "node tests/settings-core.test.js && node tests/quote-core.test.js && node tests/product-quote-core.test.js && node tests/dimension-core.test.js && node tests/layout-core.test.js && node tests/catalog-core.test.js && node tests/config-core.test.js && node tests/product-selection-core.test.js && node tests/material-price-core.test.js && node tests/middle-field-core.test.js && node tests/product-form-rules-core.test.js && node tests/product-mode-core.test.js && node tests/display-core.test.js && node tests/export-core.test.js && node tests/settings-render-core.test.js && node tests/cost-detail-core.test.js && node tests/drawing-core.test.js && node tests/drawing-content-core.test.js && node tests/fitting-drawing.test.js && node tests/fitting-visual-core.test.js && node tests/fitting-renderer.test.js && node tests/branch-fitting-renderer.test.js && node tests/product-geometry-core.test.js && node tests/docking-middle-renderer.test.js && node tests/manifold-drawing.test.js && node tests/docking-drawing.test.js && node tests/tee-drawing.test.js && node tests/elbow-drawing.test.js && node tests/quote-smoke.test.js",
+    "start": "electron .",
+    "pack": "electron-packager . FrantaManifoldQuote --platform=win32 --arch=x64 --out=release --overwrite --ignore=\"release\" --ignore=\"tools\" --ignore=\"报价逻辑\"",
+    "msi": "node build-msi.js",
+    "dist": "npm run pack && npm run msi"
+  },
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-packager": "^17.1.2",
+    "electron-wix-msi": "^5.1.3"
+  }
+}
