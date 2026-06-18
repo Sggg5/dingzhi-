@@ -1,4 +1,6 @@
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 const SettingsRenderCore = require("../settings-render-core");
 
 const pricing = {
@@ -46,5 +48,11 @@ SettingsRenderCore.setValueAtPath(mutable, ["a", "b"], 3);
 assert.strictEqual(mutable.a.b, 3);
 assert.strictEqual(SettingsRenderCore.isActiveSettingCategory("tee", "tee"), true);
 assert.strictEqual(SettingsRenderCore.isActiveSettingSection("process", "dimensions"), false);
+
+const indexHtml = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+assert(indexHtml.includes("45°弯头加工角度系数为 0.8"));
+assert(indexHtml.includes("分水器不含税成本 = 主管材料 + 支管材料 + 配件 + 分水器加工费"));
+assert(indexHtml.includes("对接不含税成本 = 中间直管材料 + A/B端配件"));
+assert(indexHtml.includes("三通不含税成本 = 三通体/直管材料 + A/B/C端配件"));
 
 console.log("settings render core tests passed");

@@ -23,9 +23,13 @@
     const firstBranch = config.branches[0];
     const firstBranchWidth = firstBranch ? pipeVisualDiameter(firstBranch.diameter) : 0;
     const firstBranchFittingWidth = firstBranch ? branchFittingSize(firstBranch, firstBranchWidth).width : 0;
+    const lastBranch = config.branches[config.branches.length - 1];
+    const lastBranchWidth = lastBranch ? pipeVisualDiameter(lastBranch.diameter) : 0;
+    const lastBranchFittingWidth = lastBranch ? branchFittingSize(lastBranch, lastBranchWidth).width : 0;
     const inletBranchClearance = Math.max(34, firstBranchFittingWidth / 2 + 18);
+    const tailBranchClearance = Math.max(34, lastBranchFittingWidth / 2 + 18);
     const visualInletAllowance = Math.max(36, config.inletAllowance * allowanceScale, inletLength + inletBranchClearance);
-    const visualTailAllowance = Math.max(24, config.tailAllowance * allowanceScale);
+    const visualTailAllowance = Math.max(24, config.tailAllowance * allowanceScale, tailLength + tailBranchClearance);
     const usableWidth = Math.max(280, Math.min(720, availableDimensionWidth - visualInletAllowance - visualTailAllowance));
     const spanScale = layout.span > 0 ? usableWidth / layout.span : 0;
     const visualTotalWidth = visualInletAllowance + usableWidth + visualTailAllowance;
@@ -42,13 +46,11 @@
     const mainFittingLabelY = mainY - mainHeight / 2 - Math.max(24, Math.min(52, mainHeight * 0.5));
     const mainFittingLabelX = config.mainFitting === "直管" ? mainLeft : dimensionLeft + inletLength / 2;
     const tailFittingLabelX = config.tailFitting === "直管" ? mainRight : mainRight + tailLength / 2;
-    const dimensionY = mainY + mainHeight / 2 + (config.manifoldType === "单排" ? 36 : 90);
-    const totalDimensionY = dimensionY + 45;
+    const baseDimensionY = mainY + mainHeight / 2 + (config.manifoldType === "单排" ? 36 : 90);
     const totalLengthText = `总长 ${drawingTotalLengthText(result.mainLength, config.mainDiameter)}`;
     const titleSpec = `D${config.mainDiameter}x${titleBranchSummary(config)} 分水器`;
     const bomRows = drawingBomRows(config);
     const lowerShiftY = config.manifoldType === "单排" ? 0 : 50;
-    const infoBoxY = config.manifoldType === "单排" ? Math.max(430, totalDimensionY + 44) : 500 + lowerShiftY;
     const infoBoxHeight = Math.max(110, 54 + bomRows.length * 15);
     const infoBoxWidth = 300;
     const dimLine = (x1, x2, y, label, longStart = false, longEnd = false) => DrawingCore.horizontalDimension({
@@ -58,7 +60,8 @@
       extensionEnd: { fromY: y - 18, toY: longEnd ? y + 47 : y + 12 }
     });
     let contentTop = mainY - mainHeight / 2;
-    let contentBottom = totalDimensionY + 18;
+    let contentBottom = mainY + mainHeight / 2;
+    let bottomBranchClearBottom = mainY + mainHeight / 2;
     const branches = config.branches.map((branch, index) => {
       const x = branchXs[index];
       const isBottom = config.manifoldType !== "单排" && index % 2 === 1;
@@ -74,6 +77,9 @@
       const numberY = isBottom ? labelY + 28 : labelY - 28;
       contentTop = Math.min(contentTop, fittingY - 6, labelY - 18, numberY - 14);
       contentBottom = Math.max(contentBottom, fittingY + fittingSize.height + 6, labelY + 18, numberY + 14);
+      if (isBottom) {
+        bottomBranchClearBottom = Math.max(bottomBranchClearBottom, fittingY + fittingSize.height + 6, labelY + 18, numberY + 14);
+      }
       const heightLabel = branch.height > 0
         ? `<text x="${x}" y="${isBottom ? labelY - 15 : labelY + 15}" text-anchor="middle" font-size="10" fill="${drawingColors.mutedLabel}">加高 ${branch.height}</text>`
         : "";
@@ -89,6 +95,14 @@
         ${heightLabel}
       `;
     }).join("");
+    const dimensionY = config.manifoldType === "单排"
+      ? baseDimensionY
+      : Math.max(baseDimensionY, bottomBranchClearBottom + 18);
+    const totalDimensionY = dimensionY + 45;
+    const infoBoxY = config.manifoldType === "单排"
+      ? Math.max(430, totalDimensionY + 44)
+      : Math.max(500 + lowerShiftY, totalDimensionY + 44);
+    contentBottom = Math.max(contentBottom, totalDimensionY + 18);
     const mainContent = `
       <rect x="${mainLeft}" y="${mainY - mainHeight / 2}" width="${mainRight - mainLeft}" height="${mainHeight}" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>
       <line x1="${mainLeft - 40}" y1="${mainY}" x2="${dimensionRight + 8}" y2="${mainY}" stroke="${drawingColors.dimension}" stroke-width="1" stroke-dasharray="7 6"/>

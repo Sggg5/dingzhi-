@@ -45,4 +45,52 @@ assert(svg.includes("<inlet/>") && svg.includes("<tail/>"));
 assert(svg.includes("<branch-fitting>外丝</branch-fitting>"));
 assert(svg.includes("<dimension>总长 L=320 mm</dimension>"));
 assert(svg.includes("<bom>1</bom>"));
+let capturedTailX = null;
+let capturedEndSegment = null;
+const largeTailHelpers = {
+  ...helpers,
+  branchFittingSize: () => ({ width: 36, height: 30 }),
+  tailFittingLength: () => 95,
+  tailFittingSvg: (_config, x) => {
+    capturedTailX = x;
+    return "<tail/>";
+  },
+  DrawingCore: {
+    ...helpers.DrawingCore,
+    horizontalDimension: ({ x1, x2, label }) => {
+      if (String(label).startsWith("E=")) capturedEndSegment = { x1, x2 };
+      return `<dimension>${label}</dimension>`;
+    }
+  }
+};
+ManifoldDrawing.render(config, { mainLength: 320, inletAllowance: 100, tailAllowance: 40 }, largeTailHelpers);
+assert(capturedEndSegment);
+assert(capturedTailX >= capturedEndSegment.x1 + 34);
+assert.strictEqual(capturedEndSegment.x2 - capturedTailX, 95);
+
+let doubleRowDimensionY = null;
+const doubleRowHelpers = {
+  ...helpers,
+  branchFittingSize: () => ({ width: 34, height: 30 }),
+  DrawingCore: {
+    ...helpers.DrawingCore,
+    horizontalDimension: ({ y, label }) => {
+      if (String(label).startsWith("P=")) doubleRowDimensionY = y;
+      return `<dimension>${label}</dimension>`;
+    }
+  }
+};
+ManifoldDrawing.render(
+  {
+    ...config,
+    manifoldType: "双排交错",
+    branches: [
+      { diameter: 32, fitting: "外丝", height: 100 },
+      { diameter: 32, fitting: "外丝", height: 100 }
+    ]
+  },
+  { mainLength: 320, inletAllowance: 100, tailAllowance: 40 },
+  doubleRowHelpers
+);
+assert(doubleRowDimensionY > 480);
 console.log("manifold drawing tests passed");
