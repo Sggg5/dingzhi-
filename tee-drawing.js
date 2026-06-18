@@ -16,9 +16,14 @@
     const bodyHeight = pipeVisualDiameter(config.bodyDiameter || config.diameter);
     const lengthVisual = clamp((config.bodyLength || config.length) * 2.1, 140, 310);
     const pxPerMm = lengthVisual / Math.max(1, config.bodyLength || config.length);
-    const middleAWidth = compressedStraightVisualLength(teeMiddleLengthMm(config.middleA, Math.max(config.bodyDiameter || config.diameter, config.diameterA))) * pxPerMm;
+    const sideMiddleVisualWidth = (type, diameter) => {
+      const logicalLength = teeMiddleLengthMm(type, Math.max(config.bodyDiameter || config.diameter, diameter));
+      const baseWidth = compressedStraightVisualLength(logicalLength) * pxPerMm;
+      return type === "中接" && Number(diameter) >= 133 ? baseWidth * 0.5 : baseWidth;
+    };
+    const middleAWidth = sideMiddleVisualWidth(config.middleA, config.diameterA);
     const middleBWidth = compressedStraightVisualLength(teeBMiddleVisualLengthMm(config)) * pxPerMm * 0.5;
-    const middleCWidth = compressedStraightVisualLength(teeMiddleLengthMm(config.middleC, Math.max(config.bodyDiameter || config.diameter, config.diameterC))) * pxPerMm;
+    const middleCWidth = sideMiddleVisualWidth(config.middleC, config.diameterC);
     const leftX = 600 - lengthVisual / 2;
     const rightX = 600 + lengthVisual / 2;
     const centerX = 600;
@@ -43,6 +48,10 @@
     const bodyLabelFontSize = drawingColors.bodyLabelFontSize || 14;
     const totalDimensionFontSize = drawingColors.totalDimensionFontSize || 18;
     const totalLength = teeHorizontalTotalLengthMm(config);
+    const bodyBottomY = mainY + bodyHeight / 2;
+    const dimensionY = Math.max(405, bodyBottomY + Math.max(36, bodyHeight * 0.12));
+    const dimensionExtensionTopY = Math.min(dimensionY - 26, bodyBottomY + 12);
+    const dimensionLabelY = dimensionY - 15;
     const middleSvg = `
       ${config.middleA === "中接" ? reducerSegmentSvg(fittingAX, leftX, mainY, pipeA, bodyHeight) : ""}
       ${config.middleC === "中接" ? reducerSegmentSvg(rightX, fittingCX, mainY, bodyHeight, pipeC) : ""}
@@ -68,18 +77,19 @@
         <text x="${fittingCCenterX}" y="${sideSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterC} ${fittingLabel(config.fittingC)}</text>
       ` : ""}
       ${DrawingCore.horizontalDimension({
-        x1: dimensionLeft, x2: dimensionRight, y: 405,
+        x1: dimensionLeft, x2: dimensionRight, y: dimensionY,
         label: `总长 ${drawingTotalLengthText(totalLength, config.bodyDiameter || config.diameter)}`,
         color: drawingColors.dimension, labelColor: drawingColors.label,
-        extensionStart: { fromY: 330, toY: 415 }, extensionEnd: { fromY: 330, toY: 415 },
-        labelY: 390, fontSize: totalDimensionFontSize
+        extensionStart: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
+        extensionEnd: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
+        labelY: dimensionLabelY, fontSize: totalDimensionFontSize
       })}
     `;
     const bounds = {
       left: Math.min(dimensionLeft, fittingACenterX - 84),
       right: Math.max(dimensionRight, fittingCCenterX + 84),
       top: Math.min(bSpecY - 24, fittingBY - bFittingHeight - 12, sideSpecY - 24),
-      bottom: 430
+      bottom: dimensionY + 30
     };
     return typeof DrawingCore.fitContent === "function"
       ? DrawingCore.fitContent({

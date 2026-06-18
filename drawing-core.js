@@ -172,6 +172,12 @@
     `;
   }
 
+  function defaultDateText() {
+    const date = new Date();
+    const pad = value => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
   function titleBlock(options) {
     const f = CAD_STANDARD.frame;
     const {
@@ -179,7 +185,8 @@
       y = 675,
       material = "",
       titleSvg = "",
-      productLabel = "国标定制产品"
+      productLabel = "国标定制产品",
+      dateText = defaultDateText()
     } = options;
     return `
       <g transform="translate(${x} ${y})">
@@ -193,7 +200,7 @@
         <line x1="0" y1="114" x2="260" y2="114" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="30" y1="0" x2="30" y2="84" stroke="${f.stroke}"/>
         <line x1="60" y1="0" x2="60" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
-        <line x1="165" y1="0" x2="165" y2="84" stroke="${f.stroke}"/>
+        <line x1="165" y1="0" x2="165" y2="144" stroke="${f.stroke}"/>
         <line x1="215" y1="0" x2="215" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="260" y1="84" x2="505" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="260" y1="114" x2="505" y2="114" stroke="${f.stroke}"/>
@@ -208,13 +215,14 @@
         <text x="237.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">日期</text>
         <text x="16" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">设计</text>
         <text x="95" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="237.5" y="102" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
         <text x="16" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">审核</text>
         <text x="95" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="237.5" y="134" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
         <text x="382" y="56" text-anchor="middle" font-size="${f.materialFont}" fill="${f.stroke}">${material}</text>
         <text x="301" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">图样标记</text>
         <text x="383" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">重量</text>
         <text x="465" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">比例</text>
-        <text x="465" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">1:2</text>
         <text x="289" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">共</text>
         <text x="313" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">页</text>
         <text x="448" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">第</text>

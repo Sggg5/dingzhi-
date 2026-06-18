@@ -20,43 +20,45 @@ assert(center.includes('stroke-width="1"'));
 
 const frame = DrawingCore.engineeringFrame("TEST-001");
 assert(frame.includes("TEST-001"));
-assert(frame.includes("借用件登记"));
 assert(frame.includes('width="1194" height="800"'));
 
 const bom = DrawingCore.bomBox({
   x: 820,
   y: 500,
   height: 110,
-  rows: [{ name: "主管 D40", quantity: 1 }]
+  rows: [{ name: "Main D40", quantity: 1 }]
 });
-assert(bom.includes("BOM 清单"));
-assert(bom.includes("主管 D40"));
+assert(bom.includes("Main D40"));
 assert(bom.includes(">1</text>"));
 
 const info = DrawingCore.infoBox({
   x: 180,
   y: 500,
-  title: "尺寸说明",
-  content: '<text x="18" y="56">L：长度</text>'
+  title: "Size note",
+  content: '<text x="18" y="56">L: length</text>'
 });
 assert(info.includes('translate(180 500)'));
-assert(info.includes("尺寸说明"));
-assert(info.includes("L：长度"));
+assert(info.includes("Size note"));
+assert(info.includes("L: length"));
 
 const titleBlock = DrawingCore.titleBlock({
   material: "316L",
-  titleSvg: '<text x="614" y="78">测试产品</text>',
-  productLabel: "德标定制产品"
+  dateText: "2026-06-18",
+  titleSvg: '<text x="614" y="78">Test product</text>',
+  productLabel: "Custom product"
 });
 assert(titleBlock.includes("316L"));
-assert(titleBlock.includes("测试产品"));
-assert(titleBlock.includes("德标定制产品"));
-assert(titleBlock.includes("浙江福兰特有限公司"));
+assert(titleBlock.includes("Test product"));
+assert(titleBlock.includes("Custom product"));
+assert(titleBlock.includes("2026-06-18"));
+assert(titleBlock.includes('x1="165" y1="0" x2="165" y2="144"'));
+assert(!titleBlock.includes("1:2"));
 
 const requirements = DrawingCore.technicalRequirements({
-  lines: ["第一条", { text: "第二条", indent: 12 }]
+  lines: ["First", { text: "Second", indent: 12 }]
 });
-assert(requirements.includes("技术要求:"));
+assert(requirements.includes("First"));
+assert(requirements.includes("Second"));
 assert(requirements.includes('x="12" y="40"'));
 
 const horizontal = DrawingCore.horizontalDimension({

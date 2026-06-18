@@ -50,7 +50,9 @@
     const specLabelY = Math.min(238, 280 - Math.max(pipeA, pipeB) / 2 - 16);
     const labelFontSize = drawingColors.labelFontSize || 15;
     const dimensionFontSize = drawingColors.dimensionFontSize || 16;
-    const dimensionY = 372;
+    const bodyBottomY = 280 + Math.max(pipeA, pipeB) / 2;
+    const dimensionY = Math.max(372, bodyBottomY + Math.max(36, Math.max(pipeA, pipeB) * 0.12));
+    const dimensionExtensionTopY = Math.min(dimensionY - 24, bodyBottomY + 10);
     const dimensionSvg = totalLength > 0 ? DrawingCore.horizontalDimension({
       x1: dimensionLeft,
       x2: dimensionRight,
@@ -58,8 +60,8 @@
       label: drawingTotalLengthText(totalLength, config.diameter),
       color: drawingColors.dimension,
       labelColor: drawingColors.label,
-      extensionStart: { fromY: 318, toY: dimensionY + 10 },
-      extensionEnd: { fromY: 318, toY: dimensionY + 10 },
+      extensionStart: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
+      extensionEnd: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
       labelY: dimensionY - 12,
       fontSize: dimensionFontSize
     }) : "";

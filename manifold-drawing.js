@@ -142,7 +142,7 @@
       ${DrawingCore.infoBox({ x: 500, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "技术参数", content: `<text x="18" y="58" font-size="${infoFontSize}" fill="${drawingColors.label}">主管：D${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text><text x="18" y="82" font-size="${infoFontSize}" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text><text x="18" y="104" font-size="${infoFontSize}" fill="${drawingColors.label}">单位：mm</text>` })}
       ${DrawingCore.bomBox({ x: 820, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, rows: bomRows, labelColor: drawingColors.label, lineHeight: Math.min(15, Math.max(11, (infoBoxHeight - 56) / Math.max(1, bomRows.length))), fontSize: 11 })}
       ${DrawingCore.technicalRequirements({ y: 625 + lowerShiftY, lines: ["1、分水器不得有气孔、夹渣、缩松等影响其强度的缺陷:", "3、未注公差按国标GB/T 19928.2；", "4、未注尺寸公差按国标GB/T1804-2000m:", "5、交货时酸洗钝化后锻件表面应清洁无氧", { text: "化皮和其它污物，颜色为银白色。", indent: 12 }] })}
-      ${DrawingCore.titleBlock({ y: 625 + lowerShiftY, material: config.material, titleSvg: svgTextLines(titleSpec, 614, 78, { maxChars: 14, lineHeight: 15, fontSize: 13 }), productLabel: `${tubeSeriesLabel[config.tubeSeries] || ""}定制产品` })}
+      ${DrawingCore.titleBlock({ y: 675, material: config.material, titleSvg: svgTextLines(titleSpec, 614, 78, { maxChars: 14, lineHeight: 15, fontSize: 13 }), productLabel: `${tubeSeriesLabel[config.tubeSeries] || ""}定制产品` })}
     `;
   }
   return { render };

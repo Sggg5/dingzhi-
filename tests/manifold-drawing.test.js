@@ -40,12 +40,24 @@ const config = {
     { diameter: 20, fitting: "外丝", height: 50 }
   ]
 };
-const svg = ManifoldDrawing.render(config, { mainLength: 320, inletAllowance: 100, tailAllowance: 40 }, helpers);
+let capturedTitleBlockY = null;
+const titlePositionHelpers = {
+  ...helpers,
+  DrawingCore: {
+    ...helpers.DrawingCore,
+    titleBlock: ({ y }) => {
+      capturedTitleBlockY = y;
+      return "<title/>";
+    }
+  }
+};
+const svg = ManifoldDrawing.render(config, { mainLength: 320, inletAllowance: 100, tailAllowance: 40 }, titlePositionHelpers);
 assert(svg.includes("<frame/>"));
 assert(svg.includes("<inlet/>") && svg.includes("<tail/>"));
 assert(svg.includes("<branch-fitting>外丝</branch-fitting>"));
 assert(svg.includes("<dimension>总长 L=320 mm</dimension>"));
 assert(svg.includes("<bom>1</bom>"));
+assert.strictEqual(capturedTitleBlockY, 675);
 let capturedTailX = null;
 let capturedEndSegment = null;
 const largeTailHelpers = {

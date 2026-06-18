@@ -2,7 +2,7 @@ const assert = require("assert");
 const DockingDrawing = require("../docking-drawing");
 
 const helpers = {
-  DrawingCore: { horizontalDimension: ({ label }) => `<dimension>${label}</dimension>` },
+  DrawingCore: { horizontalDimension: ({ label, y }) => `<dimension>${label}</dimension><dimension-y value="${y}"/>` },
   clamp: (value, min, max) => Math.min(max, Math.max(min, value)),
   dockingMiddleAssembly: () => ({ svg: "<middle/>", leftX: 500, rightX: 700 }),
   dockingTotalLengthMm: () => 180,
@@ -33,5 +33,14 @@ assert(svg.includes("B端"));
 
 const noFittingSvg = DockingDrawing.render({ ...config, fittingA: "无配件", middleItems: [] }, helpers);
 assert.strictEqual(noFittingSvg.includes("A端"), false);
+
+const largeSvg = DockingDrawing.render({
+  ...config,
+  diameterA: 219,
+  diameterB: 219,
+  middleItems: []
+}, helpers);
+const largeDimensionY = Number((largeSvg.match(/<dimension-y value="([^"]+)"/) || [])[1]);
+assert(largeDimensionY > 372, "large docking dimension should move below the body");
 
 console.log("docking drawing tests passed");
