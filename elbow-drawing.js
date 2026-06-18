@@ -38,10 +38,10 @@
     const elbowBLabelY = config.angle === 45 ? elbowEndY - elbowBLabelOffset / Math.sqrt(2) : elbowEndY - elbowBLabelOffset;
     const elbowMiddleSvg = `
       ${config.middleA === "中接" ? reducerSegmentSvg(elbowFittingAX, elbowStartX, elbowStartY, elbowAHeight, elbowPipe) : ""}
-      ${config.middleA === "直管" ? `<rect x="${elbowFittingAX}" y="${elbowStartY - elbowAHeight / 2}" width="${elbowMiddleALength}" height="${elbowAHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>` : ""}
+      ${config.middleA === "直管" ? `<rect x="${elbowFittingAX}" y="${elbowStartY - elbowAHeight / 2}" width="${elbowMiddleALength}" height="${elbowAHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>` : ""}
       <g transform="rotate(${elbowBRotation} ${elbowEndX} ${elbowEndY})">
         ${config.middleB === "中接" ? reducerSegmentSvg(elbowEndX, elbowFittingBX, elbowEndY, elbowPipe, elbowBHeight) : ""}
-        ${config.middleB === "直管" ? `<rect x="${elbowEndX}" y="${elbowEndY - elbowBHeight / 2}" width="${elbowMiddleBLength}" height="${elbowBHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>` : ""}
+        ${config.middleB === "直管" ? `<rect x="${elbowEndX}" y="${elbowEndY - elbowBHeight / 2}" width="${elbowMiddleBLength}" height="${elbowBHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>` : ""}
       </g>
     `;
     const elbowAEnvelopeHeight = inlineFittingEnvelopeHeight(config.fittingA, config.diameterA, elbowAHeight);
@@ -58,6 +58,8 @@
     const elbowDimensionY = elbowStartY + elbowDimensionClearance;
     const elbowADimensionExtension = 48;
     const elbowBDimensionExtension = 48;
+    const labelFontSize = drawingColors.labelFontSize || 15;
+    const dimensionFontSize = drawingColors.dimensionFontSize || 16;
     const dimensionText = length => `H=${drawingTotalLengthText(length, config.bodyDiameter || config.diameter).replace(/^L=/, "")}`;
     const elbowSlantDimensionSvg = config.angle === 45 ? (() => {
       const unit = 1 / Math.sqrt(2);
@@ -89,7 +91,7 @@
         extensionTop: { fromX: dimX - extension, toX: dimX },
         extensionBottom: { fromX: dimX - extension, toX: dimX },
         labelOffset: -18,
-        fontSize: 16
+        fontSize: dimensionFontSize
       });
     })() : "";
 
@@ -101,12 +103,12 @@
         ${inlineFittingSvg(config.fittingB, config.diameterB, elbowFittingBX, elbowEndY, elbowBHeight, "right")}
       </g>
       ${!isNoFitting(config.fittingA) ? `
-        <text x="${elbowALabelX}" y="${elbowALabelY}" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="${drawingColors.label}">A端</text>
-        <text x="${elbowASpecX}" y="${elbowASpecY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
+        <text x="${elbowALabelX}" y="${elbowALabelY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
+        <text x="${elbowASpecX}" y="${elbowASpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
       ` : ""}
       ${!isNoFitting(config.fittingB) ? `
-        <text x="${elbowBLabelX}" y="${elbowBLabelY}" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="${drawingColors.label}">B端</text>
-        <text x="${elbowBSpecDynamicX}" y="${elbowBSpecDynamicY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
+        <text x="${elbowBLabelX}" y="${elbowBLabelY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">B端</text>
+        <text x="${elbowBSpecDynamicX}" y="${elbowBSpecDynamicY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
       ` : ""}
       ${DrawingCore.horizontalDimension({
         x1: elbowFittingAX - elbowALength,
@@ -118,11 +120,11 @@
         extensionStart: { fromY: elbowDimensionY - elbowADimensionExtension, toY: elbowDimensionY + 10 },
         extensionEnd: { fromY: elbowDimensionY - elbowADimensionExtension, toY: elbowDimensionY + 10 },
         labelY: elbowDimensionY - 12,
-        fontSize: 16
+        fontSize: dimensionFontSize
       })}
       ${elbowSlantDimensionSvg}
       ${elbowVerticalDimensionSvg}
-      <text x="${(elbowFittingAX - elbowALength + elbowDimensionRight) / 2}" y="${elbowDimensionY + 34}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness} ${config.angle}°弯头</text>
+      <text x="${(elbowFittingAX - elbowALength + elbowDimensionRight) / 2}" y="${elbowDimensionY + 34}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness} ${config.angle}°弯头</text>
     `;
     const bDimensionRight = config.angle === 45
       ? elbowEndX + (elbowMiddleBLength + elbowBLength + elbowBDimensionExtension + 36) / Math.sqrt(2)

@@ -257,14 +257,26 @@ const ringPressISeries = {
 };
 
 const drawingColors = {
-  pipeFill: "#e8eceb",
-  fittingFill: "#f4f1e8",
-  capFill: "#d9dfdd",
-  stroke: "#293f3b",
-  fittingStroke: "#4a4033",
-  dimension: "#6f6a61",
-  label: "#263d39",
-  mutedLabel: "#5f625d"
+  pipeFill: DrawingCore.CAD_STANDARD.colors.pipeFill,
+  fittingFill: DrawingCore.CAD_STANDARD.colors.fittingFill,
+  capFill: DrawingCore.CAD_STANDARD.colors.capFill,
+  stroke: DrawingCore.CAD_STANDARD.colors.object,
+  fittingStroke: DrawingCore.CAD_STANDARD.colors.fitting,
+  objectLineWidth: DrawingCore.CAD_STANDARD.line.visibleHeavy,
+  secondaryLineWidth: DrawingCore.CAD_STANDARD.line.visible,
+  fittingLineWidth: DrawingCore.CAD_STANDARD.line.visible,
+  dimension: DrawingCore.CAD_STANDARD.colors.dimension,
+  centerLine: DrawingCore.CAD_STANDARD.colors.center,
+  centerLineWidth: DrawingCore.CAD_STANDARD.line.center,
+  centerLineDash: DrawingCore.CAD_STANDARD.dimension.centerDash,
+  labelFontSize: DrawingCore.CAD_STANDARD.text.label,
+  bodyLabelFontSize: DrawingCore.CAD_STANDARD.text.dimension,
+  dimensionFontSize: DrawingCore.CAD_STANDARD.text.dimensionEmphasis,
+  totalDimensionFontSize: DrawingCore.CAD_STANDARD.text.dimensionTotal,
+  infoFontSize: DrawingCore.CAD_STANDARD.text.info,
+  smallFontSize: DrawingCore.CAD_STANDARD.text.small,
+  label: DrawingCore.CAD_STANDARD.colors.label,
+  mutedLabel: DrawingCore.CAD_STANDARD.colors.mutedLabel
 };
 
 let fields = {};
@@ -1549,7 +1561,7 @@ function inlineFittingEnvelopeHeight(fitting, diameter, height) {
 
 
 function flangePath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.flange(x, y, width, height, fill, stroke);
+  return FittingDrawing.flange(x, y, width, height, fill, stroke, drawingColors.fittingLineWidth);
 }
 
 function flangeVisualWidth(diameter, height) {
@@ -1557,7 +1569,7 @@ function flangeVisualWidth(diameter, height) {
 }
 
 function reducerSegmentSvg(leftX, rightX, y, leftHeight, rightHeight) {
-  return FittingDrawing.reducer(leftX, rightX, y, leftHeight, rightHeight, drawingColors.pipeFill, drawingColors.stroke);
+  return FittingDrawing.reducer(leftX, rightX, y, leftHeight, rightHeight, drawingColors.pipeFill, drawingColors.stroke, drawingColors.objectLineWidth);
 }
 
 
@@ -1575,7 +1587,7 @@ function dockingMiddleAssembly(config, leftX, rightX, y) {
 }
 
 function capPath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.cap(x, y, width, height, fill, stroke);
+  return FittingDrawing.cap(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function tailFittingLength(config, height) {
@@ -1595,11 +1607,11 @@ function ringPressVisualSize(diameter) {
 }
 
 function groovePath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.groove(x, y, width, height, fill, stroke);
+  return FittingDrawing.groove(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function buttWeldPath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.buttWeld(x, y, width, height, fill, stroke);
+  return FittingDrawing.buttWeld(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function outerThreadBranchVisualSize(branch) {
@@ -1611,19 +1623,19 @@ function innerThreadBranchVisualSize(branch) {
 }
 
 function doubleCardPath(x, y, width, height, diameter, fill, stroke) {
-  return FittingDrawing.doubleCard(x, y, width, height, fill, stroke);
+  return FittingDrawing.doubleCard(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function ringPressPath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.ringPress(x, y, width, height, fill, stroke);
+  return FittingDrawing.ringPress(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function innerThreadPath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.innerThread(x, y, width, height, fill, stroke);
+  return FittingDrawing.innerThread(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function outerThreadPath(x, y, width, height, fill, stroke) {
-  return FittingDrawing.outerThread(x, y, width, height, fill, stroke);
+  return FittingDrawing.outerThread(x, y, width, height, fill, stroke, drawingColors.objectLineWidth);
 }
 
 function draw(config, result) {
@@ -1711,9 +1723,9 @@ function drawProduct(config, result) {
       height: productInfoBoxHeight,
       title: "技术参数",
       content: `
-        <text x="18" y="58" font-size="13" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text>
-        <text x="18" y="82" font-size="13" fill="${drawingColors.label}">${connectionText}</text>
-        <text x="18" y="104" font-size="13" fill="${drawingColors.label}">单位：mm</text>
+        <text x="18" y="58" font-size="${drawingColors.infoFontSize}" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text>
+        <text x="18" y="82" font-size="${drawingColors.infoFontSize}" fill="${drawingColors.label}">${connectionText}</text>
+        <text x="18" y="104" font-size="${drawingColors.infoFontSize}" fill="${drawingColors.label}">单位：mm</text>
       `
     })}
     ${DrawingCore.bomBox({
@@ -1786,7 +1798,7 @@ function productDrawingBomRows(config) {
 
 function productDimensionNotes(config) {
   return DrawingContentCore.productDimensionNotes(config, { drawingLengthText })
-    .map((line, index) => `<text x="18" y="${56 + index * 22}" font-size="13" fill="${drawingColors.label}">${line}</text>`)
+    .map((line, index) => `<text x="18" y="${56 + index * 22}" font-size="${drawingColors.infoFontSize}" fill="${drawingColors.label}">${line}</text>`)
     .join("");
 }
 

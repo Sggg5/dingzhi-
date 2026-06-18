@@ -49,9 +49,13 @@
   }
 
   function bodySvg(bodyPath, centerPath, colors) {
+    const centerLineColor = colors.centerLine || "#8b928e";
+    const centerLineWidth = colors.centerLineWidth || 1;
+    const centerLineDash = colors.centerLineDash || "7 6";
+    const objectLineWidth = colors.objectLineWidth || 3;
     return `
-      <path d="${bodyPath}" fill="${colors.pipeFill}" stroke="${colors.stroke}" stroke-width="3" stroke-linejoin="round"/>
-      <path d="${centerPath}" fill="none" stroke="${colors.centerLine}" stroke-width="1.2" stroke-dasharray="8 7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${bodyPath}" fill="${colors.pipeFill}" stroke="${colors.stroke}" stroke-width="${objectLineWidth}" stroke-linejoin="round"/>
+      <path d="${centerPath}" fill="none" stroke="${centerLineColor}" stroke-width="${centerLineWidth}" stroke-dasharray="${centerLineDash}" stroke-linecap="round" stroke-linejoin="round"/>
     `;
   }
 

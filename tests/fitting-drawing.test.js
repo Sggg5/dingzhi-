@@ -3,9 +3,11 @@ const FittingDrawing = require("../fitting-drawing");
 
 const flange = FittingDrawing.flange(1, 2, 3, 4, "#fff", "#000");
 assert(flange.includes('x="1"') && flange.includes('rx="2"'));
+assert(FittingDrawing.flange(1, 2, 3, 4, "#fff", "#000", 1.5).includes('stroke-width="1.5"'));
 
 const reducer = FittingDrawing.reducer(10, 30, 20, 8, 16, "#eee", "#333");
 assert(reducer.includes("M 10 16") && reducer.includes("L 30 12"));
+assert(FittingDrawing.reducer(10, 30, 20, 8, 16, "#eee", "#333", 2.5).includes('stroke-width="2.5"'));
 
 const groove = FittingDrawing.groove(0, 0, 40, 80, "#eee", "#333");
 assert(groove.includes("<path") && groove.includes("stroke-linejoin"));

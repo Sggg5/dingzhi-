@@ -39,37 +39,40 @@
     const fittingBCenterY = fittingBY - bFittingHeight / 2;
     const sideSpecY = Math.min(246, mainY - Math.max(pipeA, pipeC, bodyHeight) / 2 - 28);
     const bSpecY = fittingBY - bFittingHeight - 20;
+    const labelFontSize = drawingColors.labelFontSize || 15;
+    const bodyLabelFontSize = drawingColors.bodyLabelFontSize || 14;
+    const totalDimensionFontSize = drawingColors.totalDimensionFontSize || 18;
     const totalLength = teeHorizontalTotalLengthMm(config);
     const middleSvg = `
       ${config.middleA === "中接" ? reducerSegmentSvg(fittingAX, leftX, mainY, pipeA, bodyHeight) : ""}
       ${config.middleC === "中接" ? reducerSegmentSvg(rightX, fittingCX, mainY, bodyHeight, pipeC) : ""}
-      ${config.middleB === "直管" ? `<rect x="${centerX - pipeB / 2}" y="${fittingBY}" width="${pipeB}" height="${branchTopY - fittingBY}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>` : ""}
+      ${config.middleB === "直管" ? `<rect x="${centerX - pipeB / 2}" y="${fittingBY}" width="${pipeB}" height="${branchTopY - fittingBY}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>` : ""}
     `;
     const content = `
-      <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="3"/>
+      <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>
       ${middleSvg}
       ${inlineFittingSvg(config.fittingA, config.diameterA, fittingAX, mainY, pipeA, "left")}
       ${inlineFittingSvg(config.fittingC, config.diameterC, fittingCX, mainY, pipeC, "right")}
       ${verticalInlineFittingSvg(config.fittingB, config.diameterB, fittingBX, fittingBY, pipeB, "top")}
-      <text x="${centerX}" y="${mainY + 5}" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness}</text>
+      <text x="${centerX}" y="${mainY + 5}" text-anchor="middle" dominant-baseline="middle" font-size="${bodyLabelFontSize}" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness}</text>
       ${!isNoFitting(config.fittingA) ? `
-        <text x="${fittingACenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="${drawingColors.label}">A端</text>
-        <text x="${fittingACenterX}" y="${sideSpecY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
+        <text x="${fittingACenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
+        <text x="${fittingACenterX}" y="${sideSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
       ` : ""}
       ${!isNoFitting(config.fittingB) ? `
-        <text x="${fittingBX}" y="${fittingBCenterY + 4}" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="${drawingColors.label}">B端</text>
-        <text x="${fittingBX}" y="${bSpecY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
+        <text x="${fittingBX}" y="${fittingBCenterY + 4}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">B端</text>
+        <text x="${fittingBX}" y="${bSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
       ` : ""}
       ${!isNoFitting(config.fittingC) ? `
-        <text x="${fittingCCenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="15" fill="${drawingColors.label}">C端</text>
-        <text x="${fittingCCenterX}" y="${sideSpecY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterC} ${fittingLabel(config.fittingC)}</text>
+        <text x="${fittingCCenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">C端</text>
+        <text x="${fittingCCenterX}" y="${sideSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterC} ${fittingLabel(config.fittingC)}</text>
       ` : ""}
       ${DrawingCore.horizontalDimension({
         x1: dimensionLeft, x2: dimensionRight, y: 405,
         label: `总长 ${drawingTotalLengthText(totalLength, config.bodyDiameter || config.diameter)}`,
         color: drawingColors.dimension, labelColor: drawingColors.label,
         extensionStart: { fromY: 330, toY: 415 }, extensionEnd: { fromY: 330, toY: 415 },
-        labelY: 390, fontSize: 18
+        labelY: 390, fontSize: totalDimensionFontSize
       })}
     `;
     const bounds = {

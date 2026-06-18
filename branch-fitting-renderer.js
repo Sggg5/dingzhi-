@@ -61,7 +61,7 @@
       const path = branch.fitting === "沟槽" ? h.groovePath : h.buttWeldPath;
       return rotated(path(x - width / 2, centerY - visualHeight / 2, width, visualHeight, colors.fittingFill, colors.stroke), x, centerY);
     }
-    return `<rect x="${x - branchWidth / 2 - 8}" y="${y}" width="${branchWidth + 16}" height="28" rx="3" fill="${colors.fittingFill}" stroke="${colors.fittingStroke}" stroke-width="2"/>`;
+    return `<rect x="${x - branchWidth / 2 - 8}" y="${y}" width="${branchWidth + 16}" height="28" rx="3" fill="${colors.fittingFill}" stroke="${colors.fittingStroke}" stroke-width="${colors.fittingLineWidth || 2}"/>`;
   }
 
   return { render, seatOffset, size };

@@ -5,49 +5,120 @@
   }
   root.DrawingCore = api;
 })(typeof globalThis !== "undefined" ? globalThis : window, function createDrawingCore() {
+  const CAD_STANDARD = {
+    colors: {
+      object: "#293f3b",
+      fitting: "#4a4033",
+      dimension: "#6f6a61",
+      center: "#8b928e",
+      label: "#263d39",
+      mutedLabel: "#5f625d",
+      pipeFill: "#e8eceb",
+      fittingFill: "#f4f1e8",
+      capFill: "#d9dfdd"
+    },
+    line: {
+      visible: 2,
+      visibleHeavy: 3,
+      dimension: 1.2,
+      extension: 1,
+      center: 1
+    },
+    text: {
+      label: 13,
+      dimension: 13,
+      dimensionEmphasis: 16,
+      dimensionTotal: 18,
+      info: 13,
+      title: 16,
+      small: 11
+    },
+    dimension: {
+      arrowWidth: 12,
+      arrowHeight: 6,
+      labelOffset: 10,
+      extensionOvershoot: 12,
+      centerDash: "7 6"
+    },
+    frame: {
+      stroke: "#111",
+      fill: "#fff",
+      outerLine: 1.2,
+      borderLine: 2.2,
+      tableLine: 1,
+      heavyTableLine: 2,
+      indexFont: 16,
+      sideFont: 14,
+      titleBlockLine: 2,
+      titleFont: 16,
+      titleProductFont: 15,
+      titleMetaFont: 12,
+      titleSmallFont: 11,
+      materialFont: 24,
+      technicalTitleFont: 14,
+      technicalFont: 12,
+      cardRadius: 8,
+      cardTitleFont: 16,
+      cardQuantityFont: 12
+    }
+  };
+
   function arrowMarker(color, id = "arrow") {
+    const markerWidth = CAD_STANDARD.dimension.arrowWidth;
+    const markerHeight = CAD_STANDARD.dimension.arrowHeight;
+    const refX = markerWidth;
+    const refY = markerHeight / 2;
     return `
-      <marker id="${id}" markerWidth="12" markerHeight="6" viewBox="0 0 12 6" refX="12" refY="3" orient="auto-start-reverse">
-        <path d="M 12 3 L 0 0 L 0 6 Z" fill="${color}"></path>
+      <marker id="${id}" markerWidth="${markerWidth}" markerHeight="${markerHeight}" viewBox="0 0 ${markerWidth} ${markerHeight}" refX="${refX}" refY="${refY}" orient="auto-start-reverse">
+        <path d="M ${markerWidth} ${refY} L 0 0 L 0 ${markerHeight} Z" fill="${color}"></path>
       </marker>
     `;
   }
 
+  function centerLine(x1, y1, x2, y2, options = {}) {
+    const color = options.color || CAD_STANDARD.colors.center;
+    const lineWidth = options.lineWidth || CAD_STANDARD.line.center;
+    const dash = options.dash || CAD_STANDARD.dimension.centerDash;
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${lineWidth}" stroke-dasharray="${dash}"/>`;
+  }
+
   function engineeringFrame(quoteNo = "") {
+    const f = CAD_STANDARD.frame;
     return `
-      <rect x="3" y="35" width="1194" height="800" fill="#fff" stroke="#111" stroke-width="1.2"/>
-      <rect x="104" y="51" width="1072" height="768" fill="none" stroke="#111" stroke-width="2.2"/>
-      <line x1="600" y1="35" x2="600" y2="68" stroke="#111" stroke-width="2.2"/>
-      <line x1="600" y1="819" x2="600" y2="835" stroke="#111" stroke-width="2.2"/>
-      <text x="300" y="50" text-anchor="middle" font-size="16" fill="#111">1</text>
-      <text x="900" y="50" text-anchor="middle" font-size="16" fill="#111">2</text>
-      <text x="300" y="832" text-anchor="middle" font-size="16" fill="#111">1</text>
-      <text x="900" y="832" text-anchor="middle" font-size="16" fill="#111">2</text>
-      <line x1="104" y1="95" x2="345" y2="95" stroke="#111" stroke-width="1"/>
-      <line x1="345" y1="51" x2="345" y2="95" stroke="#111" stroke-width="1"/>
-      <text x="225" y="80" text-anchor="middle" font-size="16" fill="#111">${quoteNo}</text>
-      <line x1="3" y1="380" x2="126" y2="380" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="398" x2="104" y2="398" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="445" x2="104" y2="445" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="485" x2="104" y2="485" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="525" x2="104" y2="525" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="590" x2="104" y2="590" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="655" x2="104" y2="655" stroke="#111" stroke-width="1"/>
-      <line x1="3" y1="725" x2="104" y2="725" stroke="#111" stroke-width="1"/>
-      <line x1="104" y1="380" x2="126" y2="380" stroke="#111" stroke-width="2"/>
-      <text x="52" y="260" text-anchor="middle" font-size="16" fill="#111">A</text>
-      <text x="1187" y="260" text-anchor="middle" font-size="16" fill="#111">A</text>
-      <text x="1187" y="605" text-anchor="middle" font-size="16" fill="#111">B</text>
-      <text x="52" y="392" text-anchor="middle" font-size="14" fill="#111">借用件登记</text>
-      <text x="52" y="426" text-anchor="middle" font-size="14" fill="#111">描 图</text>
-      <text x="52" y="468" text-anchor="middle" font-size="14" fill="#111">校 描</text>
-      <text x="52" y="545" text-anchor="middle" font-size="14" fill="#111">旧底图总号</text>
-      <text x="52" y="625" text-anchor="middle" font-size="14" fill="#111">签 字</text>
-      <text x="52" y="692" text-anchor="middle" font-size="14" fill="#111">日 期</text>
+      <rect x="3" y="35" width="1194" height="800" fill="${f.fill}" stroke="${f.stroke}" stroke-width="${f.outerLine}"/>
+      <rect x="104" y="51" width="1072" height="768" fill="none" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+      <line x1="600" y1="35" x2="600" y2="68" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+      <line x1="600" y1="819" x2="600" y2="835" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+      <text x="300" y="50" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">1</text>
+      <text x="900" y="50" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">2</text>
+      <text x="300" y="832" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">1</text>
+      <text x="900" y="832" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">2</text>
+      <line x1="104" y1="95" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="345" y1="51" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <text x="225" y="80" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">${quoteNo}</text>
+      <line x1="3" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="398" x2="104" y2="398" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="445" x2="104" y2="445" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="485" x2="104" y2="485" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="525" x2="104" y2="525" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="590" x2="104" y2="590" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="655" x2="104" y2="655" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="3" y1="725" x2="104" y2="725" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      <line x1="104" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.heavyTableLine}"/>
+      <text x="52" y="260" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">A</text>
+      <text x="1187" y="260" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">A</text>
+      <text x="1187" y="605" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">B</text>
+      <text x="52" y="392" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">借用件登记</text>
+      <text x="52" y="426" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">描 图</text>
+      <text x="52" y="468" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">校 描</text>
+      <text x="52" y="545" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">旧底图总号</text>
+      <text x="52" y="625" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">签 字</text>
+      <text x="52" y="692" text-anchor="middle" font-size="${f.sideFont}" fill="${f.stroke}">日 期</text>
     `;
   }
 
   function bomBox(options) {
+    const f = CAD_STANDARD.frame;
     const {
       x,
       y,
@@ -71,9 +142,9 @@
     }).join("");
     return `
       <g transform="translate(${x} ${y})">
-        <rect x="0" y="0" width="${width}" height="${height}" rx="8" fill="#fff" stroke="${borderColor}"/>
-        <text x="18" y="28" font-size="16" font-weight="700" fill="${accentColor}">BOM 清单</text>
-        <text x="${quantityX}" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="${labelColor}">数量</text>
+        <rect x="0" y="0" width="${width}" height="${height}" rx="${f.cardRadius}" fill="${f.fill}" stroke="${borderColor}"/>
+        <text x="18" y="28" font-size="${f.cardTitleFont}" font-weight="700" fill="${accentColor}">BOM 清单</text>
+        <text x="${quantityX}" y="28" text-anchor="middle" font-size="${f.cardQuantityFont}" font-weight="700" fill="${labelColor}">数量</text>
         <line x1="18" y1="42" x2="${width - 18}" y2="42" stroke="${dividerColor}"/>
         ${rowSvg}
       </g>
@@ -81,6 +152,7 @@
   }
 
   function infoBox(options) {
+    const f = CAD_STANDARD.frame;
     const {
       x,
       y,
@@ -93,14 +165,15 @@
     } = options;
     return `
       <g transform="translate(${x} ${y})">
-        <rect x="0" y="0" width="${width}" height="${height}" rx="8" fill="#fff" stroke="${borderColor}"/>
-        <text x="18" y="28" font-size="16" font-weight="700" fill="${accentColor}">${title}</text>
+        <rect x="0" y="0" width="${width}" height="${height}" rx="${f.cardRadius}" fill="${f.fill}" stroke="${borderColor}"/>
+        <text x="18" y="28" font-size="${f.cardTitleFont}" font-weight="700" fill="${accentColor}">${title}</text>
         ${content}
       </g>
     `;
   }
 
   function titleBlock(options) {
+    const f = CAD_STANDARD.frame;
     const {
       x = 454,
       y = 675,
@@ -110,55 +183,56 @@
     } = options;
     return `
       <g transform="translate(${x} ${y})">
-        <rect x="0" y="0" width="722" height="144" fill="#fff" stroke="#111" stroke-width="2"/>
-        <line x1="260" y1="0" x2="260" y2="144" stroke="#111" stroke-width="2"/>
-        <line x1="505" y1="0" x2="505" y2="144" stroke="#111" stroke-width="2"/>
-        <line x1="0" y1="21" x2="260" y2="21" stroke="#111"/>
-        <line x1="0" y1="42" x2="260" y2="42" stroke="#111"/>
-        <line x1="0" y1="63" x2="260" y2="63" stroke="#111"/>
-        <line x1="0" y1="84" x2="260" y2="84" stroke="#111" stroke-width="2"/>
-        <line x1="0" y1="114" x2="260" y2="114" stroke="#111" stroke-width="2"/>
-        <line x1="30" y1="0" x2="30" y2="84" stroke="#111"/>
-        <line x1="60" y1="0" x2="60" y2="144" stroke="#111" stroke-width="2"/>
-        <line x1="165" y1="0" x2="165" y2="84" stroke="#111"/>
-        <line x1="215" y1="0" x2="215" y2="144" stroke="#111" stroke-width="2"/>
-        <line x1="260" y1="84" x2="505" y2="84" stroke="#111" stroke-width="2"/>
-        <line x1="260" y1="114" x2="505" y2="114" stroke="#111"/>
-        <line x1="342" y1="84" x2="342" y2="144" stroke="#111"/>
-        <line x1="424" y1="84" x2="424" y2="144" stroke="#111"/>
-        <line x1="505" y1="48" x2="722" y2="48" stroke="#111" stroke-width="2"/>
-        <line x1="505" y1="96" x2="722" y2="96" stroke="#111" stroke-width="2"/>
-        <text x="15" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#111">标记</text>
-        <text x="45" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#111">处数</text>
-        <text x="112.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#111">更改文件号</text>
-        <text x="190" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#111">签字</text>
-        <text x="237.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#111">日期</text>
-        <text x="16" y="102" font-size="12" fill="#111">设计</text>
-        <text x="95" y="102" font-size="12" fill="#111">FRANTA</text>
-        <text x="16" y="134" font-size="12" fill="#111">审核</text>
-        <text x="95" y="134" font-size="12" fill="#111">FRANTA</text>
-        <text x="382" y="56" text-anchor="middle" font-size="24" fill="#111">${material}</text>
-        <text x="301" y="103" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">图样标记</text>
-        <text x="383" y="103" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">重量</text>
-        <text x="465" y="103" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">比例</text>
-        <text x="465" y="129" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">1:2</text>
-        <text x="289" y="129" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">共</text>
-        <text x="313" y="129" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">页</text>
-        <text x="448" y="129" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">第</text>
-        <text x="482" y="129" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#111">页</text>
-        <text x="614" y="30" text-anchor="middle" font-size="16" fill="#111">浙江福兰特有限公司</text>
+        <rect x="0" y="0" width="722" height="144" fill="${f.fill}" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="260" y1="0" x2="260" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="505" y1="0" x2="505" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="0" y1="21" x2="260" y2="21" stroke="${f.stroke}"/>
+        <line x1="0" y1="42" x2="260" y2="42" stroke="${f.stroke}"/>
+        <line x1="0" y1="63" x2="260" y2="63" stroke="${f.stroke}"/>
+        <line x1="0" y1="84" x2="260" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="0" y1="114" x2="260" y2="114" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="30" y1="0" x2="30" y2="84" stroke="${f.stroke}"/>
+        <line x1="60" y1="0" x2="60" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="165" y1="0" x2="165" y2="84" stroke="${f.stroke}"/>
+        <line x1="215" y1="0" x2="215" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="260" y1="84" x2="505" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="260" y1="114" x2="505" y2="114" stroke="${f.stroke}"/>
+        <line x1="342" y1="84" x2="342" y2="144" stroke="${f.stroke}"/>
+        <line x1="424" y1="84" x2="424" y2="144" stroke="${f.stroke}"/>
+        <line x1="505" y1="48" x2="722" y2="48" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <line x1="505" y1="96" x2="722" y2="96" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
+        <text x="15" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">标记</text>
+        <text x="45" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">处数</text>
+        <text x="112.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">更改文件号</text>
+        <text x="190" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">签字</text>
+        <text x="237.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">日期</text>
+        <text x="16" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">设计</text>
+        <text x="95" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="16" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">审核</text>
+        <text x="95" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="382" y="56" text-anchor="middle" font-size="${f.materialFont}" fill="${f.stroke}">${material}</text>
+        <text x="301" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">图样标记</text>
+        <text x="383" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">重量</text>
+        <text x="465" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">比例</text>
+        <text x="465" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">1:2</text>
+        <text x="289" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">共</text>
+        <text x="313" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">页</text>
+        <text x="448" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">第</text>
+        <text x="482" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">页</text>
+        <text x="614" y="30" text-anchor="middle" font-size="${f.titleFont}" fill="${f.stroke}">浙江福兰特有限公司</text>
         ${titleSvg}
-        <text x="614" y="126" text-anchor="middle" font-size="15" fill="#111">${productLabel}</text>
+        <text x="614" y="126" text-anchor="middle" font-size="${f.titleProductFont}" fill="${f.stroke}">${productLabel}</text>
       </g>
     `;
   }
 
   function technicalRequirements(options) {
+    const f = CAD_STANDARD.frame;
     const { x = 132, y = 675, lines = [] } = options;
     return `
       <g transform="translate(${x} ${y})">
-        <text x="0" y="0" font-size="14" font-weight="700" fill="#111">技术要求:</text>
-        ${lines.map((line, index) => `<text x="${line.indent || 0}" y="${20 + index * 20}" font-size="12" fill="#111">${line.text || line}</text>`).join("")}
+        <text x="0" y="0" font-size="${f.technicalTitleFont}" font-weight="700" fill="${f.stroke}">技术要求:</text>
+        ${lines.map((line, index) => `<text x="${line.indent || 0}" y="${20 + index * 20}" font-size="${f.technicalFont}" fill="${f.stroke}">${line.text || line}</text>`).join("")}
       </g>
     `;
   }
@@ -169,21 +243,22 @@
       x2,
       y,
       label = "",
-      color = "#6f6a61",
+      color = CAD_STANDARD.colors.dimension,
       labelColor = color,
-      lineWidth = 1,
+      lineWidth = CAD_STANDARD.line.dimension,
+      extensionLineWidth = CAD_STANDARD.line.extension,
       extensionStart,
       extensionEnd,
-      labelY = y - 10,
-      fontSize = 13,
+      labelY = y - CAD_STANDARD.dimension.labelOffset,
+      fontSize = CAD_STANDARD.text.dimension,
       fontWeight = 400,
       markerId = "arrow"
     } = options;
     const startExtension = extensionStart
-      ? `<line x1="${x1}" y1="${extensionStart.fromY}" x2="${x1}" y2="${extensionStart.toY}" stroke="${color}" stroke-width="1"/>`
+      ? `<line x1="${x1}" y1="${extensionStart.fromY}" x2="${x1}" y2="${extensionStart.toY}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
     const endExtension = extensionEnd
-      ? `<line x1="${x2}" y1="${extensionEnd.fromY}" x2="${x2}" y2="${extensionEnd.toY}" stroke="${color}" stroke-width="1"/>`
+      ? `<line x1="${x2}" y1="${extensionEnd.fromY}" x2="${x2}" y2="${extensionEnd.toY}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
     return `
       ${startExtension}
@@ -199,21 +274,22 @@
       y1,
       y2,
       label = "",
-      color = "#6f6a61",
+      color = CAD_STANDARD.colors.dimension,
       labelColor = color,
-      lineWidth = 1,
+      lineWidth = CAD_STANDARD.line.dimension,
+      extensionLineWidth = CAD_STANDARD.line.extension,
       extensionTop,
       extensionBottom,
       labelOffset = -18,
-      fontSize = 16,
+      fontSize = CAD_STANDARD.text.dimension,
       fontWeight = 400,
       markerId = "arrow"
     } = options;
     const topExtension = extensionTop
-      ? `<line x1="${extensionTop.fromX}" y1="${y1}" x2="${extensionTop.toX}" y2="${y1}" stroke="${color}" stroke-width="1"/>`
+      ? `<line x1="${extensionTop.fromX}" y1="${y1}" x2="${extensionTop.toX}" y2="${y1}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
     const bottomExtension = extensionBottom
-      ? `<line x1="${extensionBottom.fromX}" y1="${y2}" x2="${extensionBottom.toX}" y2="${y2}" stroke="${color}" stroke-width="1"/>`
+      ? `<line x1="${extensionBottom.fromX}" y1="${y2}" x2="${extensionBottom.toX}" y2="${y2}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
     const labelX = x + labelOffset;
     const labelY = (y1 + y2) / 2;
@@ -236,8 +312,9 @@
       labelOffset = 12,
       color = "#6f6a61",
       labelColor = color,
-      lineWidth = 1,
-      fontSize = 16,
+      lineWidth = CAD_STANDARD.line.dimension,
+      extensionLineWidth = CAD_STANDARD.line.extension,
+      fontSize = CAD_STANDARD.text.dimensionEmphasis,
       fontWeight = 400,
       fontFamily = "Microsoft YaHei, Arial, sans-serif",
       markerId = "arrow"
@@ -252,8 +329,8 @@
     const labelY = (y1 + y2) / 2 - labelOffset * unit;
     const textAngle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
     return `
-      <line x1="${centerBaseX}" y1="${centerBaseY}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="1"/>
-      <line x1="${endBaseX}" y1="${endBaseY}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="1"/>
+      <line x1="${centerBaseX}" y1="${centerBaseY}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="${extensionLineWidth}"/>
+      <line x1="${endBaseX}" y1="${endBaseY}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${extensionLineWidth}"/>
       <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${lineWidth}" marker-start="url(#${markerId})" marker-end="url(#${markerId})"/>
       ${label ? `<text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize}" font-weight="${fontWeight}" font-family="${fontFamily}" fill="${labelColor}" transform="rotate(${textAngle} ${labelX} ${labelY})">${label}</text>` : ""}
     `;
@@ -289,5 +366,5 @@
     return `<g transform="translate(${translateX.toFixed(2)} ${translateY.toFixed(2)}) scale(${scale.toFixed(4)})">${content}</g>`;
   }
 
-  return { arrowMarker, bomBox, engineeringFrame, fitContent, horizontalDimension, infoBox, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
+  return { CAD_STANDARD, arrowMarker, bomBox, centerLine, engineeringFrame, fitContent, horizontalDimension, infoBox, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
 });

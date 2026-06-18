@@ -23,6 +23,8 @@
     const scale = totalRawWidth > 0 ? targetWidth / totalRawWidth : 1;
     const widths = rawWidths.map(width => width * scale);
     const assemblyLeftX = (leftX + rightX - targetWidth) / 2;
+    const objectLineWidth = h.drawingColors.objectLineWidth || 3;
+    const smallFontSize = h.drawingColors.smallFontSize || 11;
     let cursor = assemblyLeftX;
     let currentHeight = leftHeight;
     const parts = items.map((item, index) => {
@@ -41,11 +43,11 @@
         return `<path d="M ${startX} ${currentTop} L ${reducerStartX} ${currentTop} L ${reducerEndX} ${nextTop}
           L ${endX} ${nextTop} L ${endX} ${nextBottom} L ${reducerEndX} ${nextBottom}
           L ${reducerStartX} ${currentBottom} L ${startX} ${currentBottom} Z"
-          fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="3" stroke-linejoin="round"/>`;
+          fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}" stroke-linejoin="round"/>`;
       }
       return `<rect x="${startX}" y="${y - currentHeight / 2}" width="${width}" height="${currentHeight}" rx="0"
-        fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="3"/>
-        <text x="${(startX + endX) / 2}" y="${y + currentHeight / 2 + 24}" text-anchor="middle" font-size="11"
+        fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}"/>
+        <text x="${(startX + endX) / 2}" y="${y + currentHeight / 2 + 24}" text-anchor="middle" font-size="${smallFontSize}"
         fill="${h.drawingColors.mutedLabel}">${h.drawingLengthText(item.length, "")}</text>`;
     }).join("");
     return { svg: parts, leftX: assemblyLeftX, rightX: assemblyLeftX + targetWidth };

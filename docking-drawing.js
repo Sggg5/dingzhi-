@@ -48,6 +48,8 @@
     const leftFittingCenterX = (dimensionLeft + leftConnectionX) / 2;
     const rightFittingCenterX = (dimensionRight + rightConnectionX) / 2;
     const specLabelY = Math.min(238, 280 - Math.max(pipeA, pipeB) / 2 - 16);
+    const labelFontSize = drawingColors.labelFontSize || 15;
+    const dimensionFontSize = drawingColors.dimensionFontSize || 16;
     const dimensionY = 372;
     const dimensionSvg = totalLength > 0 ? DrawingCore.horizontalDimension({
       x1: dimensionLeft,
@@ -59,7 +61,7 @@
       extensionStart: { fromY: 318, toY: dimensionY + 10 },
       extensionEnd: { fromY: 318, toY: dimensionY + 10 },
       labelY: dimensionY - 12,
-      fontSize: 16
+      fontSize: dimensionFontSize
     }) : "";
     const content = `
       ${hasMiddleItems ? assembly.svg : ""}
@@ -67,12 +69,12 @@
       ${inlineFittingSvg(config.fittingB, config.diameterB, rightConnectionX, 280, pipeB, "right")}
       ${dimensionSvg}
       ${!isNoFitting(config.fittingA) ? `
-        <text x="${leftFittingCenterX}" y="288" text-anchor="middle" font-size="15" fill="${drawingColors.label}">A端</text>
-        <text x="${leftLabelX}" y="${specLabelY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
+        <text x="${leftFittingCenterX}" y="288" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
+        <text x="${leftLabelX}" y="${specLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
       ` : ""}
       ${!isNoFitting(config.fittingB) ? `
-        <text x="${rightFittingCenterX}" y="288" text-anchor="middle" font-size="15" fill="${drawingColors.label}">B端</text>
-        <text x="${rightLabelX}" y="${specLabelY}" text-anchor="middle" font-size="15" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
+        <text x="${rightFittingCenterX}" y="288" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">B端</text>
+        <text x="${rightLabelX}" y="${specLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
       ` : ""}
     `;
     const bounds = {

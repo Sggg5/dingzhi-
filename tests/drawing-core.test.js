@@ -1,9 +1,22 @@
 const assert = require("assert");
 const DrawingCore = require("../drawing-core");
 
+assert.strictEqual(DrawingCore.CAD_STANDARD.line.dimension, 1.2);
+assert.strictEqual(DrawingCore.CAD_STANDARD.dimension.centerDash, "7 6");
+assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionEmphasis, 16);
+assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionTotal, 18);
+assert.strictEqual(DrawingCore.CAD_STANDARD.text.info, 13);
+assert.strictEqual(DrawingCore.CAD_STANDARD.frame.stroke, "#111");
+assert.strictEqual(DrawingCore.CAD_STANDARD.frame.borderLine, 2.2);
+assert.strictEqual(DrawingCore.CAD_STANDARD.frame.titleBlockLine, 2);
+
 const marker = DrawingCore.arrowMarker("#777");
 assert(marker.includes('id="arrow"'));
 assert(marker.includes('fill="#777"'));
+
+const center = DrawingCore.centerLine(0, 10, 100, 10);
+assert(center.includes('stroke-dasharray="7 6"'));
+assert(center.includes('stroke-width="1"'));
 
 const frame = DrawingCore.engineeringFrame("TEST-001");
 assert(frame.includes("TEST-001"));
@@ -55,6 +68,7 @@ const horizontal = DrawingCore.horizontalDimension({
   extensionEnd: { fromY: 20, toY: 60 }
 });
 assert(horizontal.includes('x1="10" y1="50" x2="110" y2="50"'));
+assert(horizontal.includes('stroke-width="1.2"'));
 assert(horizontal.includes('x="60" y="40"'));
 assert(horizontal.includes("L=100 mm"));
 
@@ -80,6 +94,7 @@ const projected45 = DrawingCore.projected45Dimension({
 });
 assert(projected45.includes('x1="100" y1="100"'));
 assert(projected45.includes('x1="200" y1="0"'));
+assert(projected45.includes('stroke-width="1.2"'));
 assert(projected45.includes("rotate(-45"));
 assert(projected45.includes("H=140 mm"));
 

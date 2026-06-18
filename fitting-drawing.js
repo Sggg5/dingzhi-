@@ -3,21 +3,21 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.FittingDrawing = api;
 })(typeof globalThis !== "undefined" ? globalThis : window, function createFittingDrawing() {
-  function flange(x, y, width, height, fill, stroke) {
-    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  function flange(x, y, width, height, fill, stroke, lineWidth = 2) {
+    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}"/>`;
   }
 
-  function reducer(leftX, rightX, y, leftHeight, rightHeight, fill, stroke) {
+  function reducer(leftX, rightX, y, leftHeight, rightHeight, fill, stroke, lineWidth = 3) {
     return `
       <path d="M ${leftX} ${y - leftHeight / 2}
         L ${rightX} ${y - rightHeight / 2}
         L ${rightX} ${y + rightHeight / 2}
         L ${leftX} ${y + leftHeight / 2}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}" stroke-linejoin="round"/>
     `;
   }
 
-  function groove(x, y, width, height, fill, stroke) {
+  function groove(x, y, width, height, fill, stroke, lineWidth = 3) {
     const notchWidth = Math.max(8, width * 0.22);
     const notchDepth = Math.max(5, height * 0.06);
     const notchLeft = x + (width - notchWidth) / 2;
@@ -35,15 +35,15 @@
         L ${notchLeft} ${y + height - notchDepth}
         L ${notchLeft} ${y + height}
         L ${x} ${y + height}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}" stroke-linejoin="round"/>
     `;
   }
 
-  function buttWeld(x, y, width, height, fill, stroke) {
-    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="0" fill="${fill}" stroke="${stroke}" stroke-width="3"/>`;
+  function buttWeld(x, y, width, height, fill, stroke, lineWidth = 3) {
+    return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="0" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}"/>`;
   }
 
-  function cap(x, y, width, height, fill, stroke) {
+  function cap(x, y, width, height, fill, stroke, lineWidth = 3) {
     const px = value => x + (value - 50) / 85 * width;
     const py = value => y + (value - 20) / 380 * height;
     return `
@@ -53,11 +53,11 @@
         L ${px(135)} ${py(342)}
         C ${px(135)} ${py(375)} ${px(112)} ${py(400)} ${px(80)} ${py(400)}
         L ${px(50)} ${py(400)}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>
     `;
   }
 
-  function doubleCard(x, y, width, height, fill, stroke) {
+  function doubleCard(x, y, width, height, fill, stroke, lineWidth = 3) {
     return `
       <path d="M ${x} ${y + height * 0.107}
         L ${x + width * 0.161} ${y + height * 0.107}
@@ -79,11 +79,11 @@
         C ${x + width * 0.216} ${y + height * 1.021}, ${x + width * 0.189} ${y + height * 0.986}, ${x + width * 0.176} ${y + height * 0.938}
         C ${x + width * 0.168} ${y + height * 0.911}, ${x + width * 0.166} ${y + height * 0.891}, ${x + width * 0.155} ${y + height * 0.891}
         L ${x} ${y + height * 0.891}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}"/>
     `;
   }
 
-  function ringPress(x, y, width, height, fill, stroke) {
+  function ringPress(x, y, width, height, fill, stroke, lineWidth = 3) {
     return `
       <path d="M ${x} ${y}
         L ${x + width * 0.259} ${y}
@@ -97,11 +97,11 @@
         L ${x + width * 0.290} ${y + height * 0.969}
         C ${x + width * 0.275} ${y + height * 0.978}, ${x + width * 0.275} ${y + height}, ${x + width * 0.259} ${y + height}
         L ${x} ${y + height}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}"/>
     `;
   }
 
-  function innerThread(x, y, width, height, fill, stroke) {
+  function innerThread(x, y, width, height, fill, stroke, lineWidth = 3) {
     return `
       <path d="M ${x + width * 0.05} ${y}
         L ${x + width * 0.68} ${y}
@@ -113,11 +113,11 @@
         L ${x + width * 0.05} ${y + height}
         L ${x} ${y + height * 0.93}
         L ${x} ${y + height * 0.07}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}"/>
     `;
   }
 
-  function outerThread(x, y, width, height, fill, stroke) {
+  function outerThread(x, y, width, height, fill, stroke, lineWidth = 3) {
     const px = value => x + (value - 190) / 573 * width;
     const py = value => y + (value - 78) / 676 * height;
     return `
@@ -128,7 +128,7 @@
         L ${px(763)} ${py(148)} L ${px(700)} ${py(147)} L ${px(696)} ${py(140)}
         L ${px(696)} ${py(126)} L ${px(680)} ${py(78)} L ${px(526)} ${py(78)}
         L ${px(509)} ${py(131)} L ${px(502)} ${py(135)}
-        Z" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        Z" fill="${fill}" stroke="${stroke}" stroke-width="${lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>
     `;
   }
 

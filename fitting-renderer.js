@@ -35,7 +35,7 @@
       const path = fitting === "沟槽" ? h.groovePath : h.buttWeldPath;
       return path(mainLeft - width, y - height / 2, width, height, colors.fittingFill, colors.fittingStroke);
     }
-    return `<rect x="${mainLeft - 42}" y="${y - height / 2 - 9}" width="42" height="${height + 18}" rx="4" fill="${colors.fittingFill}" stroke="${colors.fittingStroke}" stroke-width="2"/>`;
+    return `<rect x="${mainLeft - 42}" y="${y - height / 2 - 9}" width="42" height="${height + 18}" rx="4" fill="${colors.fittingFill}" stroke="${colors.fittingStroke}" stroke-width="${colors.fittingLineWidth || 2}"/>`;
   }
 
   function tail(config, mainRight, y, height, h) {

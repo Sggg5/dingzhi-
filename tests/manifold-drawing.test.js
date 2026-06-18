@@ -5,6 +5,7 @@ const tag = name => () => `<${name}/>`;
 const helpers = {
   DrawingCore: {
     arrowMarker: tag("arrow"),
+    centerLine: () => "<center-line/>",
     engineeringFrame: tag("frame"),
     horizontalDimension: ({ label }) => `<dimension>${label}</dimension>`,
     infoBox: ({ title }) => `<info>${title}</info>`,
