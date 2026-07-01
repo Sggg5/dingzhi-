@@ -1,11 +1,14 @@
 const assert = require("assert");
 const TeeDrawing = require("../tee-drawing");
 const helpers = {
-  DrawingCore: { horizontalDimension: ({ label, y }) => `<dimension>${label}</dimension><dimension-y value="${y}"/>` },
+  DrawingCore: {
+    horizontalDimension: ({ label, y }) => `<dimension>${label}</dimension><dimension-y value="${y}"/>`,
+    verticalDimension: ({ label, x, y1, y2 }) => `<vertical-dimension x="${x}" y1="${y1}" y2="${y2}">${label}</vertical-dimension>`
+  },
   clamp: (v, min, max) => Math.min(max, Math.max(min, v)),
   compressedStraightVisualLength: v => v,
   drawingColors: { pipeFill: "#eee", stroke: "#333", label: "#123", dimension: "#777" },
-  drawingTotalLengthText: v => `L=${v} mm`,
+  drawingTotalLengthText: (v, _diameter, prefix = "L=") => `${prefix}${v} mm`,
   fittingLabel: v => v,
   inlineFittingLength: () => 30,
   inlineFittingSvg: (name, _d, x) => `<inline name="${name}" x="${x}"/>`,
@@ -28,6 +31,10 @@ assert(svg.includes("<reducer"));
 assert(svg.includes('name="外丝"'));
 assert(svg.includes('name="法兰"'));
 assert(svg.includes("A端") && svg.includes("B端") && svg.includes("C端"));
+assert(svg.includes("<vertical-dimension"));
+assert(svg.includes("H=100 mm"));
+const branchHeightDimensionX = Number((svg.match(/<vertical-dimension x="([^\"]+)"/) || [])[1]);
+assert(branchHeightDimensionX > 760, "tee branch height dimension should sit to the right of C end");
 assert(svg.includes("<dimension>总长 L=200 mm</dimension>"));
 const largeSvg = TeeDrawing.render({
   ...config,

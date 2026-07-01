@@ -35,13 +35,17 @@
   function fittingNote(detail, helpers) {
     const { formatFactor, money } = formatters(helpers);
     if (!detail) return "按配件价格表取值；若为316L，再乘316L配件系数；进入成本前去税";
+    const aliasText = detail.lookupFittingName && detail.lookupFittingName !== detail.fittingName
+      ? `临时按${detail.lookupFittingName}行取值`
+      : "";
     return [
+      aliasText,
       `表格取径 D${detail.priceDiameter}`,
       `含税表价 ${money(detail.taxIncludedPrice)}`,
       `去税 ÷ ${formatFactor(detail.taxDivisor)}`,
       `材质系数 x ${formatFactor(detail.materialFactor)}`,
       `计入成本 ${money(detail.cost)}`
-    ].join("；");
+    ].filter(Boolean).join("；");
   }
 
   function fittingDetailRows(items, config, helpers = {}) {
@@ -56,7 +60,8 @@
         return [
           `${item.label} ${fittingLabel(item.fitting)} D${item.diameter}`,
           fittingNote(detail, helpers),
-          amount
+          amount,
+          { detail: true }
         ];
       });
   }
@@ -69,10 +74,15 @@
       .filter(item => item.fitting && !isNoFitting(item.fitting))
       .map(item => {
         const detail = processCostDetail(processType, item.fitting, item.diameter);
+        const fallbackText = detail.fallbackUsed ? `；对焊暂无专用表值，暂按双卡 ${money(detail.fallbackCost)} 取值` : "";
+        const aliasText = detail.lookupFittingName && detail.lookupFittingName !== item.fitting
+          ? `；临时按${detail.lookupFittingName}加工费行取值`
+          : "";
         return [
           `${item.label} ${fittingLabel(item.fitting)} D${item.diameter} 加工`,
-          `加工费表格取径 D${detail.processDiameter}；表格取值 ${money(detail.processCost)}；该项先汇总，再乘成型/难度系数`,
-          detail.processCost
+          `加工费表格取径 D${detail.processDiameter}；表格取值 ${money(detail.processCost)}${aliasText}${fallbackText}；该项先汇总，再乘成型/难度系数`,
+          detail.processCost,
+          { detail: true }
         ];
       });
   }
@@ -111,10 +121,14 @@
 
   function manifoldRows(config, result, pricing, helpers = {}) {
     const { formatFactor, formatNumber } = formatters(helpers);
+    const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
+    const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
     const fittingDetails = fittingDetailRows([
-      { label: "进水端", fitting: config.mainFitting, diameter: config.mainDiameter },
-      { label: "末尾", fitting: config.tailFitting, diameter: config.mainDiameter },
-      ...config.branches.map((branch, index) => ({
+      { label: "进水端", fitting: config.mainFitting, diameter: mainFittingDiameter },
+      ...(config.mainAdapterEnabled ? [{ label: "进水端短中接", fitting: "中接", diameter: Math.max(config.mainDiameter, mainFittingDiameter) }] : []),
+      { label: "末尾", fitting: config.tailFitting, diameter: tailFittingDiameter },
+      ...(config.tailAdapterEnabled ? [{ label: "末尾端短中接", fitting: "中接", diameter: Math.max(config.mainDiameter, tailFittingDiameter) }] : []),
+      ...config.branches.filter(branch => branch.fitting !== "无配件").map((branch, index) => ({
         label: `${index + 1}路`,
         fitting: branch.fitting,
         diameter: branch.diameter
@@ -238,5 +252,100 @@
     ];
   }
 
-  return { dockingRows, elbowRows, manifoldRows, managementLabel, teeRows, totalRows };
+  function combinationRows(config, result, pricing, helpers = {}) {
+    const { formatFactor, formatNumber, money } = formatters(helpers);
+    const { dockingProcessCost, fittingLabel, fittingTheoreticalWeightKg, isNoFitting, teeProcessCost, tubeMaterialCost, tubeWeightKg } = helpers;
+    const components = Array.isArray(config.components) ? config.components : [];
+    const pipeRows = [];
+    const fittingItems = [];
+    const processRows = [];
+    const addPipe = (name, length, diameter, thickness) => {
+      const weight = tubeWeightKg(length, diameter, thickness, config.material, false);
+      pipeRows.push([
+        name,
+        `D${diameter} x ${thickness}；L=${formatNumber(length)} mm；重量 ${formatNumber(weight)} kg；钢价 ${formatNumber(config.steelTonPrice)} 元/吨，按管材去税系数 x${formatFactor(pricing.materialTaxDivisor)}`,
+        tubeMaterialCost(weight, config.steelTonPrice),
+        { detail: true }
+      ]);
+    };
+
+    components.forEach((component, index) => {
+      const itemNo = index + 1;
+      if (component.type === "直管") {
+        addPipe(`${itemNo}. 主链直管`, component.length, component.diameter, component.thickness);
+        return;
+      }
+      if (component.type === "45°弯头" || component.type === "90°弯头") {
+        fittingItems.push({ label: `${itemNo}. 主链${component.type}`, fitting: component.type === "45°弯头" ? "45弯头" : "90弯头", diameter: component.diameter });
+        return;
+      }
+      if (component.type !== "三通") return;
+
+      addPipe(`${itemNo}. 三通主管`, component.length, component.diameter, component.thickness);
+      addPipe(`${itemNo}. 三通支管`, component.branchLength, component.branchDiameter, component.branchThickness);
+      (component.branchComponents || []).forEach((branchComponent, branchIndex) => {
+        const branchNo = `${itemNo}.${branchIndex + 1}`;
+        if (branchComponent.type === "直管") {
+          addPipe(`${branchNo} 支口直管`, branchComponent.length, branchComponent.diameter, branchComponent.thickness);
+        } else {
+          fittingItems.push({ label: `${branchNo} 支口${branchComponent.type}`, fitting: branchComponent.type === "45°弯头" ? "45弯头" : "90弯头", diameter: branchComponent.diameter });
+        }
+      });
+      const outlet = component.branchComponents?.[component.branchComponents.length - 1];
+      const outletDiameter = outlet?.diameter || component.branchDiameter;
+      const outletThickness = outlet?.thickness || component.branchThickness;
+      if (component.branchMiddle === "直管") {
+        addPipe(`${itemNo}. 支口末段直管`, component.branchMiddleLength, outletDiameter, outletThickness);
+      } else if (component.branchMiddle === "中接") {
+        fittingItems.push({ label: `${itemNo}. 支口中接`, fitting: "中接", diameter: Math.max(outletDiameter, component.branchFittingDiameter) });
+      }
+      fittingItems.push({ label: `${itemNo}. 支口末端`, fitting: component.branchFitting, diameter: component.branchFittingDiameter });
+      processRows.push([`${itemNo}. 三通体基础加工`, `设置项“三通体基础加工费”取值 ${money(pricing.combination?.teeBodyBaseProcess || 0)}`, pricing.combination?.teeBodyBaseProcess || 0, { detail: true }]);
+      const branchProcess = (component.branchComponents || []).length * (pricing.combination?.branchChainProcessPerSegment || 0);
+      if (branchProcess > 0) {
+        processRows.push([`${itemNo}. 支口组件加工`, `${component.branchComponents.length} 段 x ${money(pricing.combination?.branchChainProcessPerSegment || 0)}`, branchProcess, { detail: true }]);
+      }
+      if (!isNoFitting(component.branchFitting)) {
+        const branchProcessCost = teeProcessCost(component.branchFitting, component.branchFittingDiameter);
+        processRows.push([`${itemNo}. 支口${fittingLabel(component.branchFitting)}加工`, `三通类加工费表，取径 D${component.branchFittingDiameter}`, branchProcessCost, { detail: true }]);
+      }
+      if (component.branchMiddle === "中接") {
+        const adapterDiameter = Math.max(outletDiameter, component.branchFittingDiameter);
+        processRows.push([`${itemNo}. 支口中接加工`, `三通类加工费表，取径 D${adapterDiameter}`, teeProcessCost("中接", adapterDiameter), { detail: true }]);
+      }
+    });
+
+    const firstDiameter = components[0]?.diameter || 40;
+    const lastDiameter = components[components.length - 1]?.diameter || firstDiameter;
+    fittingItems.unshift({ label: "A端", fitting: config.fittingA, diameter: firstDiameter });
+    fittingItems.push({ label: "B端", fitting: config.fittingB, diameter: lastDiameter });
+    const fittingRows = fittingDetailRows(fittingItems, config, helpers);
+    if (result.endpointProcessCost > 0) {
+      processRows.push(["A/B端配件加工", `对接类加工费表：A端D${firstDiameter} + B端D${lastDiameter}`, result.endpointProcessCost, { detail: true }]);
+    }
+    (result.jointRows || []).forEach((joint, index) => {
+      const left = components[index]?.type || "前段";
+      const right = components[index + 1]?.type || "后段";
+      processRows.push([`焊接点 ${joint.index}`, `${left} / ${right} 相连；调用弯头类“对焊”加工费表，取较大外径 D${joint.diameter}`, joint.cost, { detail: true }]);
+    });
+
+    const fittingAnnealingWeight = Math.max(0, result.totalTubeWeightKg - result.tubeWeightKg);
+    return [
+      ["管材材料明细", "以下按主链、三通主管/支管及支口直管逐段计算", ""],
+      ...pipeRows,
+      ["配件明细", "配件价格为含税表价，计算成本时去税；316L 再乘材料系数", ""],
+      ...fittingRows,
+      ["组合加工明细", "焊接点按弯头类“对焊”行；三通体与支口按组合件设置项/三通加工表", ""],
+      ...processRows,
+      ["管材理论重量合计", "所有直管、三通主管和支管的材料重量", `${formatNumber(result.tubeWeightKg)} kg`],
+      ["非管材退火重量", "弯头、端部/支口配件的非法兰理论重量", `${formatNumber(fittingAnnealingWeight)} kg`],
+      [`退火（${formatNumber(result.totalTubeWeightKg)} kg）`, "退火重量 = 管材重量 + 非法兰配件理论重量", result.annealingCost],
+      [`制造管理（组合加工 x ${formatFactor(pricing.combination?.managementProcessFactor || 0)}）`, "组合加工费 x 组合件制造管理加工系数", result.managementCost],
+      [`包材（${formatNumber(result.totalTubeWeightKg)} kg）`, "包材重量与退火重量相同", result.packagingCost],
+      ["表面处理", `${config.surfaceTreatment}；仅按管材重量计算`, result.surfaceTreatmentCost],
+      ...totalRows(result, pricing, helpers)
+    ];
+  }
+
+  return { combinationRows, dockingRows, elbowRows, manifoldRows, managementLabel, teeRows, totalRows };
 });

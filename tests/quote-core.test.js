@@ -71,6 +71,24 @@ closeTo(QuoteCore.processCost({
   standardDiameters: standards,
   isNoFitting
 }), 0);
+closeTo(QuoteCore.processCost({
+  fittingName: "对焊",
+  diameter: 40,
+  processTable: { "对焊": { 40: 0 } },
+  fallbackProcessTable: { "双卡": { 40: 0.44 } },
+  fallbackFittingName: "双卡",
+  standardDiameters: standards,
+  isNoFitting
+}), 0.44);
+closeTo(QuoteCore.processCost({
+  fittingName: "对焊",
+  diameter: 40,
+  processTable: { "对焊": { 40: 1.23 } },
+  fallbackProcessTable: { "双卡": { 40: 0.44 } },
+  fallbackFittingName: "双卡",
+  standardDiameters: standards,
+  isNoFitting
+}), 1.23);
 
 const lengthPricing = {
   fittingLengthBySeries: { A: { "外丝": { 40: 37.8 } } },
@@ -104,5 +122,42 @@ closeTo(totals.tax, 13);
 closeTo(totals.discountedPrice, 113 / 0.68);
 closeTo(totals.facePrice, 113 / 0.68 / 0.17);
 closeTo(totals.totalPrice, totals.unitPrice * 2 + 10);
+
+const adapterAliasPricing = {
+  fittingTaxDivisor: 1.13,
+  fittingMaterialFactor: { "304": 1 },
+  fittingWeightFactor: { "堵头": 1.8 },
+  fittingByDiameter: {},
+  fittingBySeries: {
+    A: { "堵头": { 40: 1.2 } }
+  }
+};
+const adapterAliasBaseArgs = {
+  pricing: adapterAliasPricing,
+  tubeSeries: { A: [{ diameter: 40 }], B: [{ diameter: 42 }] },
+  isNoFitting,
+  material: "304"
+};
+assert.strictEqual(QuoteCore.costLookupFittingName("中接"), "堵头");
+closeTo(QuoteCore.fittingCost({
+  ...adapterAliasBaseArgs,
+  fittingName: "中接",
+  diameter: 40,
+  series: "A"
+}), 1.2 / 1.13);
+closeTo(QuoteCore.fittingTheoreticalWeightKg({
+  ...adapterAliasBaseArgs,
+  fittingName: "中接",
+  diameter: 40,
+  series: "A",
+  steelTonPrice: 16000
+}), (1.2 / 1.13) / (18 * 1.8));
+closeTo(QuoteCore.processCost({
+  fittingName: "中接",
+  diameter: 40,
+  processTable: { "堵头": { 40: 0.38 } },
+  standardDiameters: standards,
+  isNoFitting
+}), 0.38);
 
 console.log("quote core tests passed");

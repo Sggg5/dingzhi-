@@ -32,11 +32,16 @@
     return pricing.fittingBySeries?.[series] || pricing.fittingByDiameter;
   }
 
+  function costLookupFittingName(fittingName) {
+    return fittingName === "中接" ? "堵头" : fittingName;
+  }
+
   function fittingCost({ fittingName, diameter, material, series, pricing, tubeSeries, isNoFitting }) {
     if (isNoFitting(fittingName)) return 0;
+    const lookupFittingName = costLookupFittingName(fittingName);
     const table = fittingSeriesTable(series, pricing);
     const priceDiameter = fittingPriceDiameter(diameter, series, pricing, tubeSeries);
-    const taxIncludedPrice = table[fittingName]?.[priceDiameter] || 0;
+    const taxIncludedPrice = table[lookupFittingName]?.[priceDiameter] || 0;
     const taxDivisor = Math.max(1, Number(pricing.fittingTaxDivisor) || 1);
     return taxIncludedPrice / taxDivisor * (Number(pricing.fittingMaterialFactor[material]) || 0);
   }
@@ -63,7 +68,8 @@
   function fittingTheoreticalWeightKg(args) {
     const { fittingName, steelTonPrice, pricing, isNoFitting } = args;
     if (isNoFitting(fittingName)) return 0;
-    const factor = Number(pricing.fittingWeightFactor?.[fittingName]) || 0;
+    const lookupFittingName = costLookupFittingName(fittingName);
+    const factor = Number(pricing.fittingWeightFactor?.[lookupFittingName]) || 0;
     const materialKgPrice = (Number(steelTonPrice) + 2000) / 1000;
     if (factor <= 0 || materialKgPrice <= 0) return 0;
     return fittingCost(args) / (materialKgPrice * factor);
@@ -82,9 +88,21 @@
     ), standardDiameters[0]);
   }
 
-  function processCost({ fittingName, diameter, processTable, standardDiameters, isNoFitting }) {
+  function processCost({
+    fittingName,
+    diameter,
+    processTable,
+    standardDiameters,
+    isNoFitting,
+    fallbackProcessTable,
+    fallbackFittingName
+  }) {
     if (isNoFitting(fittingName)) return 0;
-    return processTable?.[fittingName]?.[nearestDiameter(diameter, standardDiameters)] || 0;
+    const lookupFittingName = costLookupFittingName(fittingName);
+    const processDiameter = nearestDiameter(diameter, standardDiameters);
+    const cost = Number(processTable?.[lookupFittingName]?.[processDiameter]) || 0;
+    if (cost || fittingName !== "对焊") return cost;
+    return Number(fallbackProcessTable?.[fallbackFittingName || fittingName]?.[processDiameter]) || 0;
   }
 
   function fittingLengthMm({ fittingName, diameter, series, pricing, standardDiameters, isNoFitting }) {
@@ -95,6 +113,7 @@
   }
 
   return {
+    costLookupFittingName,
     finalizeCost,
     fittingCost,
     fittingLengthMm,

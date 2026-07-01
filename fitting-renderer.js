@@ -5,7 +5,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : window, function createFittingRenderer() {
   function inlet(config, mainLeft, y, height, h) {
     const fitting = config.mainFitting;
-    const diameter = config.mainDiameter;
+    const diameter = config.mainFittingDiameter || config.mainDiameter;
     const colors = h.drawingColors;
     if (fitting === "直管") return "";
     if (fitting === "法兰") {
@@ -43,7 +43,7 @@
     if (config.tailFitting === "堵头") {
       return h.capPath(mainRight, y - height / 2, Math.max(14, height * 0.21), height, h.drawingColors.capFill, h.drawingColors.stroke);
     }
-    return `<g transform="translate(${mainRight * 2} 0) scale(-1 1)">${inlet({ ...config, mainFitting: config.tailFitting }, mainRight, y, height, h)}</g>`;
+    return `<g transform="translate(${mainRight * 2} 0) scale(-1 1)">${inlet({ ...config, mainFitting: config.tailFitting, mainFittingDiameter: config.tailFittingDiameter || config.mainDiameter }, mainRight, y, height, h)}</g>`;
   }
 
   function inline(fitting, diameter, x, y, height, side, h) {

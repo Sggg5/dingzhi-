@@ -1,4 +1,4 @@
-(function exposeManifoldDrawing(root, factory) {
+﻿(function exposeManifoldDrawing(root, factory) {
   const api = factory();
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.ManifoldDrawing = api;
@@ -7,14 +7,23 @@
     const {
       DrawingCore, branchFittingSeatOffset, branchFittingSize, branchFittingSvg, branchLayout,
       drawingBomRows, drawingColors, drawingLengthText, drawingTotalLengthText, fittingLabel,
-      inletFittingLength, inletFittingSvg, pipeVisualDiameter, svgTextLines, tailFittingLength,
-      tailFittingSvg, titleBranchSummary, tubeSeriesLabel
+      inletFittingLength, inletFittingSvg, pipeVisualDiameter, reducerSegmentSvg, svgTextLines, tailFittingLength,
+      tailFittingSvg, titleBranchSummary, tubeSeriesLabel,
+      showInfoPanels = true
     } = helpers;
     const mainY = 285;
     const layout = branchLayout(config);
     const mainHeight = pipeVisualDiameter(config.mainDiameter);
-    const inletLength = inletFittingLength(config, mainHeight);
-    const tailLength = tailFittingLength(config, mainHeight);
+    const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
+    const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
+    const inletFittingHeight = pipeVisualDiameter(mainFittingDiameter);
+    const tailFittingHeight = pipeVisualDiameter(tailFittingDiameter);
+    const inletAdapterLength = config.mainAdapterEnabled ? 24 : 0;
+    const tailAdapterLength = config.tailAdapterEnabled ? 24 : 0;
+    const inletBodyLength = inletFittingLength(config, inletFittingHeight);
+    const tailBodyLength = tailFittingLength(config, tailFittingHeight);
+    const inletLength = inletBodyLength + inletAdapterLength;
+    const tailLength = tailBodyLength + tailAdapterLength;
     const frameDimensionLeft = 145;
     const frameDimensionRight = 1150;
     const availableDimensionWidth = frameDimensionRight - frameDimensionLeft;
@@ -41,11 +50,13 @@
     const endX = stationXs[stationXs.length - 1] || startX;
     const mainLeft = startX - visualInletAllowance + inletLength;
     const mainRight = endX + visualTailAllowance - tailLength;
+    const inletFittingAnchor = mainLeft - inletAdapterLength;
+    const tailFittingAnchor = mainRight + tailAdapterLength;
     const dimensionLeft = mainLeft - inletLength;
     const dimensionRight = mainRight + tailLength;
     const mainFittingLabelY = mainY - mainHeight / 2 - Math.max(24, Math.min(52, mainHeight * 0.5));
-    const mainFittingLabelX = config.mainFitting === "直管" ? mainLeft : dimensionLeft + inletLength / 2;
-    const tailFittingLabelX = config.tailFitting === "直管" ? mainRight : mainRight + tailLength / 2;
+    const mainFittingLabelX = config.mainFitting === "直管" ? mainLeft : dimensionLeft + inletBodyLength / 2;
+    const tailFittingLabelX = config.tailFitting === "直管" ? mainRight : tailFittingAnchor + tailBodyLength / 2;
     const baseDimensionY = mainY + mainHeight / 2 + (config.manifoldType === "单排" ? 36 : 90);
     const totalLengthText = `总长 ${drawingTotalLengthText(result.mainLength, config.mainDiameter)}`;
     const titleSpec = `D${config.mainDiameter}x${titleBranchSummary(config)} 分水器`;
@@ -56,6 +67,7 @@
     const labelFontSize = drawingColors.labelFontSize || 13;
     const infoFontSize = drawingColors.infoFontSize || 13;
     const smallFontSize = drawingColors.smallFontSize || 11;
+    const layer = DrawingCore.layer || ((name, body, attributes = "") => `<g data-layer="${name}"${attributes ? ` ${attributes}` : ""}>${body || ""}</g>`);
     const dimLine = (x1, x2, y, label, longStart = false, longEnd = false) => DrawingCore.horizontalDimension({
       x1, x2, y, label,
       color: drawingColors.dimension, labelColor: drawingColors.label, lineWidth: 1.4,
@@ -66,8 +78,10 @@
     let contentBottom = mainY + mainHeight / 2;
     let bottomBranchClearBottom = mainY + mainHeight / 2;
     const branches = config.branches.map((branch, index) => {
+      if (branch.fitting === "无配件") return "";
       const x = branchXs[index];
-      const isBottom = config.manifoldType !== "单排" && index % 2 === 1;
+      const manualSide = branch.side;
+      const isBottom = config.manifoldType !== "单排" && (manualSide === "下" || (manualSide !== "上" && index % 2 === 1));
       const branchWidth = pipeVisualDiameter(branch.diameter);
       const visualBranchHeight = Math.min(branch.height, branch.fitting === "双卡" ? 50 : 80);
       const branchPipeHeight = visualBranchHeight > 0 ? 36 + visualBranchHeight * 0.55 : 0;
@@ -110,15 +124,17 @@
       <rect x="${mainLeft}" y="${mainY - mainHeight / 2}" width="${mainRight - mainLeft}" height="${mainHeight}" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>
       ${DrawingCore.centerLine(mainLeft - 40, mainY, dimensionRight + 8, mainY)}
       ${branches}
-      ${inletFittingSvg(config, mainLeft, mainY, mainHeight)}
-      ${tailFittingSvg(config, mainRight, mainY, mainHeight)}
+      ${config.mainAdapterEnabled ? reducerSegmentSvg(inletFittingAnchor, mainLeft, mainY, inletFittingHeight, mainHeight) : ""}
+      ${config.tailAdapterEnabled ? reducerSegmentSvg(mainRight, tailFittingAnchor, mainY, mainHeight, tailFittingHeight) : ""}
+      ${inletFittingSvg(config, inletFittingAnchor, mainY, inletFittingHeight)}
+      ${tailFittingSvg(config, tailFittingAnchor, mainY, tailFittingHeight)}
       ${dimLine(dimensionLeft, startX, dimensionY, drawingLengthText(result.inletAllowance, "L="), true, false)}
       ${Array.from({ length: Math.max(0, stationXs.length - 1) }, (_, index) => dimLine(stationXs[index], stationXs[index + 1], dimensionY, drawingLengthText(layout.stationSpacings[index], "P="))).join("")}
       ${dimLine(endX, dimensionRight, dimensionY, drawingLengthText(result.tailAllowance, "E="), false, true)}
       ${DrawingCore.horizontalDimension({ x1: dimensionLeft, x2: dimensionRight, y: totalDimensionY, label: totalLengthText, color: drawingColors.dimension, labelColor: drawingColors.label, lineWidth: 1.5, labelY: totalDimensionY - 13, fontSize: drawingColors.labelFontSize || 15 })}
       <text x="${(startX + endX) / 2}" y="${mainY + 5}" text-anchor="middle" font-size="${drawingColors.bodyLabelFontSize || 14}" fill="${drawingColors.label}">主管 ${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text>
-      <text x="${mainFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.mutedLabel}">${config.mainDiameter}${config.mainFitting === "直管" ? "" : ` ${config.mainFitting}`}</text>
-      <text x="${tailFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.mutedLabel}">${config.mainDiameter}${config.tailFitting === "直管" ? "" : ` ${fittingLabel(config.tailFitting)}`}</text>
+      <text x="${mainFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.mutedLabel}">${mainFittingDiameter}${config.mainFitting === "直管" ? "" : ` ${config.mainFitting}`}</text>
+      <text x="${tailFittingLabelX}" y="${mainFittingLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.mutedLabel}">${tailFittingDiameter}${config.tailFitting === "直管" ? "" : ` ${fittingLabel(config.tailFitting)}`}</text>
     `;
     const fittedMainContent = typeof DrawingCore.fitContent === "function"
       ? DrawingCore.fitContent({
@@ -128,21 +144,25 @@
           top: Math.min(contentTop, mainFittingLabelY - 18),
           bottom: contentBottom
         },
-        box: { left: 132, right: 1160, top: 110, bottom: infoBoxY - 38 },
+        box: showInfoPanels
+          ? { left: 132, right: 1160, top: 110, bottom: infoBoxY - 38 }
+          : { left: 132, right: 1160, top: 118, bottom: 585 },
         content: mainContent,
         minScale: 0.58,
-        fitOnlyOnOverflow: true
+        fitOnlyOnOverflow: showInfoPanels
       })
       : mainContent;
     return `
       <defs>${DrawingCore.arrowMarker(drawingColors.dimension)}</defs>
-      ${DrawingCore.engineeringFrame(config.quoteNo)}
-      ${fittedMainContent}
-      ${DrawingCore.infoBox({ x: 180, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "尺寸说明", content: `<text x="18" y="56" font-size="${infoFontSize}" fill="${drawingColors.label}">L：进水端尺寸</text><text x="18" y="78" font-size="${infoFontSize}" fill="${drawingColors.label}">P：支管间距</text><text x="18" y="100" font-size="${infoFontSize}" fill="${drawingColors.label}">E：末尾尺寸</text>` })}
-      ${DrawingCore.infoBox({ x: 500, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "技术参数", content: `<text x="18" y="58" font-size="${infoFontSize}" fill="${drawingColors.label}">主管：D${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text><text x="18" y="82" font-size="${infoFontSize}" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text><text x="18" y="104" font-size="${infoFontSize}" fill="${drawingColors.label}">单位：mm</text>` })}
-      ${DrawingCore.bomBox({ x: 820, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, rows: bomRows, labelColor: drawingColors.label, lineHeight: Math.min(15, Math.max(11, (infoBoxHeight - 56) / Math.max(1, bomRows.length))), fontSize: 11 })}
-      ${DrawingCore.technicalRequirements({ y: 625 + lowerShiftY, lines: ["1、分水器不得有气孔、夹渣、缩松等影响其强度的缺陷:", "3、未注公差按国标GB/T 19928.2；", "4、未注尺寸公差按国标GB/T1804-2000m:", "5、交货时酸洗钝化后锻件表面应清洁无氧", { text: "化皮和其它污物，颜色为银白色。", indent: 12 }] })}
-      ${DrawingCore.titleBlock({ y: 675, material: config.material, titleSvg: svgTextLines(titleSpec, 614, 78, { maxChars: 14, lineHeight: 15, fontSize: 13 }), productLabel: `${tubeSeriesLabel[config.tubeSeries] || ""}定制产品` })}
+      ${layer("frame", DrawingCore.engineeringFrame(config.quoteNo))}
+      ${layer("product", fittedMainContent)}
+      ${layer("info", `
+        ${DrawingCore.infoBox({ x: 180, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "尺寸说明", content: `<text x="18" y="56" font-size="${infoFontSize}" fill="${drawingColors.label}">L：进水端尺寸</text><text x="18" y="78" font-size="${infoFontSize}" fill="${drawingColors.label}">P：支管间距</text><text x="18" y="100" font-size="${infoFontSize}" fill="${drawingColors.label}">E：末尾尺寸</text>` })}
+        ${DrawingCore.infoBox({ x: 500, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, title: "技术参数", content: `<text x="18" y="58" font-size="${infoFontSize}" fill="${drawingColors.label}">主管：D${config.mainDiameter} x ${config.wallThickness}${config.mainPositiveTolerance ? " 正公差" : ""}</text><text x="18" y="82" font-size="${infoFontSize}" fill="${drawingColors.label}">材质：不锈钢 ${config.material}</text><text x="18" y="104" font-size="${infoFontSize}" fill="${drawingColors.label}">单位：mm</text>` })}
+        ${DrawingCore.bomBox({ x: 820, y: infoBoxY, width: infoBoxWidth, height: infoBoxHeight, rows: bomRows, labelColor: drawingColors.label, lineHeight: Math.min(15, Math.max(11, (infoBoxHeight - 56) / Math.max(1, bomRows.length))), fontSize: 11 })}
+      `, `style="${showInfoPanels ? "" : "display:none"}"`)}
+      ${layer("notes", DrawingCore.technicalRequirements({ y: 625 + lowerShiftY, lines: ["1、分水器不得有气孔、夹渣、缩松等影响其强度的缺陷:", "3、未注公差按国标GB/T 19928.2；", "4、未注尺寸公差按国标GB/T1804-2000m:", "5、交货时酸洗钝化后焊件表面应清洁无氧化皮和其它污物，颜色为银白色。"] }))}
+      ${layer("titleblock", DrawingCore.titleBlock({ y: 675, material: config.material, titleSvg: svgTextLines(titleSpec, 613.5, 72, { maxChars: 22, lineHeight: 16, fontSize: 14, multiLineOffset: 3 }), productLabel: `${tubeSeriesLabel[config.tubeSeries] || ""}定制产品`, productCode: config.productCode }))}
     `;
   }
   return { render };

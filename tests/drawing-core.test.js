@@ -3,8 +3,8 @@ const DrawingCore = require("../drawing-core");
 
 assert.strictEqual(DrawingCore.CAD_STANDARD.line.dimension, 1.2);
 assert.strictEqual(DrawingCore.CAD_STANDARD.dimension.centerDash, "7 6");
-assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionEmphasis, 16);
-assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionTotal, 18);
+assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionEmphasis, 13);
+assert.strictEqual(DrawingCore.CAD_STANDARD.text.dimensionTotal, 13);
 assert.strictEqual(DrawingCore.CAD_STANDARD.text.info, 13);
 assert.strictEqual(DrawingCore.CAD_STANDARD.frame.stroke, "#111");
 assert.strictEqual(DrawingCore.CAD_STANDARD.frame.borderLine, 2.2);
@@ -17,6 +17,10 @@ assert(marker.includes('fill="#777"'));
 const center = DrawingCore.centerLine(0, 10, 100, 10);
 assert(center.includes('stroke-dasharray="7 6"'));
 assert(center.includes('stroke-width="1"'));
+
+const layer = DrawingCore.layer("dimension", "<line/>");
+assert(layer.includes('data-layer="dimension"'));
+assert(layer.includes("<line/>"));
 
 const frame = DrawingCore.engineeringFrame("TEST-001");
 assert(frame.includes("TEST-001"));
@@ -45,13 +49,18 @@ const titleBlock = DrawingCore.titleBlock({
   material: "316L",
   dateText: "2026-06-18",
   titleSvg: '<text x="614" y="78">Test product</text>',
-  productLabel: "Custom product"
+  productLabel: "Custom product",
+  productCode: "B36010104005000"
 });
 assert(titleBlock.includes("316L"));
 assert(titleBlock.includes("Test product"));
 assert(titleBlock.includes("Custom product"));
+assert(!titleBlock.includes("B36010104005000"));
 assert(titleBlock.includes("2026-06-18"));
+assert(titleBlock.includes('x="212.5" y="102"'));
+assert(titleBlock.includes('x="212.5" y="134"'));
 assert(titleBlock.includes('x1="165" y1="0" x2="165" y2="144"'));
+assert(!titleBlock.includes('x1="215" y1="0" x2="215" y2="144"'));
 assert(!titleBlock.includes("1:2"));
 
 const requirements = DrawingCore.technicalRequirements({
@@ -73,6 +82,20 @@ assert(horizontal.includes('x1="10" y1="50" x2="110" y2="50"'));
 assert(horizontal.includes('stroke-width="1.2"'));
 assert(horizontal.includes('x="60" y="40"'));
 assert(horizontal.includes("L=100 mm"));
+assert(!horizontal.includes("data-dimension-id"));
+
+const draggableHorizontal = DrawingCore.horizontalDimension({
+  x1: 10,
+  x2: 110,
+  y: 50,
+  label: "L=100 mm",
+  dimensionId: "test-total",
+  offset: { dx: 8, dy: -4 }
+});
+assert(draggableHorizontal.includes('data-dimension-id="test-total"'));
+assert(draggableHorizontal.includes('data-dimension-axis="y"'));
+assert(draggableHorizontal.includes('class="draggable-dimension"'));
+assert(draggableHorizontal.includes('transform="translate(8 -4)"'));
 
 const vertical = DrawingCore.verticalDimension({
   x: 100,
@@ -85,6 +108,18 @@ const vertical = DrawingCore.verticalDimension({
 assert(vertical.includes('x1="100" y1="20" x2="100" y2="120"'));
 assert(vertical.includes("rotate(-90 82 70)"));
 assert(vertical.includes("H=100 mm"));
+
+const draggableVertical = DrawingCore.verticalDimension({
+  x: 100,
+  y1: 20,
+  y2: 120,
+  label: "H=100 mm",
+  dimensionId: "test-height",
+  offset: { dx: -3, dy: 7 }
+});
+assert(draggableVertical.includes('data-dimension-id="test-height"'));
+assert(draggableVertical.includes('data-dimension-axis="x"'));
+assert(draggableVertical.includes('transform="translate(-3 7)"'));
 
 const projected45 = DrawingCore.projected45Dimension({
   centerBaseX: 100,
@@ -108,5 +143,6 @@ const fitted = DrawingCore.fitContent({
 assert(fitted.includes("<rect/>"));
 assert(fitted.includes("scale(1.0000)"));
 assert(fitted.includes("translate(100.00 100.00)"));
+assert(fitted.includes('data-layer-group="fitted"'));
 
 console.log("drawing core tests passed");

@@ -11,10 +11,37 @@
     return `"${String(value).replaceAll('"', '""')}"`;
   }
 
-  function quoteListCsv(quoteItems, formatNumber) {
-    const rows = [["规格", "数量", "面价", "面价金额"]];
+  const quotePriceColumnDefinitions = {
+    factoryCost: { label: "成本", amountLabel: "成本金额", valueKey: "factoryCost", totalKey: "factoryCostTotal" },
+    discountedPrice: { label: "面价折后", amountLabel: "折后金额", valueKey: "discountedPrice", totalKey: "discountedPriceTotal" },
+    unitPrice: { label: "面价", amountLabel: "面价金额", valueKey: "unitPrice", totalKey: "totalPrice" }
+  };
+
+  function quoteListTotalValue(item, columnKey) {
+    const definition = quotePriceColumnDefinitions[columnKey] || quotePriceColumnDefinitions.unitPrice;
+    if (Number.isFinite(Number(item[definition.totalKey]))) return Number(item[definition.totalKey]);
+    return (Number(item[definition.valueKey]) || 0) * (Number(item.quantity) || 0);
+  }
+
+  function quoteListCsv(quoteItems, formatNumber, columns = ["unitPrice"]) {
+    const activeColumns = columns.filter(column => quotePriceColumnDefinitions[column]);
+    const priceColumns = activeColumns.length ? activeColumns : ["unitPrice"];
+    const rows = [[
+      "产品编码",
+      "规格",
+      "数量",
+      ...priceColumns.flatMap(column => [quotePriceColumnDefinitions[column].label, quotePriceColumnDefinitions[column].amountLabel])
+    ]];
     quoteItems.forEach(item => {
-      rows.push([item.name, item.quantity, formatNumber(item.unitPrice), formatNumber(item.totalPrice)]);
+      rows.push([
+        item.config?.productCode || "待确认",
+        item.name,
+        item.quantity,
+        ...priceColumns.flatMap(column => {
+          const definition = quotePriceColumnDefinitions[column];
+          return [formatNumber(item[definition.valueKey] || 0), formatNumber(quoteListTotalValue(item, column))];
+        })
+      ]);
     });
     return `\ufeff${rows.map(row => row.map(csvEscape).join(",")).join("\n")}`;
   }

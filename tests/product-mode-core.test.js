@@ -21,4 +21,8 @@ assert.strictEqual(ProductModeCore.elbowFieldHidden(elbow, false), false);
 assert.strictEqual(ProductModeCore.genericProductFieldHidden(elbow, false), true);
 assert.strictEqual(ProductModeCore.genericProductFieldHidden(elbow, true), false);
 
+const combination = ProductModeCore.state("组合件");
+assert.strictEqual(combination.combinationMode, true);
+assert.strictEqual(combination.fittingSectionHidden, true);
+
 console.log("product mode core tests passed");

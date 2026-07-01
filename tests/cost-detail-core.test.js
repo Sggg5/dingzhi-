@@ -120,4 +120,52 @@ assert.strictEqual(manifoldRows.some(row => row[0] === "加工基础"), true);
 assert.strictEqual(manifoldRows.find(row => row[0] === "加工基础")[1].includes("1口产品也按2口基础加工费起算"), true);
 assert.strictEqual(manifoldRows.some(row => row[0] === "加工合计"), true);
 
+const combinationRows = CostDetailCore.combinationRows(
+  {
+    material: "316L",
+    tubeSeries: "A",
+    steelTonPrice: 16000,
+    surfaceTreatment: "酸洗",
+    fittingA: "外丝",
+    fittingB: "法兰",
+    components: [
+      { type: "直管", diameter: 40, thickness: 1.5, length: 120 },
+      {
+        type: "三通", diameter: 40, thickness: 1.5, length: 80,
+        branchLength: 60, branchDiameter: 32, branchThickness: 1.5,
+        branchFitting: "外丝", branchFittingDiameter: 32,
+        branchMiddle: "中接", branchMiddleLength: 50,
+        branchComponents: [{ type: "90°弯头", diameter: 32, thickness: 1.5, length: 60 }]
+      }
+    ]
+  },
+  {
+    ...totals,
+    tubeWeightKg: 1.2,
+    totalTubeWeightKg: 1.6,
+    tubeCost: 8,
+    fittingCost: 6,
+    processCost: 5,
+    endpointProcessCost: 0.8,
+    annealingCost: 1,
+    managementCost: 2,
+    packagingCost: 1,
+    surfaceTreatmentCost: 0,
+    jointRows: [{ index: 1, diameter: 40, cost: 0.4 }]
+  },
+  { ...pricing, combination: { teeBodyBaseProcess: 6.82, branchChainProcessPerSegment: 1, managementProcessFactor: 2.14 } },
+  {
+    ...helpers,
+    tubeWeightKg: (length, diameter, thickness) => length * diameter * thickness / 100000,
+    tubeMaterialCost: weight => weight * 5,
+    teeProcessCost: (_name, diameter) => diameter / 100
+  }
+);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("主链直管")), true);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("焊接点 1")), true);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("三通体基础加工")), true);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("配件明细")), true);
+
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("A/B端配件加工")), true);
+
 console.log("cost detail core tests passed");

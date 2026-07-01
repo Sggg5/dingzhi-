@@ -14,7 +14,7 @@
 
   function titleBranchSummary(config) {
     const groups = new Map();
-    config.branches.forEach(branch => {
+    config.branches.filter(branch => branch.fitting !== "无配件").forEach(branch => {
       const key = `D${branch.diameter}`;
       groups.set(key, (groups.get(key) || 0) + 1);
     });
@@ -24,9 +24,13 @@
   function manifoldBomRows(config, helpers) {
     const { fittingLabel } = helpers;
     const rows = [];
+    const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
+    const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
     addRow(rows, `主管 D${config.mainDiameter} x ${config.wallThickness}`);
-    if (config.mainFitting !== "直管") addRow(rows, `进水 ${fittingLabel(config.mainFitting)} D${config.mainDiameter}`);
-    if (config.tailFitting !== "直管") addRow(rows, `末尾 ${fittingLabel(config.tailFitting)} D${config.mainDiameter}`);
+    if (config.mainFitting !== "直管") addRow(rows, `进水 ${fittingLabel(config.mainFitting)} D${mainFittingDiameter}`);
+    if (config.mainAdapterEnabled) addRow(rows, `进水中接 D${mainFittingDiameter}-D${config.mainDiameter}`);
+    if (config.tailFitting !== "直管") addRow(rows, `末尾 ${fittingLabel(config.tailFitting)} D${tailFittingDiameter}`);
+    if (config.tailAdapterEnabled) addRow(rows, `末尾中接 D${config.mainDiameter}-D${tailFittingDiameter}`);
     config.branches.forEach(branch => {
       const heightText = branch.height > 0 ? ` 加高${branch.height}` : "";
       const toleranceText = branch.positiveTolerance ? " 正差" : "";

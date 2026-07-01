@@ -23,6 +23,15 @@ assert.strictEqual(DrawingContentCore.titleBranchSummary(manifold), "D20x2口");
 const manifoldRows = DrawingContentCore.manifoldBomRows(manifold, helpers);
 assert.deepStrictEqual(manifoldRows.find(row => row.name === "支管外丝 D20"), { name: "支管外丝 D20", quantity: 2 });
 assert.strictEqual(manifoldRows.some(row => row.name === "末尾 管帽盖 D40"), true);
+const adapterRows = DrawingContentCore.manifoldBomRows({
+  ...manifold,
+  mainFittingDiameter: 50.8,
+  tailFittingDiameter: 32,
+  mainAdapterEnabled: true,
+  tailAdapterEnabled: true
+}, helpers);
+assert.strictEqual(adapterRows.some(row => row.name === "进水中接 D50.8-D40"), true);
+assert.strictEqual(adapterRows.some(row => row.name === "末尾中接 D40-D32"), true);
 
 const docking = {
   productType: "对接类",

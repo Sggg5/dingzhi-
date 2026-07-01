@@ -1,5 +1,5 @@
 const options = {
-  productTypes: ["分水器类", "对接类", "三通类", "弯头类"],
+  productTypes: ["分水器类", "对接类", "三通类", "弯头类", "组合件"],
   materials: ["304", "316L"],
   manifoldTypes: ["单排", "双排交错", "双排对齐"],
   surfaceTreatments: ["酸洗", "喷砂", "抛光"],
@@ -18,6 +18,7 @@ const options = {
       { diameter: 219, thickness: 3.0 }
     ],
     B: [
+      { diameter: 15, thickness: 1.5, equivalent: null },
       { diameter: 22, thickness: 1.5 },
       { diameter: 28, thickness: 1.5 },
       { diameter: 35, thickness: 1.5 },
@@ -42,13 +43,13 @@ const options = {
   spacing: Array.from({ length: 11 }, (_, index) => 120 + index * 10),
   branchHeight: [0, 40, 50, 60, 70, 80, 90, 100],
   mainFittings: ["直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
-  branchFittings: ["直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
+  branchFittings: ["无配件", "直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
   tailFittings: ["堵头", "直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
   fittingConnections: ["无配件", "外丝", "内丝", "双卡", "环压", "插焊", "法兰", "移动螺母", "沟槽", "对焊"]
 };
 
 const pricing = {
-  settingsVersion: 9,
+  settingsVersion: 10,
   materialFactor: { "304": 1, "316L": 1.32 },
   tubeKgPrice: { "304": 26, "316L": 38 },
   fittingMaterialFactor: { "304": 1, "316L": 1.5 },
@@ -118,6 +119,11 @@ const pricing = {
   processBaseForTwoBranches: 6.82,
   processPerExtraBranch: 1.81,
   heightProcessPerBranch: 1,
+  combination: {
+    teeBodyBaseProcess: 6.82,
+    branchChainProcessPerSegment: 1,
+    managementProcessFactor: 2.14
+  },
   dockingProcessByDiameter: {
     "外丝": { 16: 0.28, 20: 0.29, 25.4: 0.32, 32: 0.35, 40: 0.40, 50.8: 0.43, 76.1: 1.08, 88.9: 1.20, 101.6: 1.35, 18: 0.28, 22: 0.29, 28: 0.32, 35: 0.35, 42: 0.40, 54: 0.43, 108: 1.35 },
     "内丝": { 16: 0.28, 20: 0.29, 25.4: 0.32, 32: 0.35, 40: 0.40, 50.8: 0.43, 76.1: 1.08, 88.9: 1.20, 101.6: 1.35, 18: 0.28, 22: 0.29, 28: 0.32, 35: 0.35, 42: 0.40, 54: 0.43, 108: 1.35 },
@@ -208,6 +214,25 @@ function scaledNumberTable(source, factor) {
   return Object.fromEntries(Object.entries(source || {}).map(([key, value]) => [key, Number((Number(value) * factor).toFixed(4))]));
 }
 
+function cloneDiameterValue(table, sourceDiameter, targetDiameter) {
+  if (!table || table[targetDiameter] !== undefined || table[sourceDiameter] === undefined) return;
+  table[targetDiameter] = table[sourceDiameter];
+}
+
+function cloneDiameterAcrossRows(rows, sourceDiameter, targetDiameter) {
+  Object.values(rows || {}).forEach(row => cloneDiameterValue(row, sourceDiameter, targetDiameter));
+}
+
+function installGerman15Defaults(target) {
+  cloneDiameterValue(target.teeStraightLengthBySeries?.B, 18, 15);
+  cloneDiameterValue(target.elbowCenterHeightBySeries?.B, 18, 15);
+  cloneDiameterAcrossRows(target.fittingLengthBySeries?.B, 18, 15);
+  cloneDiameterAcrossRows(target.fittingBySeries?.B, 18, 15);
+  cloneDiameterAcrossRows(target.dockingProcessByDiameter, 18, 15);
+  cloneDiameterAcrossRows(target.teeProcessByDiameter, 18, 15);
+  cloneDiameterAcrossRows(target.elbowProcessByDiameter, 18, 15);
+}
+
 function installInsertWeldDefaults(target) {
   target.fittingByDiameter["插焊"] = scaledNumberTable(target.fittingByDiameter["环压"], insertWeldFactor);
   target.fittingBySeries.A["插焊"] = scaledNumberTable(target.fittingBySeries.A["环压"], insertWeldFactor);
@@ -218,6 +243,7 @@ function installInsertWeldDefaults(target) {
   target.elbowProcessByDiameter["插焊"] = { ...target.elbowProcessByDiameter["环压"] };
 }
 
+installGerman15Defaults(pricing);
 installInsertWeldDefaults(pricing);
 const defaultPricing = JSON.parse(JSON.stringify(pricing));
 const settingsStorageKey = "manifoldQuotePricingV1";
@@ -229,6 +255,8 @@ let settingsUnlocked = false;
 let settingsDirty = false;
 let activeSettingsCategory = "manifold";
 let activeSettingsSection = "dimensions";
+let drawingInfoPanelsVisible = true;
+let dimensionOverrides = {};
 
 const doubleCardISeries = {
   16: { dn: 15, d2: 22.2, r: 2.2, l1: 23, la: 8 },
@@ -285,6 +313,7 @@ function bindFields() {
   fields = {
     customerName: document.querySelector("#customerName"),
     quoteNo: document.querySelector("#quoteNo"),
+    productCode: document.querySelector("#productCode"),
     productType: document.querySelector("#productType"),
     material: document.querySelector("#material"),
     tubeSeries: document.querySelector("#tubeSeries"),
@@ -301,8 +330,12 @@ function bindFields() {
     inletAllowance: document.querySelector("#inletAllowance"),
     tailAllowance: document.querySelector("#tailAllowance"),
     mainFitting: document.querySelector("#mainFitting"),
+    mainFittingDiameter: document.querySelector("#mainFittingDiameter"),
+    mainAdapterEnabled: document.querySelector("#mainAdapterEnabled"),
     branchFitting: document.querySelector("#branchFitting"),
     tailFitting: document.querySelector("#tailFitting"),
+    tailFittingDiameter: document.querySelector("#tailFittingDiameter"),
+    tailAdapterEnabled: document.querySelector("#tailAdapterEnabled"),
     customBranches: document.querySelector("#customBranches"),
     branchEditor: document.querySelector("#branchEditor"),
     branchRows: document.querySelector("#branchRows"),
@@ -362,7 +395,13 @@ function bindFields() {
     productGenericFittingA: document.querySelector("#productGenericFittingA"),
     productGenericFittingB: document.querySelector("#productGenericFittingB"),
     productFittingC: document.querySelector("#productFittingC"),
-    productProcessFactor: document.querySelector("#productProcessFactor")
+    productProcessFactor: document.querySelector("#productProcessFactor"),
+    combinationSection: document.querySelector("#combinationSection"),
+    combinationAddType: document.querySelector("#combinationAddType"),
+    combinationAdd: document.querySelector("#combinationAdd"),
+    combinationFittingA: document.querySelector("#combinationFittingA"),
+    combinationFittingB: document.querySelector("#combinationFittingB"),
+    combinationRows: document.querySelector("#combinationRows")
   };
   const missing = Object.entries(fields).filter(([, element]) => !element).map(([name]) => name);
   if (missing.length) {
@@ -371,9 +410,76 @@ function bindFields() {
 }
 
 let quoteItems = [];
+const quotePriceColumnDefinitions = {
+  factoryCost: { label: "成本", amountLabel: "成本金额", valueKey: "factoryCost", totalKey: "factoryCostTotal" },
+  discountedPrice: { label: "面价折后", amountLabel: "折后金额", valueKey: "discountedPrice", totalKey: "discountedPriceTotal" },
+  unitPrice: { label: "面价", amountLabel: "面价金额", valueKey: "unitPrice", totalKey: "totalPrice" }
+};
+let quotePriceColumns = ["unitPrice"];
 let dockingMiddleTouched = false;
 let lastDockingDiameterPair = "";
 let teeBodyLengthTouched = false;
+
+async function copyPlainText(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "\u5f85\u786e\u8ba4") return false;
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
+}
+
+function showCopyToast(text) {
+  let toast = document.querySelector("#copyToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "copyToast";
+    toast.className = "copy-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = text;
+  toast.classList.add("show");
+  clearTimeout(showCopyToast.timer);
+  showCopyToast.timer = setTimeout(() => toast.classList.remove("show"), 1200);
+}
+
+function bindCopyTarget(element, valueProvider, successText) {
+  if (!element) return;
+  element.classList.add("copyable-value");
+  element.tabIndex = 0;
+  element.setAttribute("role", "button");
+  element.title = "\u70b9\u51fb\u590d\u5236";
+  const copy = async () => {
+    try {
+      if (await copyPlainText(valueProvider())) showCopyToast(successText);
+    } catch (_error) {
+      showCopyToast("\u590d\u5236\u5931\u8d25");
+    }
+  };
+  element.addEventListener("click", copy);
+  element.addEventListener("keydown", event => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    copy();
+  });
+}
+
+function bindCopyActions() {
+  bindCopyTarget(fields.productCode, () => fields.productCode.value, "\u4ea7\u54c1\u7f16\u7801\u5df2\u590d\u5236");
+  ["factoryCost", "discountedPrice", "unitPrice", "totalPrice"].forEach(id => {
+    const element = document.querySelector(`#${id}`);
+    bindCopyTarget(element, () => element.textContent.replace(/[^\d.-]/g, ""), "\u4ef7\u683c\u5df2\u590d\u5236");
+  });
+}
 
 function formatNumber(value) {
   return Number(value).toLocaleString("zh-CN", {
@@ -448,6 +554,7 @@ function loadPricingSettings() {
       };
       pricing.tubeKgPrice = { ...defaultPricing.tubeKgPrice, ...saved.tubeKgPrice };
       pricing.surfaceTreatmentPerKg = { ...defaultPricing.surfaceTreatmentPerKg, ...saved.surfaceTreatmentPerKg };
+      pricing.combination = { ...defaultPricing.combination, ...saved.combination };
       pricing.dockingProcessByDiameter = mergeFittingSeries(defaultPricing.dockingProcessByDiameter, saved.dockingProcessByDiameter);
       pricing.elbowProcessByDiameter = mergeFittingSeries(defaultPricing.elbowProcessByDiameter, saved.elbowProcessByDiameter);
       pricing.teeProcessByDiameter = mergeFittingSeries(defaultPricing.teeProcessByDiameter, saved.teeProcessByDiameter);
@@ -613,20 +720,98 @@ function fittingCost(fittingName, diameter, material, series = currentTubeSeries
 
 function fittingCostDetail(fittingName, diameter, material, series = currentTubeSeries()) {
   if (isNoFitting(fittingName)) {
-    return { priceDiameter: diameter, taxIncludedPrice: 0, taxDivisor: 1, materialFactor: 0, cost: 0 };
+    return { fittingName, lookupFittingName: fittingName, priceDiameter: diameter, taxIncludedPrice: 0, taxDivisor: 1, materialFactor: 0, cost: 0 };
   }
+  const lookupFittingName = QuoteCore.costLookupFittingName(fittingName);
   const table = fittingSeriesTable(series);
   const priceDiameter = fittingPriceDiameter(diameter, series);
-  const taxIncludedPrice = Number(table[fittingName]?.[priceDiameter]) || 0;
+  const taxIncludedPrice = Number(table[lookupFittingName]?.[priceDiameter]) || 0;
   const taxDivisor = Math.max(1, Number(pricing.fittingTaxDivisor) || 1);
   const materialFactor = Number(pricing.fittingMaterialFactor[material]) || 0;
   return {
+    fittingName,
+    lookupFittingName,
     priceDiameter,
     taxIncludedPrice,
     taxDivisor,
     materialFactor,
     cost: taxIncludedPrice / taxDivisor * materialFactor
   };
+}
+
+function tableValueExists(value) {
+  return value !== undefined && value !== null && value !== "" && value !== "无" && Number(value) > 0;
+}
+
+function fittingValidationDetail(fittingName, diameter, material, series = currentTubeSeries()) {
+  if (isNoFitting(fittingName)) return null;
+  const lookupFittingName = QuoteCore.costLookupFittingName(fittingName);
+  const table = fittingSeriesTable(series);
+  const priceDiameter = fittingPriceDiameter(diameter, series);
+  const taxIncludedPrice = table?.[lookupFittingName]?.[priceDiameter];
+  const length = QuoteCore.fittingLengthMm({
+    fittingName,
+    diameter,
+    series,
+    pricing,
+    standardDiameters: processStandardDiameters,
+    isNoFitting
+  });
+  const weightFactor = pricing.fittingWeightFactor?.[lookupFittingName];
+  const materialFactor = pricing.fittingMaterialFactor?.[material];
+  return { fittingName, lookupFittingName, priceDiameter, taxIncludedPrice, length, weightFactor, materialFactor };
+}
+
+function pushUniqueIssue(issues, issue) {
+  const key = `${issue.type}|${issue.item}|${issue.detail}`;
+  if (issues.some(item => `${item.type}|${item.item}|${item.detail}` === key)) return;
+  issues.push(issue);
+}
+
+function validateFittingItem(issues, item, config, options = {}) {
+  if (!item || isNoFitting(item.fitting)) return;
+  const detail = fittingValidationDetail(item.fitting, item.diameter, config.material, config.tubeSeries);
+  const label = `${item.label || ""}${item.label ? " " : ""}${fittingLabel(item.fitting)} D${item.diameter}`;
+  if (!detail || !tableValueExists(detail.taxIncludedPrice)) {
+    pushUniqueIssue(issues, {
+      type: "配件价格",
+      item: label,
+      detail: `系列${config.tubeSeries} 表格规格 D${detail?.priceDiameter ?? item.diameter} 未配置含税价格`
+    });
+  }
+  if (options.length !== false && item.length !== false && !tableValueExists(detail?.length)) {
+    pushUniqueIssue(issues, {
+      type: "配件长度",
+      item: label,
+      detail: "未配置配件长度，图纸总长和尺寸界限可能不准确"
+    });
+  }
+  if (options.weight !== false && !tableValueExists(detail?.weightFactor)) {
+    pushUniqueIssue(issues, {
+      type: "重量系数",
+      item: label,
+      detail: "未配置配件重量系数，退火、包材和制造管理重量可能不准确"
+    });
+  }
+  if (!tableValueExists(detail?.materialFactor)) {
+    pushUniqueIssue(issues, {
+      type: "材质系数",
+      item: `${config.material} ${label}`,
+      detail: "未配置当前材质的配件系数"
+    });
+  }
+}
+
+function validateProcessItem(issues, processType, item, config) {
+  if (!item || isNoFitting(item.fitting)) return;
+  const detail = processCostDetail(processType, item.fitting, item.diameter);
+  if (!tableValueExists(detail.processCost)) {
+    pushUniqueIssue(issues, {
+      type: "加工费",
+      item: `${productKindName(config.productType)} ${item.label || ""}${item.label ? " " : ""}${fittingLabel(item.fitting)} D${item.diameter}`,
+      detail: `加工费表规格 D${detail.processDiameter} 未配置有效取值`
+    });
+  }
 }
 
 function finalizeCost(subtotal, config) {
@@ -659,7 +844,7 @@ function heatTreatmentFittingWeightKg(fittingName, diameter, material, steelTonP
   });
 }
 
-const processStandardDiameters = [16, 20, 25.4, 32, 40, 50.8, 76.1, 88.9, 101.6, 133, 159, 219, 18, 22, 28, 35, 42, 54, 108];
+const processStandardDiameters = [16, 20, 25.4, 32, 40, 50.8, 76.1, 88.9, 101.6, 133, 159, 219, 15, 18, 22, 28, 35, 42, 54, 108];
 
 function dockingProcessCost(fittingName, diameter) {
   return QuoteCore.processCost({
@@ -667,7 +852,9 @@ function dockingProcessCost(fittingName, diameter) {
     diameter,
     processTable: pricing.dockingProcessByDiameter,
     standardDiameters: processStandardDiameters,
-    isNoFitting
+    isNoFitting,
+    fallbackProcessTable: pricing.elbowProcessByDiameter,
+    fallbackFittingName: "双卡"
   });
 }
 
@@ -677,7 +864,9 @@ function teeProcessCost(fittingName, diameter) {
     diameter,
     processTable: pricing.teeProcessByDiameter,
     standardDiameters: processStandardDiameters,
-    isNoFitting
+    isNoFitting,
+    fallbackProcessTable: pricing.elbowProcessByDiameter,
+    fallbackFittingName: "双卡"
   });
 }
 
@@ -687,7 +876,9 @@ function elbowProcessCost(fittingName, diameter) {
     diameter,
     processTable: pricing.elbowProcessByDiameter,
     standardDiameters: processStandardDiameters,
-    isNoFitting
+    isNoFitting,
+    fallbackProcessTable: pricing.elbowProcessByDiameter,
+    fallbackFittingName: "双卡"
   });
 }
 
@@ -706,11 +897,17 @@ function processCostDetail(processType, fittingName, diameter) {
     elbow: pricing.elbowProcessByDiameter
   };
   if (isNoFitting(fittingName)) {
-    return { processDiameter: diameter, processCost: 0 };
+    return { fittingName, lookupFittingName: fittingName, processDiameter: diameter, processCost: 0, tableCost: 0, fallbackUsed: false, fallbackCost: 0 };
   }
+  const lookupFittingName = QuoteCore.costLookupFittingName(fittingName);
   const processDiameter = nearestProcessDiameter(diameter);
-  const processCost = Number(tableMap[processType]?.[fittingName]?.[processDiameter]) || 0;
-  return { processDiameter, processCost };
+  const tableCost = Number(tableMap[processType]?.[lookupFittingName]?.[processDiameter]) || 0;
+  const fallbackUsed = !tableCost && fittingName === "对焊";
+  const fallbackCost = fallbackUsed
+    ? Number(pricing.elbowProcessByDiameter?.["双卡"]?.[processDiameter]) || 0
+    : 0;
+  const processCost = tableCost || fallbackCost;
+  return { fittingName, lookupFittingName, processDiameter, processCost, tableCost, fallbackUsed, fallbackCost };
 }
 
 function fittingLengthMm(fittingName, diameter, series = currentTubeSeries()) {
@@ -807,6 +1004,7 @@ function syncProductMode() {
     element.hidden = !mode.manifoldMode;
   });
   document.querySelector("#fittingSection").hidden = mode.fittingSectionHidden;
+  fields.combinationSection.hidden = !mode.combinationMode;
   document.querySelectorAll("[data-docking-field]").forEach(element => {
     element.hidden = !mode.dockingMode;
   });
@@ -875,6 +1073,7 @@ function syncTeeMiddleLengthFields() {
 function getProductConfig() {
   const productType = fields.productType.value;
   if (productType === "对接类") return getDockingConfig();
+  if (productType === "组合件") return getCombinationConfig();
 
   const teeMode = productType === "三通类";
   const elbowMode = productType === "弯头类";
@@ -922,11 +1121,165 @@ function getProductConfig() {
     quantity: Math.max(1, Number(fields.quantity.value) || 1),
     surfaceTreatment: fields.surfaceTreatment.value,
     difficultyFactorInput: fields.difficultyFactor.dataset.manual === "true" ? fields.difficultyFactor.value.trim() : "",
+    dimensionOverrides,
     steelTonPrice: Math.max(0, Number(fields.steelTonPrice.value) || 0),
     costRate: Math.max(0.01, Number(fields.profitRate.value) || 68) / 100,
     faceDiscountRate: Math.max(0.01, Number(fields.taxRate.value) || 17) / 100,
     freight: Math.max(0, Number(fields.freight.value) || 0)
   };
+}
+
+function readCombinationRows() {
+  return Array.from(fields.combinationRows.querySelectorAll(".combination-row")).map((row, index) => ({
+    id: row.dataset.id || `component-${index + 1}`,
+    type: row.querySelector("[data-combination-type]").value,
+    diameter: Number(row.querySelector("[data-combination-diameter]").value),
+    thickness: Number(row.querySelector("[data-combination-thickness]").value),
+    length: Math.max(1, Number(row.querySelector("[data-combination-length]").value) || 1),
+    branchLength: Math.max(1, Number(row.querySelector("[data-combination-branch-length]")?.value) || 60),
+    branchDiameter: Number(row.querySelector("[data-combination-branch-diameter]")?.value) || Number(row.querySelector("[data-combination-diameter]").value),
+    branchThickness: Number(row.querySelector("[data-combination-branch-thickness]")?.value) || Number(row.querySelector("[data-combination-thickness]").value),
+    branchFittingDiameter: Number(row.querySelector("[data-combination-branch-fitting-diameter]")?.value) || Number(row.querySelector("[data-combination-branch-diameter]")?.value) || Number(row.querySelector("[data-combination-diameter]").value),
+    branchFitting: row.querySelector("[data-combination-branch-fitting]")?.value || "外丝",
+    branchMiddle: row.querySelector("[data-combination-branch-middle]")?.value || "无",
+    branchMiddleLength: Math.max(1, Number(row.querySelector("[data-combination-branch-middle-length]")?.value) || 50),
+    branchComponents: Array.from(row.querySelectorAll(".combination-branch-component")).map((branchRow, branchIndex) => ({
+      id: branchRow.dataset.id || `branch-component-${branchIndex + 1}`,
+      type: branchRow.querySelector("[data-branch-component-type]").value,
+      diameter: Number(branchRow.querySelector("[data-branch-component-diameter]").value),
+      thickness: Number(branchRow.querySelector("[data-branch-component-thickness]").value),
+      length: Math.max(1, Number(branchRow.querySelector("[data-branch-component-length]").value) || 1),
+      direction: branchRow.querySelector("[data-branch-component-direction]").value
+    })),
+    direction: row.querySelector("[data-combination-direction]").value
+  }));
+}
+
+function getCombinationConfig() {
+  return {
+    productType: "组合件",
+    customerName: fields.customerName.value.trim() || "未填写",
+    quoteNo: fields.quoteNo.value.trim(),
+    material: fields.material.value,
+    tubeSeries: fields.tubeSeries.value,
+    fittingA: fields.combinationFittingA.value,
+    fittingB: fields.combinationFittingB.value,
+    components: readCombinationRows(),
+    dimensionOverrides,
+    quantity: Math.max(1, Number(fields.quantity.value) || 1),
+    surfaceTreatment: fields.surfaceTreatment.value,
+    difficultyFactorInput: "",
+    steelTonPrice: Math.max(0, Number(fields.steelTonPrice.value) || 0),
+    costRate: Math.max(0.01, Number(fields.profitRate.value) || 68) / 100,
+    faceDiscountRate: Math.max(0.01, Number(fields.taxRate.value) || 17) / 100,
+    freight: Math.max(0, Number(fields.freight.value) || 0)
+  };
+}
+
+function combinationDefaultLength(type, diameter) {
+  if (type === "45°弯头") return productDefaultLength("弯头类", diameter, 45);
+  if (type === "90°弯头") return productDefaultLength("弯头类", diameter, 90);
+  if (type === "三通") return productDefaultLength("三通类", diameter);
+  return 100;
+}
+
+function combinationRowHtml(component, index) {
+  const diameters = fittingSettingDiameters(currentTubeSeries());
+  const thicknesses = seriesThicknesses();
+  const diameter = diameters.includes(Number(component.diameter)) ? Number(component.diameter) : diameters[0];
+  const thickness = thicknesses.includes(Number(component.thickness)) ? Number(component.thickness) : defaultWallThickness(diameter);
+  const branchDiameter = diameters.includes(Number(component.branchDiameter)) ? Number(component.branchDiameter) : diameter;
+  const branchThickness = thicknesses.includes(Number(component.branchThickness)) ? Number(component.branchThickness) : defaultWallThickness(branchDiameter);
+  const branchFittingDiameter = diameters.includes(Number(component.branchFittingDiameter)) ? Number(component.branchFittingDiameter) : branchDiameter;
+  const branchFittings = availableFittings(options.fittingConnections, branchFittingDiameter);
+  const branchFitting = branchFittings.includes(component.branchFitting) ? component.branchFitting : branchFittings[0];
+  const branchComponentRows = component.branchComponents.map((branchComponent, branchIndex) => combinationBranchRowHtml(
+    branchComponent, branchIndex, diameters, thicknesses
+  )).join("");
+  const teeFields = component.type === "三通" ? `<div class="combination-tee-fields">
+      <strong>支口</strong>
+      <label><span>支口外径 mm</span>${selectHtml(diameters, branchDiameter, "data-combination-branch-diameter")}</label>
+      <label><span>支口壁厚 mm</span>${selectHtml(thicknesses, branchThickness, "data-combination-branch-thickness")}</label>
+      <label><span>支口长度 mm</span><input data-combination-branch-length type="number" min="1" step="1" value="${component.branchLength}"></label>
+      <label><span>配件外径 mm</span>${selectHtml(diameters, branchFittingDiameter, "data-combination-branch-fitting-diameter")}</label>
+      <label><span>支口配件</span>${selectHtml(branchFittings, branchFitting, "data-combination-branch-fitting", fittingLabel)}</label>
+      <label><span>中间段</span>${selectHtml(["无", "直管", "中接"], component.branchMiddle, "data-combination-branch-middle")}</label>
+      <label class="${component.branchMiddle === "直管" ? "" : "is-disabled"}"><span>直管长度 mm</span><input data-combination-branch-middle-length type="number" min="1" step="1" value="${component.branchMiddleLength}" ${component.branchMiddle === "直管" ? "" : "disabled"}></label>
+      <div class="combination-branch-chain">
+        <div class="combination-branch-chain-head">
+          <div><strong>支路组件</strong><span>位于支口与末端配件之间</span></div>
+          ${selectHtml(CombinationCore.BRANCH_TYPES, "直管", "data-branch-add-type")}
+          <button type="button" class="secondary-button" data-combination-branch-add>添加</button>
+        </div>
+        <div class="combination-branch-list">${branchComponentRows || '<p class="combination-branch-empty">暂未添加，支口直接连接末端配件</p>'}</div>
+      </div>
+    </div>` : "";
+  return `<div class="combination-row" data-id="${component.id}" data-type="${component.type}">
+    <div class="combination-row-head">
+      <span class="combination-index">${index + 1}</span>
+      ${selectHtml(CombinationCore.TYPES, component.type, "data-combination-type")}
+      <div class="combination-actions">
+        <button type="button" data-combination-move="up" title="前移" aria-label="前移">↑</button>
+        <button type="button" data-combination-move="down" title="后移" aria-label="后移">↓</button>
+        <button type="button" data-combination-remove title="删除" aria-label="删除">×</button>
+      </div>
+    </div>
+    <div class="combination-main-fields">
+      <label><span>外径 mm</span>${selectHtml(diameters, diameter, "data-combination-diameter")}</label>
+      <label><span>壁厚 mm</span>${selectHtml(thicknesses, thickness, "data-combination-thickness")}</label>
+      <label><span>长度/中心高 mm</span><input data-combination-length type="number" min="1" step="1" value="${component.length}"></label>
+      <label><span>转向/支口方向</span>${selectHtml(["左", "右"], component.direction, "data-combination-direction")}</label>
+    </div>
+    ${teeFields}
+  </div>`;
+}
+
+function combinationBranchRowHtml(component, index, diameters, thicknesses) {
+  const diameter = diameters.includes(Number(component.diameter)) ? Number(component.diameter) : diameters[0];
+  const thickness = thicknesses.includes(Number(component.thickness)) ? Number(component.thickness) : defaultWallThickness(diameter);
+  return `<div class="combination-branch-component" data-id="${component.id}">
+    <div class="combination-branch-component-head">
+      <span>${index + 1}</span>
+      ${selectHtml(CombinationCore.BRANCH_TYPES, component.type, "data-branch-component-type")}
+      <div class="combination-actions">
+        <button type="button" data-branch-component-move="up" title="前移">↑</button>
+        <button type="button" data-branch-component-move="down" title="后移">↓</button>
+        <button type="button" data-branch-component-remove title="删除">×</button>
+      </div>
+    </div>
+    <div class="combination-branch-component-fields">
+      <label><span>外径 mm</span>${selectHtml(diameters, diameter, "data-branch-component-diameter")}</label>
+      <label><span>壁厚 mm</span>${selectHtml(thicknesses, thickness, "data-branch-component-thickness")}</label>
+      <label><span>长度/中心高 mm</span><input data-branch-component-length type="number" min="1" step="1" value="${component.length}"></label>
+      <label><span>弯头方向</span>${selectHtml(["左", "右"], component.direction, "data-branch-component-direction")}</label>
+    </div>
+  </div>`;
+}
+
+function renderCombinationRows(items) {
+  const components = CombinationCore.normalizeComponents(items);
+  fields.combinationRows.innerHTML = components.map(combinationRowHtml).join("");
+}
+
+function syncCombinationRules(changedId) {
+  if (!fields.combinationRows.children.length) renderCombinationRows();
+  if (changedId === "tubeSeries") {
+    renderCombinationRows(readCombinationRows().map(item => ({
+      ...item,
+      diameter: equivalentSeriesDiameter(item.diameter, fields.tubeSeries.value) || item.diameter,
+      branchDiameter: equivalentSeriesDiameter(item.branchDiameter, fields.tubeSeries.value) || item.branchDiameter,
+      branchFittingDiameter: equivalentSeriesDiameter(item.branchFittingDiameter, fields.tubeSeries.value) || item.branchFittingDiameter,
+      branchComponents: item.branchComponents.map(branchComponent => ({
+        ...branchComponent,
+        diameter: equivalentSeriesDiameter(branchComponent.diameter, fields.tubeSeries.value) || branchComponent.diameter
+      }))
+    })));
+  }
+  const components = readCombinationRows();
+  const diameterA = components[0]?.diameter || 40;
+  const diameterB = components[components.length - 1]?.diameter || diameterA;
+  fillSelect(fields.combinationFittingA, availableFittings(options.fittingConnections, diameterA));
+  fillSelect(fields.combinationFittingB, availableFittings(options.fittingConnections, diameterB));
 }
 
 function getDockingConfig() {
@@ -1246,6 +1599,7 @@ function readBranchRows() {
       positiveTolerance: row.querySelector("[data-branch-positive]").checked,
       fitting,
       height: normalizeBranchHeight(fitting, Number(row.querySelector("[data-branch-height]").value), 0),
+      side: row.querySelector("[data-branch-side]")?.value === "下" ? "下" : row.querySelector("[data-branch-side]")?.value === "上" ? "上" : "",
       spacingAfter: index < rows.length - 1 ? Number(row.querySelector("[data-branch-spacing]").value) : 0
     };
   });
@@ -1258,6 +1612,7 @@ function uniformBranches(count) {
     positiveTolerance: fields.branchPositiveTolerance.checked,
     fitting: fields.branchFitting.value,
     height: Number(fields.branchHeight.value),
+    side: "",
     spacingAfter: index < count - 1 ? Number(fields.branchSpacing.value) : 0
   }));
 }
@@ -1286,8 +1641,12 @@ function getConfig() {
     inletAllowance: Math.max(0, Number(fields.inletAllowance.value) || 0),
     tailAllowance: Math.max(0, Number(fields.tailAllowance.value) || 0),
     mainFitting: fields.mainFitting.value,
+    mainFittingDiameter: Number(fields.mainFittingDiameter.value),
+    mainAdapterEnabled: fields.mainAdapterEnabled.checked,
     branchFitting: fields.branchFitting.value,
     tailFitting: fields.tailFitting.value,
+    tailFittingDiameter: Number(fields.tailFittingDiameter.value),
+    tailAdapterEnabled: fields.tailAdapterEnabled.checked,
     customBranches: fields.customBranches.checked,
     branches,
     quantity: Math.max(1, Number(fields.quantity.value) || 1),
@@ -1301,6 +1660,7 @@ function getConfig() {
 }
 
 function calculate(config) {
+  if (config.productType === "组合件") return calculateCombination(config);
   if (config.productType === "对接类") return calculateDocking(config);
   if (config.productType === "三通类") return calculateTee(config);
   if (config.productType === "弯头类") return calculateElbow(config);
@@ -1311,14 +1671,130 @@ function calculate(config) {
   const result = ProductQuoteCore.calculateManifold(config, pricing, {
     branchLayout: LayoutCore.branchLayout,
     finalizeCost,
+    elbowProcessCost,
     fittingCost,
     ...quoteTubeHelpers(),
     weightWallThickness: QuoteCore.weightWallThickness
   });
-  return {
-    ...result,
-    costRows: CostDetailCore.manifoldRows(config, result, pricing, costDetailHelpers())
+  return withQuoteValidation(config, result, CostDetailCore.manifoldRows(config, result, pricing, costDetailHelpers()));
+}
+
+function singleCombinationReference(config) {
+  const components = CombinationCore.normalizeComponents(config.components);
+  if (components.length !== 1) return null;
+  const component = components[0];
+  const common = {
+    ...config,
+    processFactor: 1,
+    difficultyFactorInput: ""
   };
+  const quoteHelpers = {
+    dockingProcessCost,
+    elbowProcessCost,
+    finalizeCost,
+    fittingCost,
+    fittingTheoreticalWeightKg,
+    heatTreatmentFittingWeightKg,
+    teeProcessCost,
+    ...quoteTubeHelpers()
+  };
+
+  if (component.type === "直管") {
+    const referenceConfig = {
+      ...common,
+      productType: "对接类",
+      diameter: component.diameter,
+      thickness: component.thickness,
+      diameterA: component.diameter,
+      thicknessA: component.thickness,
+      diameterB: component.diameter,
+      thicknessB: component.thickness,
+      middleItems: [{ type: "直管", length: component.length }]
+    };
+    const result = ProductQuoteCore.calculateDocking(referenceConfig, pricing, quoteHelpers);
+    return { referenceConfig, result, type: "对接类", costRows: CostDetailCore.dockingRows(referenceConfig, result, pricing, costDetailHelpers()) };
+  }
+
+  if (component.type === "45°弯头" || component.type === "90°弯头") {
+    const referenceConfig = {
+      ...common,
+      productType: "弯头类",
+      angle: component.type === "45°弯头" ? 45 : 90,
+      length: component.length,
+      bodyDiameter: component.diameter,
+      bodyThickness: component.thickness,
+      diameterA: component.diameter,
+      thicknessA: component.thickness,
+      diameterB: component.diameter,
+      thicknessB: component.thickness,
+      middleA: "无",
+      middleB: "无",
+      middleLengthA: 0,
+      middleLengthB: 0
+    };
+    const result = ProductQuoteCore.calculateElbow(referenceConfig, pricing, quoteHelpers);
+    return { referenceConfig, result, type: "弯头类", costRows: CostDetailCore.elbowRows(referenceConfig, result, pricing, costDetailHelpers()) };
+  }
+
+  const noBranchChain = (component.branchComponents || []).length === 0;
+  const isStandardTee = component.type === "三通" && noBranchChain && component.branchMiddle !== "中接"
+    && component.branchDiameter === component.branchFittingDiameter;
+  if (isStandardTee) {
+    const referenceConfig = {
+      ...common,
+      productType: "三通类",
+      bodyDiameter: component.diameter,
+      bodyThickness: component.thickness,
+      bodyLength: component.length,
+      diameterA: component.diameter,
+      thicknessA: component.thickness,
+      diameterB: component.branchDiameter,
+      thicknessB: component.branchThickness,
+      diameterC: component.diameter,
+      thicknessC: component.thickness,
+      fittingA: config.fittingA,
+      fittingB: component.branchFitting,
+      fittingC: config.fittingB,
+      middleA: "无",
+      middleB: component.branchMiddle,
+      middleC: "无",
+      middleLengthB: component.branchMiddle === "直管" ? component.branchMiddleLength : 0
+    };
+    const result = ProductQuoteCore.calculateTee(referenceConfig, pricing, quoteHelpers);
+    return { referenceConfig, result, type: "三通类", costRows: CostDetailCore.teeRows(referenceConfig, result, pricing, costDetailHelpers()) };
+  }
+  return null;
+}
+
+function calculateCombination(config) {
+  const reference = singleCombinationReference(config);
+  const result = CombinationCore.calculate(config, pricing, {
+    dockingProcessCost,
+    elbowProcessCost,
+    finalizeCost,
+    fittingCost,
+    fittingTheoreticalWeightKg,
+    heatTreatmentFittingWeightKg,
+    isNoFitting,
+    teeProcessCost,
+    ...quoteTubeHelpers()
+  });
+  if (reference) {
+    const combined = {
+      ...result,
+      ...reference.result,
+      geometry: result.geometry,
+      bomRows: result.bomRows,
+      costRows: [["单组件标准计价", `当前仅含 1 个组件，已按${reference.type}的材料、加工、退火、管理及包材规则计算`, ""], ...reference.costRows],
+      pricingReferenceType: reference.type
+    };
+    return withQuoteValidation(config, combined, combined.costRows);
+  }
+  return withQuoteValidation(config, result, CostDetailCore.combinationRows(config, result, pricing, {
+      ...costDetailHelpers(),
+      teeProcessCost,
+      ...quoteTubeHelpers()
+    }));
 }
 
 function calculateElbow(config) {
@@ -1330,10 +1806,7 @@ function calculateElbow(config) {
     heatTreatmentFittingWeightKg,
     ...quoteTubeHelpers()
   });
-  return {
-    ...result,
-    costRows: CostDetailCore.elbowRows(config, result, pricing, costDetailHelpers())
-  };
+  return withQuoteValidation(config, result, CostDetailCore.elbowRows(config, result, pricing, costDetailHelpers()));
 }
 
 function calculateTee(config) {
@@ -1345,10 +1818,7 @@ function calculateTee(config) {
     teeProcessCost,
     ...quoteTubeHelpers()
   });
-  return {
-    ...result,
-    costRows: CostDetailCore.teeRows(config, result, pricing, costDetailHelpers())
-  };
+  return withQuoteValidation(config, result, CostDetailCore.teeRows(config, result, pricing, costDetailHelpers()));
 }
 
 function calculateDocking(config) {
@@ -1360,10 +1830,7 @@ function calculateDocking(config) {
     heatTreatmentFittingWeightKg,
     ...quoteTubeHelpers()
   });
-  return {
-    ...result,
-    costRows: CostDetailCore.dockingRows(config, result, pricing, costDetailHelpers())
-  };
+  return withQuoteValidation(config, result, CostDetailCore.dockingRows(config, result, pricing, costDetailHelpers()));
 }
 
 function costDetailHelpers() {
@@ -1374,6 +1841,198 @@ function quoteTubeHelpers() {
   return {
     tubeMaterialCost: (weightKg, steelTonPrice) => QuoteCore.tubeMaterialCost(weightKg, steelTonPrice, pricing.materialTaxDivisor),
     tubeWeightKg: QuoteCore.tubeWeightKg
+  };
+}
+
+function teeMiddleFittingItems(config) {
+  const items = [];
+  if (config.middleA === "中接") items.push({ label: "A端中接", fitting: "中接", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterA) });
+  if (config.middleB === "中接") items.push({ label: "B端中接", fitting: "中接", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterB) });
+  if (config.middleC === "中接") items.push({ label: "C端中接", fitting: "中接", diameter: Math.max(config.bodyDiameter || config.diameter, config.diameterC) });
+  return items;
+}
+
+function elbowMiddleFittingItems(config) {
+  const bodyDiameter = config.bodyDiameter || config.diameter;
+  return [
+    config.middleA === "中接" ? { label: "A端中接", fitting: "中接", diameter: Math.max(bodyDiameter, config.diameterA) } : null,
+    config.middleB === "中接" ? { label: "B端中接", fitting: "中接", diameter: Math.max(bodyDiameter, config.diameterB) } : null
+  ].filter(Boolean);
+}
+
+function productFittingItems(config) {
+  if (isManifoldType(config.productType)) {
+    const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
+    const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
+    return [
+      { label: "进水端", fitting: config.mainFitting, diameter: mainFittingDiameter },
+      config.mainAdapterEnabled ? { label: "进水端中接", fitting: "中接", diameter: Math.max(config.mainDiameter, mainFittingDiameter) } : null,
+      { label: "末尾", fitting: config.tailFitting, diameter: tailFittingDiameter },
+      config.tailAdapterEnabled ? { label: "末尾中接", fitting: "中接", diameter: Math.max(config.mainDiameter, tailFittingDiameter) } : null,
+      ...(config.branches || []).map((branch, index) => ({ label: `${index + 1}路`, fitting: branch.fitting, diameter: branch.diameter }))
+    ].filter(Boolean);
+  }
+  if (config.productType === "对接类") {
+    return [
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+      ...(config.middleItems || [])
+        .filter(item => item.type === "中接")
+        .map((item, index) => ({ label: `中间${index + 1}`, fitting: "中接", diameter: config.diameter || Math.max(config.diameterA, config.diameterB) }))
+    ];
+  }
+  if (config.productType === "三通类") {
+    return [
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+      { label: "C端", fitting: config.fittingC, diameter: config.diameterC },
+      ...teeMiddleFittingItems(config)
+    ];
+  }
+  if (config.productType === "弯头类") {
+    return [
+      { label: "弯头体", fitting: Number(config.angle) === 45 ? "45弯头" : "90弯头", diameter: config.bodyDiameter || config.diameter, length: false },
+      { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+      { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+      ...elbowMiddleFittingItems(config)
+    ];
+  }
+  if (config.productType === "组合件") {
+    const components = CombinationCore.normalizeComponents(config.components || []);
+    const firstDiameter = components[0]?.diameter || 40;
+    const lastDiameter = components[components.length - 1]?.diameter || firstDiameter;
+    const items = [
+      { label: "A端", fitting: config.fittingA, diameter: firstDiameter },
+      { label: "B端", fitting: config.fittingB, diameter: lastDiameter }
+    ];
+    components.forEach((component, index) => {
+      if (component.type === "45°弯头" || component.type === "90°弯头") {
+        items.push({ label: `${index + 1}段`, fitting: component.type === "45°弯头" ? "45弯头" : "90弯头", diameter: component.diameter, length: false });
+      }
+      if (component.type === "三通") {
+        items.push({ label: `${index + 1}段支口`, fitting: component.branchFitting, diameter: component.branchFittingDiameter });
+        if (component.branchMiddle === "中接") {
+          const branchOutlet = component.branchComponents?.[component.branchComponents.length - 1];
+          items.push({ label: `${index + 1}段支口中接`, fitting: "中接", diameter: Math.max(branchOutlet?.diameter || component.branchDiameter, component.branchFittingDiameter) });
+        }
+        (component.branchComponents || []).forEach((branchComponent, branchIndex) => {
+          if (branchComponent.type === "45°弯头" || branchComponent.type === "90°弯头") {
+            items.push({ label: `${index + 1}.${branchIndex + 1}支路`, fitting: branchComponent.type === "45°弯头" ? "45弯头" : "90弯头", diameter: branchComponent.diameter, length: false });
+          }
+        });
+      }
+    });
+    return items;
+  }
+  return [];
+}
+
+function productProcessItems(config) {
+  if (config.productType === "对接类") {
+    return {
+      type: "docking",
+      items: [
+        { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+        { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+        ...(config.middleItems || [])
+          .filter(item => item.type === "中接")
+          .map((item, index) => ({ label: `中间${index + 1}`, fitting: "中接", diameter: config.diameter || Math.max(config.diameterA, config.diameterB) }))
+      ]
+    };
+  }
+  if (config.productType === "三通类") {
+    return {
+      type: "tee",
+      items: [
+        { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+        { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+        { label: "C端", fitting: config.fittingC, diameter: config.diameterC },
+        ...teeMiddleFittingItems(config)
+      ]
+    };
+  }
+  if (config.productType === "弯头类") {
+    return {
+      type: "elbow",
+      items: [
+        { label: "A端", fitting: config.fittingA, diameter: config.diameterA },
+        { label: "B端", fitting: config.fittingB, diameter: config.diameterB },
+        ...elbowMiddleFittingItems(config)
+      ]
+    };
+  }
+  if (config.productType === "组合件") {
+    return { type: "", items: [] };
+  }
+  return { type: "", items: [] };
+}
+
+function combinationProcessGroups(config) {
+  const components = CombinationCore.normalizeComponents(config.components || []);
+  const firstDiameter = components[0]?.diameter || 40;
+  const lastDiameter = components[components.length - 1]?.diameter || firstDiameter;
+  const groups = [{
+    type: "docking",
+    items: [
+      { label: "A端", fitting: config.fittingA, diameter: firstDiameter },
+      { label: "B端", fitting: config.fittingB, diameter: lastDiameter }
+    ]
+  }];
+  const teeItems = [];
+  const weldItems = [];
+  components.forEach((component, index) => {
+    if (index < components.length - 1) {
+      weldItems.push({
+        label: `${index + 1}-${index + 2}连接点`,
+        fitting: "对焊",
+        diameter: Math.max(component.diameter || 0, components[index + 1]?.diameter || 0)
+      });
+    }
+    if (component.type === "三通") {
+      teeItems.push({ label: `${index + 1}段支口`, fitting: component.branchFitting, diameter: component.branchFittingDiameter });
+      if (component.branchMiddle === "中接") {
+        const branchOutlet = component.branchComponents?.[component.branchComponents.length - 1];
+        teeItems.push({ label: `${index + 1}段支口中接`, fitting: "中接", diameter: Math.max(branchOutlet?.diameter || component.branchDiameter, component.branchFittingDiameter) });
+      }
+    }
+  });
+  if (teeItems.length) groups.push({ type: "tee", items: teeItems });
+  if (weldItems.length) groups.push({ type: "elbow", items: weldItems });
+  return groups;
+}
+
+function quoteValidationIssues(config) {
+  const issues = [];
+  productFittingItems(config).forEach(item => validateFittingItem(issues, item, config));
+  const processGroups = config.productType === "组合件"
+    ? combinationProcessGroups(config)
+    : [productProcessItems(config)];
+  processGroups.forEach(process => {
+    process.items.forEach(item => validateProcessItem(issues, process.type, item, config));
+  });
+  if (!tableValueExists(pricing.fittingTaxDivisor)) {
+    pushUniqueIssue(issues, { type: "含税系数", item: "通用设置", detail: "成本含税系数未配置" });
+  }
+  if (!tableValueExists(pricing.materialTaxDivisor)) {
+    pushUniqueIssue(issues, { type: "去税系数", item: "通用设置", detail: "材料去税系数未配置" });
+  }
+  return issues;
+}
+
+function quoteIssueRows(issues) {
+  if (!issues.length) return [];
+  return [
+    ["报价数据检查", `发现 ${issues.length} 项数据风险，请先核对设置表。`, "", { warning: true }],
+    ...issues.map(issue => [`风险：${issue.type}`, issue.detail, issue.item, { warning: true }])
+  ];
+}
+
+function withQuoteValidation(config, result, costRows) {
+  const quoteIssues = quoteValidationIssues(config);
+  return {
+    ...result,
+    quoteIssues,
+    costRows: [...quoteIssueRows(quoteIssues), ...(costRows || result.costRows || [])]
   };
 }
 
@@ -1406,6 +2065,7 @@ function syncBranchRows() {
     const fallbackFitting = branchFittings.includes(fields.branchFitting.value) ? fields.branchFitting.value : branchFittings[0];
     const fitting = branchFittings.includes(old.fitting) ? old.fitting : fallbackFitting;
     const height = normalizeBranchHeight(fitting, old.height, Number(fields.branchHeight.value));
+    const side = old.side === "下" ? "下" : old.side === "上" ? "上" : "自动";
     const spacingAfter = Number(old.spacingAfter) || Number(fields.branchSpacing.value);
 
     return `
@@ -1416,6 +2076,7 @@ function syncBranchRows() {
         <label class="mini-check"><input data-branch-positive type="checkbox" ${positiveTolerance ? "checked" : ""}><span>+0.05</span></label>
         ${selectHtml(branchFittings, fitting, "data-branch-fitting")}
         <input data-branch-height type="number" min="${fitting === "直管" ? 40 : 0}" step="1" list="branchHeightOptions" value="${height}">
+        ${selectHtml(["自动", "上", "下"], side, "data-branch-side")}
         <input data-branch-spacing type="text" inputmode="decimal" value="${index < count - 1 ? spacingAfter : ""}" ${index === count - 1 ? "disabled" : ""}>
       </div>
     `;
@@ -1448,10 +2109,29 @@ function syncRules(changedId) {
   }
   const mainDiameter = Number(fields.mainDiameter.value);
   const branches = branchOptions(mainDiameter);
-  const mainFittings = availableFittings(options.mainFittings, mainDiameter);
-  const tailFittings = availableFittings(options.tailFittings, mainDiameter);
+  const previousMainFittingDiameter = Number(fields.mainFittingDiameter.value) || mainDiameter;
+  const previousTailFittingDiameter = Number(fields.tailFittingDiameter.value) || mainDiameter;
+  fillSelect(fields.mainFittingDiameter, diameters);
+  fillSelect(fields.tailFittingDiameter, diameters);
+  if (changedId === "mainDiameter") {
+    fields.mainFittingDiameter.value = String(mainDiameter);
+    fields.tailFittingDiameter.value = String(mainDiameter);
+  } else {
+    fields.mainFittingDiameter.value = String(diameters.includes(previousMainFittingDiameter) ? previousMainFittingDiameter : mainDiameter);
+    fields.tailFittingDiameter.value = String(diameters.includes(previousTailFittingDiameter) ? previousTailFittingDiameter : mainDiameter);
+  }
+  const mainFittingDiameter = Number(fields.mainFittingDiameter.value);
+  const tailFittingDiameter = Number(fields.tailFittingDiameter.value);
+  const mainFittings = availableFittings(options.mainFittings, mainFittingDiameter);
+  const tailFittings = availableFittings(options.tailFittings, tailFittingDiameter);
   fillSelect(fields.mainFitting, mainFittings);
   fillSelect(fields.tailFitting, tailFittings, fittingLabel);
+  const canUseMainAdapter = mainFittingDiameter !== mainDiameter && fields.mainFitting.value !== "直管";
+  const canUseTailAdapter = tailFittingDiameter !== mainDiameter && fields.tailFitting.value !== "直管";
+  fields.mainAdapterEnabled.disabled = !canUseMainAdapter;
+  fields.tailAdapterEnabled.disabled = !canUseTailAdapter;
+  if (!canUseMainAdapter) fields.mainAdapterEnabled.checked = false;
+  if (!canUseTailAdapter) fields.tailAdapterEnabled.checked = false;
   fillSelect(fields.branchDiameter, branches, value => `${value}`);
   if (!branches.includes(currentBranch)) {
     const mappedBranch = equivalentSeriesDiameter(currentBranch, fields.tubeSeries.value);
@@ -1639,6 +2319,14 @@ function outerThreadPath(x, y, width, height, fill, stroke) {
 }
 
 function draw(config, result) {
+  if (config.productType === "组合件") {
+    document.querySelector("#drawing").innerHTML = CombinationDrawing.render(config, result, {
+      DrawingCore, drawingColors, drawingTotalLengthText, fittingLabel, fittingLengthMm,
+      inlineFittingLength, inlineFittingSvg, isNoFitting, showInfoPanels: drawingInfoPanelsVisible,
+      svgTextLines, tubeSeriesLabel
+    });
+    return;
+  }
   if (!isManifoldType(config.productType)) {
     drawProduct(config, result);
     return;
@@ -1646,14 +2334,106 @@ function draw(config, result) {
   document.querySelector("#drawing").innerHTML = ManifoldDrawing.render(config, result, {
     DrawingCore, branchFittingSeatOffset, branchFittingSize, branchFittingSvg, branchLayout: LayoutCore.branchLayout,
     drawingBomRows, drawingColors, drawingLengthText, drawingTotalLengthText, fittingLabel,
-    inletFittingLength, inletFittingSvg, pipeVisualDiameter, svgTextLines, tailFittingLength,
-    tailFittingSvg, titleBranchSummary, tubeSeriesLabel
+    inletFittingLength, inletFittingSvg, pipeVisualDiameter, reducerSegmentSvg, svgTextLines, tailFittingLength,
+    tailFittingSvg, titleBranchSummary, tubeSeriesLabel,
+    showInfoPanels: drawingInfoPanelsVisible
   });
+}
+
+function svgPointFromPointer(svg, event) {
+  const point = svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  const matrix = svg.getScreenCTM();
+  if (!matrix) return { x: event.clientX, y: event.clientY };
+  return point.matrixTransform(matrix.inverse());
+}
+
+function draggableDimensionOffset(group) {
+  const match = String(group.getAttribute("transform") || "").match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
+  return {
+    dx: match ? Number(match[1]) || 0 : 0,
+    dy: match ? Number(match[2]) || 0 : 0
+  };
+}
+
+function constrainedDimensionDelta(group, dx, dy) {
+  const axis = group.dataset.dimensionAxis || "free";
+  if (axis === "x") return { dx, dy: 0 };
+  if (axis === "y") return { dx: 0, dy };
+  if (axis === "normal45") {
+    const unit = 1 / Math.sqrt(2);
+    const projection = dx * unit + dy * unit;
+    return { dx: projection * unit, dy: projection * unit };
+  }
+  if (axis === "vector") {
+    const vx = Number(group.dataset.dimensionVx) || 0;
+    const vy = Number(group.dataset.dimensionVy) || 0;
+    const length = Math.hypot(vx, vy) || 1;
+    const ux = vx / length;
+    const uy = vy / length;
+    const projection = dx * ux + dy * uy;
+    return { dx: projection * ux, dy: projection * uy };
+  }
+  return { dx, dy };
+}
+
+function installDimensionDrag() {
+  const svg = document.querySelector("#drawing");
+  if (!svg || svg.dataset.dimensionDragBound === "true") return;
+  svg.dataset.dimensionDragBound = "true";
+  let dragState = null;
+
+  svg.addEventListener("pointerdown", event => {
+    const group = event.target.closest?.("[data-dimension-id]");
+    if (!group || !svg.contains(group)) return;
+    event.preventDefault();
+    const startPoint = svgPointFromPointer(svg, event);
+    const startOffset = draggableDimensionOffset(group);
+    dragState = {
+      group,
+      id: group.dataset.dimensionId,
+      pointerId: event.pointerId,
+      startPoint,
+      startOffset
+    };
+    group.classList.add("is-dragging");
+    group.setPointerCapture?.(event.pointerId);
+  });
+
+  svg.addEventListener("pointermove", event => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const point = svgPointFromPointer(svg, event);
+    const rawDx = point.x - dragState.startPoint.x;
+    const rawDy = point.y - dragState.startPoint.y;
+    const delta = constrainedDimensionDelta(dragState.group, rawDx, rawDy);
+    const dx = dragState.startOffset.dx + delta.dx;
+    const dy = dragState.startOffset.dy + delta.dy;
+    dragState.group.setAttribute("transform", `translate(${dx.toFixed(1)} ${dy.toFixed(1)})`);
+  });
+
+  const finishDrag = event => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const offset = draggableDimensionOffset(dragState.group);
+    dimensionOverrides = {
+      ...dimensionOverrides,
+      [dragState.id]: {
+        dx: Math.round(offset.dx * 10) / 10,
+        dy: Math.round(offset.dy * 10) / 10
+      }
+    };
+    dragState.group.classList.remove("is-dragging");
+    dragState.group.releasePointerCapture?.(event.pointerId);
+    dragState = null;
+  };
+
+  svg.addEventListener("pointerup", finishDrag);
+  svg.addEventListener("pointercancel", finishDrag);
 }
 
 function drawProduct(config, result) {
   const svg = document.querySelector("#drawing");
-  const titleEndSpec = (diameter, fitting) => `${diameter}${isNoFitting(fitting) ? "无配件" : fittingLabel(fitting)}`;
+  const titleEndSpec = (diameter, fitting) => `${diameter}${isNoFitting(fitting) ? "" : fittingLabel(fitting)}`;
   const title = config.productType === "对接类"
     ? `${titleEndSpec(config.diameterA, config.fittingA)}x${titleEndSpec(config.diameterB, config.fittingB)} 对接`
     : config.productType === "弯头类"
@@ -1685,29 +2465,34 @@ function drawProduct(config, result) {
       inlineFittingLength,
       inlineFittingSvg,
       isNoFitting,
-      pipeVisualDiameter
+      pipeVisualDiameter,
+      showInfoPanels: drawingInfoPanelsVisible
     }),
     "弯头类": ElbowDrawing.render(config, {
       DrawingCore, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
       elbowMiddleLengthMm, elbowRoundBodySvg, fittingLabel, inlineFittingEnvelopeHeight,
-      inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter, reducerSegmentSvg
+      inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter, reducerSegmentSvg,
+      showInfoPanels: drawingInfoPanelsVisible
     }),
     "三通类": TeeDrawing.render(config, {
       DrawingCore, clamp, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
       fittingLabel, inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter,
       reducerSegmentSvg, teeBMiddleVisualLengthMm, teeHorizontalTotalLengthMm, teeMiddleLengthMm,
-      verticalInlineFittingSvg
+      verticalInlineFittingSvg,
+      showInfoPanels: drawingInfoPanelsVisible
     })
   }[config.productType];
+  const layer = DrawingCore.layer;
 
   svg.innerHTML = `
     <defs>
       ${DrawingCore.arrowMarker(drawingColors.dimension)}
     </defs>
-    ${DrawingCore.engineeringFrame(config.quoteNo)}
+    ${layer("frame", DrawingCore.engineeringFrame(config.quoteNo))}
 
     ${drawing}
 
+    <g data-layer="info" style="${drawingInfoPanelsVisible ? "" : "display:none"}">
     ${DrawingCore.infoBox({
       x: 180,
       y: infoBoxY,
@@ -1738,21 +2523,23 @@ function drawProduct(config, result) {
       lineHeight: Math.min(14, Math.max(10, (productInfoBoxHeight - 56) / Math.max(1, bomRows.length))),
       fontSize: bomFontSize
     })}
+    </g>
 
-    ${DrawingCore.technicalRequirements({
+    ${layer("notes", DrawingCore.technicalRequirements({
       lines: [
         "1、管件不得有气孔、夹渣、缩松等影响其强度的缺陷:",
         "3、未注公差按国标GB/T 19928.2；",
         "4、未注尺寸公差按国标GB/T1804-2000m:",
         "5、交货时酸洗钝化后表面应清洁无氧化皮。"
       ]
-    })}
+    }))}
 
-    ${DrawingCore.titleBlock({
+    ${layer("titleblock", DrawingCore.titleBlock({
       material: config.material,
-      titleSvg: svgTextLines(title, 614, 78, { maxChars: 14, lineHeight: 15, fontSize: 13 }),
-      productLabel: "国标定制产品"
-    })}
+      titleSvg: svgTextLines(title, 613.5, 72, { maxChars: 22, lineHeight: 16, fontSize: 14, multiLineOffset: 3 }),
+      productLabel: "国标定制产品",
+      productCode: config.productCode
+    }))}
   `;
 }
 
@@ -1765,6 +2552,7 @@ function renderSpec(config, result) {
     isManifoldType,
     spacingSpec: LayoutCore.spacingSpec
   });
+  items.splice(2, 0, ["\u4ea7\u54c1\u7f16\u7801", config.productCode || "\u5f85\u786e\u8ba4"]);
 
   document.querySelector("#specList").innerHTML = items.map(([key, value]) => `
     <div>
@@ -1776,9 +2564,10 @@ function renderSpec(config, result) {
 
 function renderCost(result) {
   document.querySelector("#costRows").innerHTML = DisplayCore.costRowsDisplay(result.costRows, money).map(row => `
-    <tr>
+    <tr class="${row.warning ? "cost-warning-row" : ""}">
       <td>${row.name}</td>
       <td>${row.note}</td>
+      <td>${row.detail}</td>
       <td>${row.amount}</td>
     </tr>
   `).join("");
@@ -1807,6 +2596,9 @@ function svgTextLines(text, x, y, options = {}) {
   const lineHeight = options.lineHeight || 16;
   const fontSize = options.fontSize || 13;
   const anchor = options.anchor || "middle";
+  const maxWidth = options.maxWidth || 0;
+  const fitThreshold = options.fitThreshold || 15;
+  const multiLineOffset = options.multiLineOffset || 0;
   const lines = [];
   let current = "";
 
@@ -1821,9 +2613,27 @@ function svgTextLines(text, x, y, options = {}) {
   }
   if (current) lines.push(current);
 
-  const startY = y - (lines.length - 1) * lineHeight / 2;
+  if (lines.length === 2 && lines[1].length <= 4 && lines[0].length > lines[1].length * 2) {
+    const joined = lines.join("");
+    const middle = Math.ceil(joined.length / 2);
+    const breakCandidates = [];
+    for (let index = 1; index < joined.length; index += 1) {
+      const previous = joined[index - 1];
+      const currentChar = joined[index];
+      if (previous === "+" || previous === "x" || previous === "X" || previous === " " || currentChar === " ") {
+        breakCandidates.push(index);
+      }
+    }
+    const splitAt = breakCandidates.length
+      ? breakCandidates.reduce((best, value) => Math.abs(value - middle) < Math.abs(best - middle) ? value : best, breakCandidates[0])
+      : middle;
+    lines.splice(0, lines.length, joined.slice(0, splitAt).trim(), joined.slice(splitAt).trim());
+  }
+
+  const centerY = y + (lines.length > 1 ? multiLineOffset : 0);
+  const startY = centerY - (lines.length - 1) * lineHeight / 2;
   return lines.map((line, index) => (
-    `<text x="${x}" y="${startY + index * lineHeight}" text-anchor="${anchor}" dominant-baseline="middle" font-size="${fontSize}" fill="#111">${line}</text>`
+    `<text x="${x}" y="${startY + index * lineHeight}" text-anchor="${anchor}" dominant-baseline="middle" font-size="${fontSize}" fill="#111"${maxWidth && line.length >= fitThreshold ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ""}>${line}</text>`
   )).join("");
 }
 
@@ -1841,13 +2651,44 @@ function topProductTitle(config) {
   return DisplayCore.topProductTitle(config);
 }
 
+function selectedQuotePriceColumns() {
+  const selected = Array.from(document.querySelectorAll("[data-quote-price-column]"))
+    .filter(input => input.checked)
+    .map(input => input.dataset.quotePriceColumn)
+    .filter(key => quotePriceColumnDefinitions[key]);
+  return selected.length ? selected : ["unitPrice"];
+}
+
+function syncQuotePriceColumnState() {
+  quotePriceColumns = selectedQuotePriceColumns();
+}
+
+function quoteListTotalValue(item, columnKey) {
+  const definition = quotePriceColumnDefinitions[columnKey] || quotePriceColumnDefinitions.unitPrice;
+  if (Number.isFinite(Number(item[definition.totalKey]))) return Number(item[definition.totalKey]);
+  return (Number(item[definition.valueKey]) || 0) * (Number(item.quantity) || 0);
+}
+
+function quoteListPrimaryColumn() {
+  if (quotePriceColumns.includes("unitPrice")) return "unitPrice";
+  if (quotePriceColumns.includes("discountedPrice")) return "discountedPrice";
+  return quotePriceColumns[0] || "unitPrice";
+}
+
 function addQuoteItem() {
   const config = getConfig();
+  const productCodeResult = ProductCodeCore.generate(config);
+  config.productCode = productCodeResult.code;
+  config.productCodeResult = productCodeResult;
   const result = calculate(config);
   quoteItems.push({
     id: Date.now(),
     name: quoteItemName(config),
     quantity: config.quantity,
+    factoryCost: result.factoryCost ?? result.subtotal ?? 0,
+    factoryCostTotal: (result.factoryCost ?? result.subtotal ?? 0) * config.quantity,
+    discountedPrice: result.discountedPrice,
+    discountedPriceTotal: result.discountedPrice * config.quantity,
     unitPrice: result.unitPrice,
     totalPrice: result.unitPrice * config.quantity,
     config,
@@ -1862,16 +2703,35 @@ function removeQuoteItem(id) {
 }
 
 function renderQuoteList() {
-  const total = quoteItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  syncQuotePriceColumnState();
+  const primaryColumn = quoteListPrimaryColumn();
+  const total = quoteItems.reduce((sum, item) => sum + quoteListTotalValue(item, primaryColumn), 0);
   document.querySelector("#quoteListTotal").textContent = `${quoteItems.length} 项，合计 ${money(total)}`;
+  document.querySelector("#quoteListHeadRow").innerHTML = `
+    <th>规格</th>
+    <th>数量</th>
+    ${quotePriceColumns.map(columnKey => {
+      const definition = quotePriceColumnDefinitions[columnKey];
+      return `<th>${definition.label}</th><th>${definition.amountLabel}</th>`;
+    }).join("")}
+    <th></th>
+  `;
   document.querySelector("#quoteListRows").innerHTML = quoteItems.length === 0
-    ? `<tr><td colspan="5">暂无报价项目</td></tr>`
+    ? `<tr><td colspan="${3 + quotePriceColumns.length * 2}">暂无报价项目</td></tr>`
     : quoteItems.map(item => `
       <tr>
-        <td class="quote-spec">${item.name}</td>
+        <td class="quote-spec">
+          <code>${item.config.productCode || "\u5f85\u786e\u8ba4"}</code>
+          <div>${item.name}</div>
+        </td>
         <td class="quote-number">${item.quantity}</td>
-        <td class="quote-money">${money(item.unitPrice)}</td>
-        <td class="quote-money">${money(item.totalPrice)}</td>
+        ${quotePriceColumns.map(columnKey => {
+          const definition = quotePriceColumnDefinitions[columnKey];
+          return `
+            <td class="quote-money">${money(item[definition.valueKey] || 0)}</td>
+            <td class="quote-money">${money(quoteListTotalValue(item, columnKey))}</td>
+          `;
+        }).join("")}
         <td class="quote-action-cell"><button class="tiny-button" type="button" data-remove-item="${item.id}">删除</button></td>
       </tr>
     `).join("");
@@ -1976,7 +2836,7 @@ function exportDrawingPdf() {
 function exportQuoteListCsv() {
   downloadText(
     ExportCore.quoteListFileName(fields.quoteNo.value),
-    ExportCore.quoteListCsv(quoteItems, formatNumber),
+    ExportCore.quoteListCsv(quoteItems, formatNumber, selectedQuotePriceColumns()),
     "text/csv;charset=utf-8"
   );
 }
@@ -2277,6 +3137,8 @@ function update() {
   syncProductMode();
   if (isManifoldType()) {
     syncRules(active?.id);
+  } else if (fields.productType.value === "组合件") {
+    syncCombinationRules(active?.id);
   } else {
     syncProductRules(active?.id, isDockingMiddleFreeInput);
   }
@@ -2286,6 +3148,9 @@ function update() {
     syncBranchRows();
   }
   const config = getConfig();
+  const productCodeResult = ProductCodeCore.generate(config);
+  config.productCode = productCodeResult.code;
+  config.productCodeResult = productCodeResult;
   const result = calculate(config);
 
   if (fields.difficultyFactor.dataset.manual !== "true" && document.activeElement !== fields.difficultyFactor) {
@@ -2296,17 +3161,27 @@ function update() {
   document.querySelector("#unitPrice").textContent = money(result.unitPrice);
   document.querySelector("#discountedPrice").textContent = money(result.discountedPrice);
   document.querySelector("#totalPrice").textContent = money(result.totalPrice);
+  fields.productCode.value = productCodeResult.code || "\u5f85\u786e\u8ba4";
+  fields.productCode.closest("label").dataset.status = productCodeResult.status;
+  fields.productCode.title = productCodeResult.message;
+  document.querySelector("#productCodeStatus").textContent = productCodeResult.valid
+    ? `\u7f16\u7801\u6709\u6548 \u00b7 ${productCodeResult.ruleId}`
+    : productCodeResult.message;
   document.querySelector("#topProductTitle").textContent = topProductTitle(config);
   document.querySelector("#topMaterialBadge").textContent = `${config.material} 不锈钢`;
   document.querySelector("#topSeriesBadge").textContent = tubeSeriesLabel[config.tubeSeries] || config.tubeSeries || "国标";
-  document.querySelector("#ruleStatus").textContent = isManifoldType(config.productType)
+  const ruleText = isManifoldType(config.productType)
     ? (config.branchDiameter <= config.mainDiameter ? "规则正常" : "支管过大")
     : `${productKindName(config.productType)}参数`;
+  document.querySelector("#ruleStatus").textContent = result.quoteIssues?.length
+    ? `数据风险 ${result.quoteIssues.length} 项`
+    : ruleText;
   document.querySelector("#drawingScale").textContent = isManifoldType(config.productType)
     ? (config.customBranches ? `${config.branchCount} 路独立预览` : `${config.branchCount} 路预览`)
     : `${productKindName(config.productType)}预览`;
 
   draw(config, result);
+  installDimensionDrag();
   renderSpec(config, result);
   renderCost(result);
   renderQuoteList();
@@ -2314,10 +3189,11 @@ function update() {
 
 function init() {
   bindFields();
+  bindCopyActions();
   loadPricingSettings();
   fields.customerName.value = "福兰特定制产品";
-  fields.quoteNo.value = `弯头-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
-  fields.productType.value = "弯头类";
+  fields.quoteNo.value = `分水-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
+  fields.productType.value = "分水器类";
   fillSelect(fields.material, options.materials);
   fillSelect(fields.manifoldType, options.manifoldTypes);
   fillSelect(fields.surfaceTreatment, options.surfaceTreatments);
@@ -2329,8 +3205,10 @@ function init() {
   fillSelect(fields.branchThickness, seriesThicknesses());
   document.querySelector("#branchHeightOptions").innerHTML = options.branchHeight.map(value => `<option value="${value}">${value === 0 ? "不加高" : `${value}`}</option>`).join("");
   fillSelect(fields.mainFitting, options.mainFittings);
+  fillSelect(fields.mainFittingDiameter, seriesDiameters());
   fillSelect(fields.branchFitting, options.branchFittings);
   fillSelect(fields.tailFitting, options.tailFittings, fittingLabel);
+  fillSelect(fields.tailFittingDiameter, seriesDiameters());
   fillSelect(fields.productDiameter, fittingSettingDiameters("A"));
   fillSelect(fields.productThickness, seriesThicknesses());
   fillSelect(fields.productDiameterA, fittingSettingDiameters("A"));
@@ -2363,6 +3241,9 @@ function init() {
   fillSelect(fields.productGenericFittingA, options.fittingConnections);
   fillSelect(fields.productGenericFittingB, options.fittingConnections);
   fillSelect(fields.productFittingC, options.fittingConnections);
+  fillSelect(fields.combinationFittingA, options.fittingConnections);
+  fillSelect(fields.combinationFittingB, options.fittingConnections);
+  renderCombinationRows();
 
   fields.material.value = "304";
   fields.material.dataset.previousValue = "304";
@@ -2374,8 +3255,12 @@ function init() {
   fields.mainPositiveTolerance.checked = false;
   fields.branchPositiveTolerance.checked = false;
   fields.mainFitting.value = "外丝";
+  fields.mainFittingDiameter.value = "40";
+  fields.mainAdapterEnabled.checked = false;
   fields.branchFitting.value = "外丝";
   fields.tailFitting.value = "堵头";
+  fields.tailFittingDiameter.value = "40";
+  fields.tailAdapterEnabled.checked = false;
   fields.productDiameter.value = "40";
   fields.productThickness.value = String(defaultWallThickness(40));
   fields.productDiameterA.value = "40";
@@ -2423,6 +3308,8 @@ function init() {
   fields.productGenericFittingA.value = "外丝";
   fields.productGenericFittingB.value = "外丝";
   fields.productFittingC.value = "外丝";
+  fields.combinationFittingA.value = "外丝";
+  fields.combinationFittingB.value = "外丝";
   fields.productProcessFactor.value = "1";
   fields.branchHeight.value = "0";
   fields.branchCount.value = "4";
@@ -2461,6 +3348,87 @@ function init() {
       dockingMiddleTouched = true;
     }
   });
+  fields.combinationAdd.addEventListener("click", () => {
+    const items = readCombinationRows();
+    const diameter = items[items.length - 1]?.diameter || 40;
+    const type = fields.combinationAddType.value;
+    items.push(CombinationCore.normalizeComponent({
+      type,
+      diameter,
+      thickness: items[items.length - 1]?.thickness || 1.5,
+      length: combinationDefaultLength(type, diameter)
+    }, items.length));
+    dimensionOverrides = {};
+    renderCombinationRows(items);
+    update();
+  });
+  fields.combinationRows.addEventListener("click", event => {
+    const row = event.target.closest(".combination-row");
+    if (!row) return;
+    const items = readCombinationRows();
+    const index = Array.from(fields.combinationRows.children).indexOf(row);
+    const branchRow = event.target.closest(".combination-branch-component");
+    if (event.target.closest("[data-combination-branch-add]")) {
+      const type = row.querySelector("[data-branch-add-type]").value;
+      const previous = items[index].branchComponents[items[index].branchComponents.length - 1];
+      const diameter = previous?.diameter || items[index].branchDiameter;
+      const thickness = previous?.thickness || items[index].branchThickness;
+      items[index].branchComponents.push(CombinationCore.normalizeBranchComponent({
+        type, diameter, thickness, length: combinationDefaultLength(type, diameter)
+      }, items[index].branchComponents.length, diameter, thickness));
+    } else if (branchRow) {
+      const branchIndex = Array.from(row.querySelectorAll(".combination-branch-component")).indexOf(branchRow);
+      if (event.target.closest("[data-branch-component-remove]")) {
+        items[index].branchComponents.splice(branchIndex, 1);
+      } else if (event.target.closest('[data-branch-component-move="up"]') && branchIndex > 0) {
+        [items[index].branchComponents[branchIndex - 1], items[index].branchComponents[branchIndex]] = [items[index].branchComponents[branchIndex], items[index].branchComponents[branchIndex - 1]];
+      } else if (event.target.closest('[data-branch-component-move="down"]') && branchIndex < items[index].branchComponents.length - 1) {
+        [items[index].branchComponents[branchIndex + 1], items[index].branchComponents[branchIndex]] = [items[index].branchComponents[branchIndex], items[index].branchComponents[branchIndex + 1]];
+      } else {
+        return;
+      }
+    } else if (event.target.closest("[data-combination-remove]")) {
+      if (items.length <= 1) return;
+      items.splice(index, 1);
+    } else if (event.target.closest('[data-combination-move="up"]') && index > 0) {
+      [items[index - 1], items[index]] = [items[index], items[index - 1]];
+    } else if (event.target.closest('[data-combination-move="down"]') && index < items.length - 1) {
+      [items[index + 1], items[index]] = [items[index], items[index + 1]];
+    } else {
+      return;
+    }
+    dimensionOverrides = {};
+    renderCombinationRows(items);
+    update();
+  });
+  fields.combinationRows.addEventListener("change", event => {
+    const row = event.target.closest(".combination-row");
+    const branchRow = event.target.closest(".combination-branch-component");
+    if (row && event.target.matches("[data-combination-type]")) {
+      const type = event.target.value;
+      const diameter = Number(row.querySelector("[data-combination-diameter]").value) || 40;
+      row.querySelector("[data-combination-length]").value = combinationDefaultLength(type, diameter);
+    }
+    if (row && event.target.matches("[data-combination-diameter]")) {
+      const type = row.querySelector("[data-combination-type]").value;
+      if (type !== "直管") {
+        row.querySelector("[data-combination-length]").value = combinationDefaultLength(type, Number(event.target.value));
+      }
+    }
+    if (branchRow && event.target.matches("[data-branch-component-type]")) {
+      const type = event.target.value;
+      const diameter = Number(branchRow.querySelector("[data-branch-component-diameter]").value) || 40;
+      branchRow.querySelector("[data-branch-component-length]").value = combinationDefaultLength(type, diameter);
+    }
+    if (branchRow && event.target.matches("[data-branch-component-diameter]")) {
+      const type = branchRow.querySelector("[data-branch-component-type]").value;
+      if (type !== "直管") branchRow.querySelector("[data-branch-component-length]").value = combinationDefaultLength(type, Number(event.target.value));
+    }
+    if (event.target.matches("[data-combination-type], [data-combination-branch-diameter], [data-combination-branch-fitting-diameter], [data-combination-branch-middle], [data-branch-component-type]")) {
+      renderCombinationRows(readCombinationRows());
+    }
+    update();
+  });
   fields.teeBodyLength.addEventListener("input", () => {
     teeBodyLengthTouched = fields.teeBodyLength.value.trim() !== "";
   });
@@ -2474,6 +3442,7 @@ function init() {
       dockingMiddleTouched = false;
       lastDockingDiameterPair = "";
       teeBodyLengthTouched = false;
+      dimensionOverrides = {};
       update();
     });
   });
@@ -2486,6 +3455,7 @@ function init() {
     dockingMiddleTouched = false;
     lastDockingDiameterPair = "";
     teeBodyLengthTouched = false;
+    dimensionOverrides = {};
     update();
   });
   fields.difficultyFactor.addEventListener("input", () => {
@@ -2501,6 +3471,7 @@ function init() {
   document.querySelector("#printQuote")?.addEventListener("click", () => window.print());
   document.querySelector("#newQuote").addEventListener("click", () => {
     quoteItems = [];
+    dimensionOverrides = {};
     fields.quoteNo.value = `FSQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
     update();
   });
@@ -2510,10 +3481,22 @@ function init() {
   document.querySelector("#exportDrawingPng").addEventListener("click", exportDrawingPng);
   document.querySelector("#exportDrawingPdf").addEventListener("click", exportDrawingPdf);
   document.querySelector("#exportList").addEventListener("click", exportQuoteListCsv);
+  document.querySelector("#toggleDrawingInfoPanels")?.addEventListener("click", () => {
+    drawingInfoPanelsVisible = !drawingInfoPanelsVisible;
+    document.querySelector("#toggleDrawingInfoPanels").textContent = drawingInfoPanelsVisible ? "\u9690\u85cf\u8bf4\u660e" : "\u663e\u793a\u8bf4\u660e";
+    update();
+  });
   document.querySelector("#addQuoteItem").addEventListener("click", addQuoteItem);
   document.querySelector("#clearQuoteItems").addEventListener("click", () => {
     quoteItems = [];
     renderQuoteList();
+  });
+  document.querySelectorAll("[data-quote-price-column]").forEach(input => {
+    input.addEventListener("change", () => {
+      const checkedCount = Array.from(document.querySelectorAll("[data-quote-price-column]")).filter(item => item.checked).length;
+      if (!checkedCount) input.checked = true;
+      renderQuoteList();
+    });
   });
   document.querySelectorAll("[data-settings-category]").forEach(button => {
     button.addEventListener("click", () => {

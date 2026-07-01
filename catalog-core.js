@@ -12,6 +12,10 @@
     ];
   }
 
+  function equivalentEntries(options, series) {
+    return seriesEntries(options, series).filter(item => item.equivalent !== null);
+  }
+
   function defaultWallThickness(options, series, diameter) {
     return seriesEntries(options, series).find(item => item.diameter === Number(diameter))?.thickness || 1.5;
   }
@@ -21,11 +25,11 @@
   }
 
   function equivalentSeriesDiameter(options, diameter, targetSeries) {
-    const allSeriesEntries = Object.keys(options.tubeSeries || {}).map(series => seriesEntries(options, series));
+    const allSeriesEntries = Object.keys(options.tubeSeries || {}).map(series => equivalentEntries(options, series));
     const sourceIndex = allSeriesEntries
       .map(items => items.findIndex(item => item.diameter === Number(diameter)))
       .find(index => index >= 0);
-    const targetEntries = seriesEntries(options, targetSeries);
+    const targetEntries = equivalentEntries(options, targetSeries);
     return sourceIndex >= 0 ? targetEntries[sourceIndex]?.diameter : undefined;
   }
 

@@ -199,4 +199,47 @@ closeTo(manifold.largeDiameterHoleProcessCost, 15);
 closeTo(manifold.autoDifficultyFactor, 1.03);
 closeTo(manifold.processCost, ((6.82 + 1) * 3 + 15) * 1.03);
 
+const manifoldWithBlankBranch = ProductQuoteCore.calculateManifold({
+  ...common,
+  productType: "分水器类",
+  manifoldType: "双排交错",
+  mainDiameter: 40,
+  wallThickness: 1.5,
+  mainPositiveTolerance: false,
+  branchCount: 2,
+  branchSpacing: 180,
+  inletAllowance: 100,
+  tailAllowance: 40,
+  mainFitting: "外丝",
+  tailFitting: "堵头",
+  branches: [
+    { diameter: 20, thickness: 1, fitting: "外丝", height: 100, positiveTolerance: false },
+    { diameter: 20, thickness: 1, fitting: "无配件", height: 100, positiveTolerance: false, side: "下" }
+  ]
+}, pricing, helpers);
+closeTo(manifoldWithBlankBranch.branchTubeWeightKg, 0.1);
+closeTo(manifoldWithBlankBranch.branchFittingCost, 10);
+
+const manifoldWithAdapters = ProductQuoteCore.calculateManifold({
+  ...common,
+  productType: "分水器类",
+  manifoldType: "单排",
+  mainDiameter: 40,
+  mainFittingDiameter: 50.8,
+  tailFittingDiameter: 32,
+  mainAdapterEnabled: true,
+  tailAdapterEnabled: true,
+  wallThickness: 1.5,
+  mainPositiveTolerance: false,
+  branchCount: 1,
+  branchSpacing: 180,
+  inletAllowance: 100,
+  tailAllowance: 40,
+  mainFitting: "外丝",
+  tailFitting: "外丝",
+  branches: [{ diameter: 20, thickness: 1, fitting: "外丝", height: 0, positiveTolerance: false }]
+}, pricing, helpers);
+closeTo(manifoldWithAdapters.adapterFittingCost, 16);
+closeTo(manifoldWithAdapters.fittingCost, 46);
+
 console.log("product quote core tests passed");

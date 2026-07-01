@@ -10,6 +10,7 @@ const options = {
       { diameter: 50.8, thickness: 1.5 }
     ],
     B: [
+      { diameter: 15, thickness: 1.5, equivalent: null },
       { diameter: 22, thickness: 1.5 },
       { diameter: 35, thickness: 1.5 },
       { diameter: 42, thickness: 1.5 },
@@ -23,13 +24,17 @@ const options = {
 };
 
 assert.deepStrictEqual(CatalogCore.seriesDiameters(options, "A"), [20, 32, 40, 50.8]);
+assert.deepStrictEqual(CatalogCore.seriesDiameters(options, "B"), [15, 22, 35, 42, 54]);
 assert.deepStrictEqual(CatalogCore.fittingSettingDiameters(options, "A"), [16, 20, 32, 40, 50.8]);
+assert.deepStrictEqual(CatalogCore.fittingSettingDiameters(options, "B"), [15, 18, 22, 35, 42, 54]);
 assert.deepStrictEqual(CatalogCore.seriesThicknesses(options, "A"), [1, 1.2, 1.5]);
+assert.strictEqual(CatalogCore.defaultWallThickness(options, "B", 15), 1.5);
 assert.strictEqual(CatalogCore.defaultWallThickness(options, "A", 16), 1);
 assert.strictEqual(CatalogCore.defaultWallThickness(options, "A", 40), 1.5);
 assert.strictEqual(CatalogCore.defaultWallThickness(options, "A", 999), 1.5);
 
 assert.strictEqual(CatalogCore.equivalentSeriesDiameter(options, 16, "B"), 18);
+assert.strictEqual(CatalogCore.equivalentSeriesDiameter(options, 15, "A"), undefined);
 assert.strictEqual(CatalogCore.equivalentSeriesDiameter(options, 40, "B"), 42);
 assert.strictEqual(CatalogCore.equivalentSeriesDiameter(options, 42, "A"), 40);
 assert.strictEqual(CatalogCore.equivalentSeriesDiameter(options, 999, "A"), undefined);

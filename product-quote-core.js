@@ -279,27 +279,35 @@
 
     const inletAllowance = config.inletAllowance;
     const tailAllowance = config.tailAllowance;
+    const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
+    const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
     const layout = branchLayout(config);
     const mainLength = layout.span + inletAllowance + tailAllowance;
     const actualWall = weightWallThickness(config.wallThickness, config.mainPositiveTolerance);
+    const activeBranches = config.branches.filter(branch => branch.fitting !== "无配件");
     const mainTubeWeightKg = tubeWeightKg(mainLength, config.mainDiameter, config.wallThickness, config.material, config.mainPositiveTolerance);
     const mainTubeCost = tubeMaterialCost(mainTubeWeightKg, config.steelTonPrice);
-    const branchTubeWeightKg = config.branches.reduce(
+    const branchTubeWeightKg = activeBranches.reduce(
       (sum, branch) => sum + tubeWeightKg(branch.height, branch.diameter, branch.thickness, config.material, branch.positiveTolerance),
       0
     );
     const totalTubeWeightKg = mainTubeWeightKg + branchTubeWeightKg;
     const branchTubeCost = tubeMaterialCost(branchTubeWeightKg, config.steelTonPrice);
-    const mainFittingCost = fittingCost(config.mainFitting, config.mainDiameter, config.material, config.tubeSeries)
-      + fittingCost(config.tailFitting, config.mainDiameter, config.material, config.tubeSeries);
-    const branchFittingCost = config.branches.reduce(
+    const mainFittingCost = fittingCost(config.mainFitting, mainFittingDiameter, config.material, config.tubeSeries)
+      + fittingCost(config.tailFitting, tailFittingDiameter, config.material, config.tubeSeries);
+    const adapterFittingCost = (config.mainAdapterEnabled
+      ? fittingCost("中接", Math.max(config.mainDiameter, mainFittingDiameter), config.material, config.tubeSeries)
+      : 0) + (config.tailAdapterEnabled
+      ? fittingCost("中接", Math.max(config.mainDiameter, tailFittingDiameter), config.material, config.tubeSeries)
+      : 0);
+    const branchFittingCost = activeBranches.reduce(
       (sum, branch) => sum + fittingCost(branch.fitting, branch.diameter, config.material, config.tubeSeries),
       0
     );
     const processMultiplier = config.mainDiameter > 50.8 ? 3 : 1;
     const baseProcessCost = pricing.processBaseForTwoBranches
       + Math.max(0, config.branchCount - 2) * pricing.processPerExtraBranch
-      + config.branches.filter(branch => branch.height > 0).length * pricing.heightProcessPerBranch;
+      + activeBranches.filter(branch => branch.height > 0).length * pricing.heightProcessPerBranch;
     const largeDiameterHoleProcessCost = [133, 159, 219].includes(config.mainDiameter) ? config.branchCount * 15 : 0;
     const branchKinds = new Set(config.branches.map(branch => `${branch.diameter}/${branch.thickness}/${branch.fitting}/${branch.height}/${branch.positiveTolerance}`));
     let autoDifficultyFactor = 1;
@@ -314,7 +322,7 @@
     const managementCost = totalTubeWeightKg * pricing.managementPerKg;
     const packagingCost = totalTubeWeightKg * pricing.packagingPerKg;
     const surfaceTreatmentCost = totalTubeWeightKg * (pricing.surfaceTreatmentPerKg[config.surfaceTreatment] || 0);
-    const subtotal = mainTubeCost + branchTubeCost + mainFittingCost + branchFittingCost + processCost + annealingCost + managementCost + packagingCost + surfaceTreatmentCost;
+    const subtotal = mainTubeCost + branchTubeCost + mainFittingCost + adapterFittingCost + branchFittingCost + processCost + annealingCost + managementCost + packagingCost + surfaceTreatmentCost;
     const totals = finalizeCost(subtotal, config);
 
     return {
@@ -326,8 +334,9 @@
       mainTubeCost,
       branchTubeCost,
       mainFittingCost,
+      adapterFittingCost,
       branchFittingCost,
-      fittingCost: mainFittingCost + branchFittingCost,
+      fittingCost: mainFittingCost + adapterFittingCost + branchFittingCost,
       processMultiplier,
       largeDiameterHoleProcessCost,
       difficultyFactor,

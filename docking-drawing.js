@@ -17,7 +17,8 @@
       inlineFittingLength,
       inlineFittingSvg,
       isNoFitting,
-      pipeVisualDiameter
+      pipeVisualDiameter,
+      showInfoPanels = true
     } = helpers;
     const middleItems = config.middleItems || [];
     const hasMiddleAdapter = middleItems.some(item => item.type === "中接");
@@ -50,6 +51,7 @@
     const specLabelY = Math.min(238, 280 - Math.max(pipeA, pipeB) / 2 - 16);
     const labelFontSize = drawingColors.labelFontSize || 15;
     const dimensionFontSize = drawingColors.dimensionFontSize || 16;
+    const layer = DrawingCore.layer || ((name, body) => `<g data-layer="${name}">${body || ""}</g>`);
     const bodyBottomY = 280 + Math.max(pipeA, pipeB) / 2;
     const dimensionY = Math.max(372, bodyBottomY + Math.max(36, Math.max(pipeA, pipeB) * 0.12));
     const dimensionExtensionTopY = Math.min(dimensionY - 24, bodyBottomY + 10);
@@ -65,11 +67,12 @@
       labelY: dimensionY - 12,
       fontSize: dimensionFontSize
     }) : "";
-    const content = `
+    const objectLayer = `
       ${hasMiddleItems ? assembly.svg : ""}
       ${inlineFittingSvg(config.fittingA, config.diameterA, leftConnectionX, 280, pipeA, "left")}
       ${inlineFittingSvg(config.fittingB, config.diameterB, rightConnectionX, 280, pipeB, "right")}
-      ${dimensionSvg}
+    `;
+    const labelLayer = `
       ${!isNoFitting(config.fittingA) ? `
         <text x="${leftFittingCenterX}" y="288" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
         <text x="${leftLabelX}" y="${specLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
@@ -78,6 +81,11 @@
         <text x="${rightFittingCenterX}" y="288" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">B端</text>
         <text x="${rightLabelX}" y="${specLabelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterB} ${fittingLabel(config.fittingB)}</text>
       ` : ""}
+    `;
+    const content = `
+      ${layer("object", objectLayer)}
+      ${layer("dimension", dimensionSvg)}
+      ${layer("label", labelLayer)}
     `;
     const bounds = {
       left: Math.min(dimensionLeft, leftLabelX - 72),
@@ -88,7 +96,9 @@
     return typeof DrawingCore.fitContent === "function"
       ? DrawingCore.fitContent({
         bounds,
-        box: { left: 150, right: 1050, top: 145, bottom: 455 },
+        box: showInfoPanels
+          ? { left: 150, right: 1050, top: 145, bottom: 455 }
+          : { left: 145, right: 1055, top: 130, bottom: 585 },
         content,
         minScale: 0.62
       })

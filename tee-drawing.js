@@ -8,7 +8,8 @@
       DrawingCore, clamp, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
       fittingLabel, inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter,
       reducerSegmentSvg, teeBMiddleVisualLengthMm, teeHorizontalTotalLengthMm, teeMiddleLengthMm,
-      verticalInlineFittingSvg
+      verticalInlineFittingSvg,
+      showInfoPanels = true
     } = helpers;
     const pipeA = pipeVisualDiameter(config.diameterA);
     const pipeB = pipeVisualDiameter(config.diameterB);
@@ -42,11 +43,18 @@
     const fittingACenterX = dimensionLeft + fittingALength / 2;
     const fittingCCenterX = dimensionRight - fittingCLength / 2;
     const fittingBCenterY = fittingBY - bFittingHeight / 2;
+    const branchHeightMm = (Number(config.bodyDiameter || config.diameter) || 0) / 2
+      + teeBMiddleVisualLengthMm(config)
+      + (isNoFitting(config.fittingB) ? 0 : inlineFittingLength(config.fittingB, config.diameterB, pipeB));
+    const branchDimensionX = dimensionRight + Math.max(58, Math.max(pipeB, bodyHeight) * 0.18);
+    const branchDimensionTopY = fittingBY - (isNoFitting(config.fittingB) ? 0 : bFittingHeight);
+    const branchDimensionBottomY = mainY;
     const sideSpecY = Math.min(246, mainY - Math.max(pipeA, pipeC, bodyHeight) / 2 - 28);
     const bSpecY = fittingBY - bFittingHeight - 20;
     const labelFontSize = drawingColors.labelFontSize || 15;
     const bodyLabelFontSize = drawingColors.bodyLabelFontSize || 14;
-    const totalDimensionFontSize = drawingColors.totalDimensionFontSize || 18;
+    const dimensionFontSize = drawingColors.dimensionFontSize || labelFontSize;
+    const layer = DrawingCore.layer || ((name, body) => `<g data-layer="${name}">${body || ""}</g>`);
     const totalLength = teeHorizontalTotalLengthMm(config);
     const bodyBottomY = mainY + bodyHeight / 2;
     const dimensionY = Math.max(405, bodyBottomY + Math.max(36, bodyHeight * 0.12));
@@ -57,12 +65,14 @@
       ${config.middleC === "中接" ? reducerSegmentSvg(rightX, fittingCX, mainY, bodyHeight, pipeC) : ""}
       ${config.middleB === "直管" ? `<rect x="${centerX - pipeB / 2}" y="${fittingBY}" width="${pipeB}" height="${branchTopY - fittingBY}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>` : ""}
     `;
-    const content = `
+    const objectLayer = `
       <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>
       ${middleSvg}
       ${inlineFittingSvg(config.fittingA, config.diameterA, fittingAX, mainY, pipeA, "left")}
       ${inlineFittingSvg(config.fittingC, config.diameterC, fittingCX, mainY, pipeC, "right")}
       ${verticalInlineFittingSvg(config.fittingB, config.diameterB, fittingBX, fittingBY, pipeB, "top")}
+    `;
+    const labelLayer = `
       <text x="${centerX}" y="${mainY + 5}" text-anchor="middle" dominant-baseline="middle" font-size="${bodyLabelFontSize}" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness}</text>
       ${!isNoFitting(config.fittingA) ? `
         <text x="${fittingACenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
@@ -76,25 +86,46 @@
         <text x="${fittingCCenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">C端</text>
         <text x="${fittingCCenterX}" y="${sideSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterC} ${fittingLabel(config.fittingC)}</text>
       ` : ""}
+    `;
+    const dimensionLayer = `
       ${DrawingCore.horizontalDimension({
         x1: dimensionLeft, x2: dimensionRight, y: dimensionY,
         label: `总长 ${drawingTotalLengthText(totalLength, config.bodyDiameter || config.diameter)}`,
         color: drawingColors.dimension, labelColor: drawingColors.label,
         extensionStart: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
         extensionEnd: { fromY: dimensionExtensionTopY, toY: dimensionY + 10 },
-        labelY: dimensionLabelY, fontSize: totalDimensionFontSize
+        labelY: dimensionLabelY, fontSize: dimensionFontSize
       })}
+      ${branchHeightMm > 0 && typeof DrawingCore.verticalDimension === "function" ? DrawingCore.verticalDimension({
+        x: branchDimensionX,
+        y1: branchDimensionTopY,
+        y2: branchDimensionBottomY,
+        label: drawingTotalLengthText(branchHeightMm, config.diameterB, "H="),
+        color: drawingColors.dimension,
+        labelColor: drawingColors.label,
+        extensionTop: { fromX: fittingBX + Math.max(pipeB, bodyHeight) / 2 + 8, toX: branchDimensionX },
+        extensionBottom: { fromX: fittingBX + Math.max(pipeB, bodyHeight) / 2 + 8, toX: branchDimensionX },
+        labelOffset: 18,
+        fontSize: labelFontSize
+      }) : ""}
+    `;
+    const content = `
+      ${layer("object", objectLayer)}
+      ${layer("dimension", dimensionLayer)}
+      ${layer("label", labelLayer)}
     `;
     const bounds = {
       left: Math.min(dimensionLeft, fittingACenterX - 84),
-      right: Math.max(dimensionRight, fittingCCenterX + 84),
-      top: Math.min(bSpecY - 24, fittingBY - bFittingHeight - 12, sideSpecY - 24),
+      right: Math.max(dimensionRight, fittingCCenterX + 84, branchDimensionX + 42),
+      top: Math.min(bSpecY - 24, fittingBY - bFittingHeight - 12, branchDimensionTopY - 18, sideSpecY - 24),
       bottom: dimensionY + 30
     };
     return typeof DrawingCore.fitContent === "function"
       ? DrawingCore.fitContent({
         bounds,
-        box: { left: 145, right: 1055, top: 130, bottom: 455 },
+        box: showInfoPanels
+          ? { left: 145, right: 1055, top: 130, bottom: 455 }
+          : { left: 145, right: 1055, top: 120, bottom: 585 },
         content,
         minScale: 0.58
       })

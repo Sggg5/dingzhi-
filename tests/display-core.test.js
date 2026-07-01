@@ -1,24 +1,48 @@
 const assert = require("assert");
 const DisplayCore = require("../display-core");
 
-const money = value => `¥${Number(value).toFixed(2)}`;
+const money = value => `￥${Number(value).toFixed(2)}`;
 
 assert.deepStrictEqual(DisplayCore.costRowDisplay(["配件", 12.3], money), {
   name: "配件",
   note: "",
-  amount: "¥12.30"
+  detail: "",
+  amount: "￥12.30"
 });
 
-assert.deepStrictEqual(DisplayCore.costRowDisplay(["加工", "已计入合计：¥1.20"], money), {
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["加工", "已计入合计：￥1.20"], money), {
   name: "加工",
-  note: "已计入合计：¥1.20",
+  note: "已计入合计：￥1.20",
+  detail: "",
   amount: ""
 });
 
-assert.deepStrictEqual(DisplayCore.costRowDisplay(["1路 外丝 D20", "含税表价¥2.65 ÷ 1.13 x 材质系数1.50", 3.5177], money), {
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["1路 外丝 D20", "含税表价￥2.65 / 1.13 x 材质系数1.50", 3.5177], money), {
   name: "1路 外丝 D20",
-  note: "含税表价¥2.65 ÷ 1.13 x 材质系数1.50",
-  amount: "¥3.52"
+  note: "含税表价￥2.65 / 1.13 x 材质系数1.50",
+  detail: "计入金额：￥3.52",
+  amount: ""
+});
+
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["加工合计", "端部加工汇总后乘系数", 7.2], money), {
+  name: "加工合计",
+  note: "端部加工汇总后乘系数",
+  detail: "",
+  amount: "￥7.20"
+});
+
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["自定义明细", "表格取值", 1.23, { detail: true }], money), {
+  name: "自定义明细",
+  note: "表格取值",
+  detail: "计入金额：￥1.23",
+  amount: ""
+});
+
+assert.deepStrictEqual(DisplayCore.costRowDisplay(["重量明细", "主管 0.89 kg + 支管 0.00 kg", "0.89 kg"], money), {
+  name: "重量明细",
+  note: "主管 0.89 kg + 支管 0.00 kg",
+  detail: "0.89 kg",
+  amount: ""
 });
 
 assert.strictEqual(DisplayCore.topProductTitle({ productType: "分水器类", mainDiameter: 88.9 }), "88.9 分水器");
@@ -121,6 +145,6 @@ const manifoldSpec = DisplayCore.specItems({
   mainLength: 940
 }, helpers);
 assert.deepStrictEqual(manifoldSpec.find(row => row[0] === "间距"), ["间距", "1-2:180mm"]);
-assert.deepStrictEqual(manifoldSpec.find(row => row[0] === "末尾配件"), ["末尾配件", "管帽盖"]);
+assert.deepStrictEqual(manifoldSpec.find(row => row[0] === "末尾配件"), ["末尾配件", "88.9 管帽盖"]);
 
 console.log("display core tests passed");

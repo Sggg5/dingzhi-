@@ -27,8 +27,8 @@
     text: {
       label: 13,
       dimension: 13,
-      dimensionEmphasis: 16,
-      dimensionTotal: 18,
+      dimensionEmphasis: 13,
+      dimensionTotal: 13,
       info: 13,
       title: 16,
       small: 11
@@ -201,7 +201,6 @@
         <line x1="30" y1="0" x2="30" y2="84" stroke="${f.stroke}"/>
         <line x1="60" y1="0" x2="60" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="165" y1="0" x2="165" y2="144" stroke="${f.stroke}"/>
-        <line x1="215" y1="0" x2="215" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="260" y1="84" x2="505" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="260" y1="114" x2="505" y2="114" stroke="${f.stroke}"/>
         <line x1="342" y1="84" x2="342" y2="144" stroke="${f.stroke}"/>
@@ -215,10 +214,10 @@
         <text x="237.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">日期</text>
         <text x="16" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">设计</text>
         <text x="95" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
-        <text x="237.5" y="102" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
+        <text x="212.5" y="102" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
         <text x="16" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">审核</text>
         <text x="95" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
-        <text x="237.5" y="134" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
+        <text x="212.5" y="134" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
         <text x="382" y="56" text-anchor="middle" font-size="${f.materialFont}" fill="${f.stroke}">${material}</text>
         <text x="301" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">图样标记</text>
         <text x="383" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">重量</text>
@@ -251,6 +250,9 @@
       x2,
       y,
       label = "",
+      dimensionId = "",
+      dragAxis = "y",
+      offset = {},
       color = CAD_STANDARD.colors.dimension,
       labelColor = color,
       lineWidth = CAD_STANDARD.line.dimension,
@@ -262,6 +264,12 @@
       fontWeight = 400,
       markerId = "arrow"
     } = options;
+    const dx = Number(offset.dx) || 0;
+    const dy = Number(offset.dy) || 0;
+    const wrapperStart = dimensionId
+      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
+      : "";
+    const wrapperEnd = dimensionId ? "</g>" : "";
     const startExtension = extensionStart
       ? `<line x1="${x1}" y1="${extensionStart.fromY}" x2="${x1}" y2="${extensionStart.toY}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
@@ -269,10 +277,12 @@
       ? `<line x1="${x2}" y1="${extensionEnd.fromY}" x2="${x2}" y2="${extensionEnd.toY}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
     return `
+      ${wrapperStart}
       ${startExtension}
       ${endExtension}
       <line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="${lineWidth}" marker-start="url(#${markerId})" marker-end="url(#${markerId})"/>
       ${label ? `<text x="${(x1 + x2) / 2}" y="${labelY}" text-anchor="middle" font-size="${fontSize}" font-weight="${fontWeight}" fill="${labelColor}">${label}</text>` : ""}
+      ${wrapperEnd}
     `;
   }
 
@@ -282,6 +292,9 @@
       y1,
       y2,
       label = "",
+      dimensionId = "",
+      dragAxis = "x",
+      offset = {},
       color = CAD_STANDARD.colors.dimension,
       labelColor = color,
       lineWidth = CAD_STANDARD.line.dimension,
@@ -293,6 +306,12 @@
       fontWeight = 400,
       markerId = "arrow"
     } = options;
+    const dx = Number(offset.dx) || 0;
+    const dy = Number(offset.dy) || 0;
+    const wrapperStart = dimensionId
+      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
+      : "";
+    const wrapperEnd = dimensionId ? "</g>" : "";
     const topExtension = extensionTop
       ? `<line x1="${extensionTop.fromX}" y1="${y1}" x2="${extensionTop.toX}" y2="${y1}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
@@ -302,10 +321,12 @@
     const labelX = x + labelOffset;
     const labelY = (y1 + y2) / 2;
     return `
+      ${wrapperStart}
       ${topExtension}
       ${bottomExtension}
       <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${color}" stroke-width="${lineWidth}" marker-start="url(#${markerId})" marker-end="url(#${markerId})"/>
       ${label ? `<text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize}" font-weight="${fontWeight}" fill="${labelColor}" transform="rotate(-90 ${labelX} ${labelY})">${label}</text>` : ""}
+      ${wrapperEnd}
     `;
   }
 
@@ -317,6 +338,9 @@
       endBaseY,
       dimensionOffset,
       label = "",
+      dimensionId = "",
+      dragAxis = "normal45",
+      offset = {},
       labelOffset = 12,
       color = "#6f6a61",
       labelColor = color,
@@ -327,6 +351,12 @@
       fontFamily = "Microsoft YaHei, Arial, sans-serif",
       markerId = "arrow"
     } = options;
+    const dx = Number(offset.dx) || 0;
+    const dy = Number(offset.dy) || 0;
+    const wrapperStart = dimensionId
+      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
+      : "";
+    const wrapperEnd = dimensionId ? "</g>" : "";
     const unit = 1 / Math.sqrt(2);
     const x1 = centerBaseX + dimensionOffset * unit;
     const y1 = centerBaseY + dimensionOffset * unit;
@@ -337,10 +367,12 @@
     const labelY = (y1 + y2) / 2 - labelOffset * unit;
     const textAngle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
     return `
+      ${wrapperStart}
       <line x1="${centerBaseX}" y1="${centerBaseY}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="${extensionLineWidth}"/>
       <line x1="${endBaseX}" y1="${endBaseY}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${extensionLineWidth}"/>
       <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${lineWidth}" marker-start="url(#${markerId})" marker-end="url(#${markerId})"/>
       ${label ? `<text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize}" font-weight="${fontWeight}" font-family="${fontFamily}" fill="${labelColor}" transform="rotate(${textAngle} ${labelX} ${labelY})">${label}</text>` : ""}
+      ${wrapperEnd}
     `;
   }
 
@@ -371,8 +403,15 @@
     const targetCenterY = (box.top + box.bottom) / 2;
     const translateX = targetCenterX - sourceCenterX * scale;
     const translateY = targetCenterY - sourceCenterY * scale;
-    return `<g transform="translate(${translateX.toFixed(2)} ${translateY.toFixed(2)}) scale(${scale.toFixed(4)})">${content}</g>`;
+    return `<g data-layer-group="fitted" transform="translate(${translateX.toFixed(2)} ${translateY.toFixed(2)}) scale(${scale.toFixed(4)})">${content}</g>`;
   }
 
-  return { CAD_STANDARD, arrowMarker, bomBox, centerLine, engineeringFrame, fitContent, horizontalDimension, infoBox, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
+  function layer(name, content, attributes = "") {
+    const body = Array.isArray(content) ? content.filter(Boolean).join("") : String(content || "");
+    if (!body.trim()) return "";
+    const extra = attributes ? ` ${attributes}` : "";
+    return `<g data-layer="${name}"${extra}>${body}</g>`;
+  }
+
+  return { CAD_STANDARD, arrowMarker, bomBox, centerLine, engineeringFrame, fitContent, horizontalDimension, infoBox, layer, projected45Dimension, technicalRequirements, titleBlock, verticalDimension };
 });

@@ -5,7 +5,7 @@
   }
   root.ConfigCore = api;
 })(typeof globalThis !== "undefined" ? globalThis : window, function createConfigCore() {
-  const PRODUCT_TYPES = new Set(["分水器类", "对接类", "三通类", "弯头类"]);
+  const PRODUCT_TYPES = new Set(["分水器类", "对接类", "三通类", "弯头类", "组合件"]);
 
   function number(value, fallback = 0) {
     const parsed = Number(value);
@@ -62,6 +62,7 @@
       thickness: positiveNumber(branch?.thickness),
       height: nonNegativeNumber(branch?.height),
       spacingAfter: nonNegativeNumber(branch?.spacingAfter),
+      side: branch?.side === "下" ? "下" : branch?.side === "上" ? "上" : "",
       positiveTolerance: Boolean(branch?.positiveTolerance)
     }));
   }
@@ -81,6 +82,10 @@
       branchHeight: nonNegativeNumber(config.branchHeight),
       inletAllowance: nonNegativeNumber(config.inletAllowance),
       tailAllowance: nonNegativeNumber(config.tailAllowance),
+      mainFittingDiameter: positiveNumber(config.mainFittingDiameter, positiveNumber(config.mainDiameter)),
+      tailFittingDiameter: positiveNumber(config.tailFittingDiameter, positiveNumber(config.mainDiameter)),
+      mainAdapterEnabled: Boolean(config.mainAdapterEnabled) && number(config.mainFittingDiameter, config.mainDiameter) !== number(config.mainDiameter),
+      tailAdapterEnabled: Boolean(config.tailAdapterEnabled) && number(config.tailFittingDiameter, config.mainDiameter) !== number(config.mainDiameter),
       branches
     };
   }
@@ -142,11 +147,23 @@
     };
   }
 
+  function normalizeCombinationConfig(rawConfig) {
+    const config = normalizeCommon(rawConfig);
+    return {
+      ...config,
+      productType: "组合件",
+      fittingA: String(config.fittingA || "无配件"),
+      fittingB: String(config.fittingB || "无配件"),
+      components: Array.isArray(config.components) ? config.components : []
+    };
+  }
+
   function normalizeConfig(rawConfig = {}) {
     const productType = rawConfig.productType || "分水器类";
     if (productType === "对接类") return normalizeDockingConfig(rawConfig);
     if (productType === "三通类") return normalizeTeeConfig(rawConfig);
     if (productType === "弯头类") return normalizeElbowConfig(rawConfig);
+    if (productType === "组合件") return normalizeCombinationConfig(rawConfig);
     return normalizeManifoldConfig(rawConfig);
   }
 
@@ -172,6 +189,7 @@
     normalizeDockingConfig,
     normalizeElbowConfig,
     normalizeManifoldConfig,
+    normalizeCombinationConfig,
     normalizeMiddleItems,
     normalizeTeeConfig,
     number,

@@ -33,6 +33,10 @@ assert.strictEqual(docking.middleItems[1].length, 0);
 
 const manifold = ConfigCore.normalizeConfig({
   mainDiameter: "88.9",
+  mainFittingDiameter: "76.1",
+  tailFittingDiameter: "88.9",
+  mainAdapterEnabled: true,
+  tailAdapterEnabled: true,
   wallThickness: "2",
   branchDiameter: "35",
   branchThickness: "1.5",
@@ -41,6 +45,9 @@ const manifold = ConfigCore.normalizeConfig({
 });
 assert.strictEqual(manifold.productType, "分水器类");
 assert.strictEqual(manifold.mainDiameter, 88.9);
+assert.strictEqual(manifold.mainFittingDiameter, 76.1);
+assert.strictEqual(manifold.mainAdapterEnabled, true);
+assert.strictEqual(manifold.tailAdapterEnabled, false);
 assert.strictEqual(manifold.branches[0].height, 0);
 
 const elbow = ConfigCore.normalizeConfig({ productType: "弯头类", angle: 44, length: 60 });

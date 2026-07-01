@@ -25,6 +25,7 @@ const helpers = {
   inletFittingLength: () => 30,
   inletFittingSvg: tag("inlet"),
   pipeVisualDiameter: value => value,
+  reducerSegmentSvg: (...args) => `<reducer>${args.slice(0, 5).join(",")}</reducer>`,
   svgTextLines: () => "<title-lines/>",
   tailFittingLength: () => 20,
   tailFittingSvg: tag("tail"),
@@ -81,6 +82,16 @@ assert(capturedEndSegment);
 assert(capturedTailX >= capturedEndSegment.x1 + 34);
 assert.strictEqual(capturedEndSegment.x2 - capturedTailX, 95);
 
+const adapterSvg = ManifoldDrawing.render({
+  ...config,
+  mainFittingDiameter: 50.8,
+  tailFittingDiameter: 32,
+  mainAdapterEnabled: true,
+  tailAdapterEnabled: true
+}, { mainLength: 320, inletAllowance: 100, tailAllowance: 40 }, helpers);
+assert(adapterSvg.includes("<reducer>"));
+assert(adapterSvg.includes("50.8 外丝"));
+
 let doubleRowDimensionY = null;
 const doubleRowHelpers = {
   ...helpers,
@@ -106,4 +117,29 @@ ManifoldDrawing.render(
   doubleRowHelpers
 );
 assert(doubleRowDimensionY > 480);
+
+const manualBottomSvg = ManifoldDrawing.render(
+  {
+    ...config,
+    manifoldType: "双排交错",
+    branches: [
+      { diameter: 32, fitting: "外丝", height: 100, side: "下" }
+    ]
+  },
+  { mainLength: 220, inletAllowance: 100, tailAllowance: 40 },
+  helpers
+);
+assert(manualBottomSvg.includes("scale(1 -1)"));
+const blankBranchSvg = ManifoldDrawing.render(
+  {
+    ...config,
+    branches: [
+      { diameter: 20, fitting: "澶栦笣", height: 50 },
+      { diameter: 20, fitting: "无配件", height: 50, side: "下" }
+    ]
+  },
+  { mainLength: 320, inletAllowance: 100, tailAllowance: 40 },
+  helpers
+);
+assert.strictEqual((blankBranchSvg.match(/<branch-fitting>/g) || []).length, 1);
 console.log("manifold drawing tests passed");

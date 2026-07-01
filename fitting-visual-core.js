@@ -36,15 +36,16 @@
 
   function inletFittingLength(config, height, deps) {
     const fitting = config.mainFitting;
+    const diameter = config.mainFittingDiameter || config.mainDiameter;
     if (fitting === "直管") return 0;
-    if (fitting === "法兰") return flangeVisualWidth(config.mainDiameter, height, deps.fittingLengthMm);
-    if (fitting === "双卡") return doubleCardVisualSize(config.mainDiameter, deps).width - 6;
+    if (fitting === "法兰") return flangeVisualWidth(diameter, height, deps.fittingLengthMm);
+    if (fitting === "双卡") return doubleCardVisualSize(diameter, deps).width - 6;
     if (deps.isRingPressLike(fitting)) {
-      const base = ringPressVisualSize(config.mainDiameter, deps);
+      const base = ringPressVisualSize(diameter, deps);
       const visualHeight = Math.max(base.height, height);
       return Math.max(base.width, visualHeight * (base.width / base.height)) - 6;
     }
-    if (fitting === "内丝" || fitting === "外丝") return threadVisualWidth(fitting, config.mainDiameter, height) - 6;
+    if (fitting === "内丝" || fitting === "外丝") return threadVisualWidth(fitting, diameter, height) - 6;
     if (fitting === "沟槽" || fitting === "对焊") return Math.max(34, height * 0.34);
     return 42;
   }
@@ -52,7 +53,7 @@
   function tailFittingLength(config, height, deps) {
     if (config.tailFitting === "直管") return 0;
     if (config.tailFitting === "堵头") return Math.max(14, height * 0.21);
-    return inletFittingLength({ ...config, mainFitting: config.tailFitting }, height, deps);
+    return inletFittingLength({ ...config, mainFitting: config.tailFitting, mainFittingDiameter: config.tailFittingDiameter || config.mainDiameter }, height, deps);
   }
 
   function inlineFittingLength(fitting, diameter, height, deps) {

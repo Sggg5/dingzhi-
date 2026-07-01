@@ -4,13 +4,15 @@
     const dockingMode = productType === "对接类";
     const teeMode = productType === "三通类";
     const elbowMode = productType === "弯头类";
+    const combinationMode = productType === "组合件";
     return {
       productType,
       manifoldMode,
       dockingMode,
       teeMode,
       elbowMode,
-      fittingSectionHidden: manifoldMode,
+      combinationMode,
+      fittingSectionHidden: manifoldMode || combinationMode,
       dockingOnlyHidden: !dockingMode,
       teeHidden: !teeMode,
       angleHidden: !elbowMode,
