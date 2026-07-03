@@ -323,7 +323,8 @@
 
     const elbowSegmentDimension = (segment, label, options = {}) => {
       const points = segment.points;
-      if (!String(segment.component.type || "").includes("45") || !points || points.length < 3) {
+      const dimensionComponent = segment.branchComponent || segment.component;
+      if (!String(dimensionComponent.type || "").includes("45") || !points || points.length < 3) {
         return elbowLeader(segment, label, options.lane || 0);
       }
       const mappedPoints = points.map(mapPoint);
@@ -340,7 +341,7 @@
       const endBase = options.extendEnd
         ? { x: endPoint.x + endUnit.x * options.extendEnd, y: endPoint.y + endUnit.y * options.extendEnd }
         : endPoint;
-      const halfWidth = Math.max(6, Math.min(39, segment.component.diameter * scale * 0.21));
+      const halfWidth = Math.max(6, Math.min(39, dimensionComponent.diameter * scale * 0.21));
       return linearDimension(tangentCorner, endBase, label, {
         halfWidth,
         lane: options.lane || 0,

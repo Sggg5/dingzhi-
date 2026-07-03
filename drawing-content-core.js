@@ -14,7 +14,7 @@
 
   function titleBranchSummary(config) {
     const groups = new Map();
-    config.branches.filter(branch => branch.fitting !== "无配件").forEach(branch => {
+    config.branches.filter(branch => branch.fitting !== "无配件" && branch.fitting !== "直管").forEach(branch => {
       const key = `D${branch.diameter}`;
       groups.set(key, (groups.get(key) || 0) + 1);
     });
@@ -23,19 +23,20 @@
 
   function manifoldBomRows(config, helpers) {
     const { fittingLabel } = helpers;
+    const isNoFitting = helpers.isNoFitting || (value => value === "无配件" || value === "直管");
     const rows = [];
     const mainFittingDiameter = config.mainFittingDiameter || config.mainDiameter;
     const tailFittingDiameter = config.tailFittingDiameter || config.mainDiameter;
     addRow(rows, `主管 D${config.mainDiameter} x ${config.wallThickness}`);
-    if (config.mainFitting !== "直管") addRow(rows, `进水 ${fittingLabel(config.mainFitting)} D${mainFittingDiameter}`);
+    if (!isNoFitting(config.mainFitting)) addRow(rows, `进水 ${fittingLabel(config.mainFitting)} D${mainFittingDiameter}`);
     if (config.mainAdapterEnabled) addRow(rows, `进水中接 D${mainFittingDiameter}-D${config.mainDiameter}`);
-    if (config.tailFitting !== "直管") addRow(rows, `末尾 ${fittingLabel(config.tailFitting)} D${tailFittingDiameter}`);
+    if (!isNoFitting(config.tailFitting)) addRow(rows, `末尾 ${fittingLabel(config.tailFitting)} D${tailFittingDiameter}`);
     if (config.tailAdapterEnabled) addRow(rows, `末尾中接 D${config.mainDiameter}-D${tailFittingDiameter}`);
     config.branches.forEach(branch => {
       const heightText = branch.height > 0 ? ` 加高${branch.height}` : "";
       const toleranceText = branch.positiveTolerance ? " 正差" : "";
       if (branch.height > 0) addRow(rows, `支管 D${branch.diameter} x ${branch.thickness}${toleranceText}${heightText}`);
-      if (branch.fitting !== "直管") addRow(rows, `支管${fittingLabel(branch.fitting)} D${branch.diameter}`);
+      if (!isNoFitting(branch.fitting)) addRow(rows, `支管${fittingLabel(branch.fitting)} D${branch.diameter}`);
     });
     return rows;
   }
@@ -44,8 +45,10 @@
     const { drawingLengthValue, fittingLabel, isNoFitting, productKindName } = helpers;
     const rows = [];
     if (config.productType === "对接类") {
+      const middlePipeDiameter = config.middlePipeDiameter || config.diameter;
+      const middlePipeThickness = config.middlePipeThickness || config.thickness;
       (config.middleItems || []).forEach(item => {
-        if (item.type === "直管") addRow(rows, `直管 D${config.diameter} x ${config.thickness} L${drawingLengthValue(item.length)}`);
+        if (item.type === "直管") addRow(rows, `直管 D${item.diameter || middlePipeDiameter} x ${item.thickness || middlePipeThickness} L${drawingLengthValue(item.length)}`);
         if (item.type === "中接") addRow(rows, `中接 D${config.diameter}`);
       });
       if (!isNoFitting(config.fittingA)) addRow(rows, `A端 ${fittingLabel(config.fittingA)} D${config.diameterA}`);
@@ -80,9 +83,10 @@
   function productDimensionNotes(config, helpers) {
     const { drawingLengthText } = helpers;
     if (config.productType === "对接类") {
+      const middlePipeDiameter = config.middlePipeDiameter || config.diameter;
       const middleText = (config.middleItems || []).length === 0
         ? "中间：无"
-        : `中间：${config.middleItems.map(item => item.type === "直管" ? `直管${drawingLengthText(item.length, "")}` : "中接").join("+")}`;
+        : `中间：${config.middleItems.map(item => item.type === "直管" ? `直管D${item.diameter || middlePipeDiameter} ${drawingLengthText(item.length, "")}` : "中接").join("+")}`;
       return [`A：D${config.diameterA} x ${config.thicknessA}`, `B：D${config.diameterB} x ${config.thicknessB}`, middleText];
     }
     if (config.productType === "弯头类") {

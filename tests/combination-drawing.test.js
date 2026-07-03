@@ -144,4 +144,14 @@ assert(!singleNinetySvg.includes("combination-elbow-leader"), "single 90-degree 
 assert(!singleNinetySvg.includes("总长 L="), "single 90-degree combination elbow should label the bottom dimension as H, not total length");
 assert(!singleNinetySvg.includes("总高 H="), "single 90-degree combination elbow should not render an extra overall height dimension");
 
+const teeBranchElbowSvg = renderScenario([{
+  type: CombinationCore.TYPES[3], diameter: 40, thickness: 1.5, length: 52,
+  branchLength: 56, branchDiameter: 40, branchThickness: 1.5,
+  branchFittingDiameter: 40, branchFitting: "外丝", branchMiddle: "无",
+  branchComponents: [{ type: CombinationCore.BRANCH_TYPES[1], diameter: 40, thickness: 1.5, length: 60, direction: "右" }]
+}]);
+assert(!teeBranchElbowSvg.includes("NaN") && !teeBranchElbowSvg.includes("undefined"), "tee branch elbow dimensions must not emit invalid coordinates");
+assert(teeBranchElbowSvg.includes('data-dimension-id="combination-branch-1-1"'), "tee branch elbow should expose its own draggable dimension");
+assert(teeBranchElbowSvg.includes("1.1"), "tee branch elbow should keep branch component sequence labeling");
+
 console.log("combination drawing tests passed");

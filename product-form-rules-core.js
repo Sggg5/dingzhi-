@@ -3,11 +3,14 @@
     return Number(value);
   }
 
-  function dockingMiddleAutoState({ diameterA, diameterB, previousPair = "", touched = false }) {
-    const pair = `${diameterA}-${diameterB}`;
+  function dockingMiddleAutoState({ diameterA, diameterB, thicknessA = "", thicknessB = "", previousPair = "", touched = false }) {
+    const pair = `${diameterA}x${thicknessA}-${diameterB}x${thicknessB}`;
     const pairChanged = pair !== previousPair;
-    const needsReducerMiddle = numberValue(diameterA) !== numberValue(diameterB);
-    const shouldAutoMiddle = needsReducerMiddle && pairChanged && !touched;
+    const needsReducerMiddle = numberValue(diameterA) !== numberValue(diameterB)
+      || numberValue(thicknessA) !== numberValue(thicknessB);
+    const shouldAutoReducer = needsReducerMiddle && pairChanged && !touched;
+    const shouldAutoStraight = !needsReducerMiddle && pairChanged && Boolean(previousPair) && !touched;
+    const shouldAutoMiddle = shouldAutoReducer || shouldAutoStraight;
     return {
       pair,
       pairChanged,
@@ -15,7 +18,43 @@
       shouldAutoMiddle,
       hasMiddle: shouldAutoMiddle ? true : undefined,
       middleCount: shouldAutoMiddle ? "1" : undefined,
-      middleType: shouldAutoMiddle ? "中接" : undefined
+      middleType: shouldAutoReducer ? "中接" : (shouldAutoStraight ? "直管" : undefined)
+    };
+  }
+
+  function dockingSideMiddleAutoState({
+    diameterA,
+    thicknessA = "",
+    diameterB,
+    thicknessB = "",
+    middleDiameter,
+    middleThickness = "",
+    changedId = "",
+    touched = false,
+    currentMiddleA = "无",
+    currentMiddleB = "无"
+  }) {
+    const triggers = new Set([
+      "productDiameterA",
+      "productThicknessA",
+      "productDiameterB",
+      "productThicknessB",
+      "productMiddleDiameter",
+      "productMiddleThickness",
+      "tubeSeries",
+      "productType"
+    ]);
+    if (touched || !triggers.has(changedId)) {
+      return { middleA: currentMiddleA, middleB: currentMiddleB, changed: false };
+    }
+    const aNeedsReducer = numberValue(diameterA) !== numberValue(middleDiameter)
+      || numberValue(thicknessA) !== numberValue(middleThickness);
+    const bNeedsReducer = numberValue(diameterB) !== numberValue(middleDiameter)
+      || numberValue(thicknessB) !== numberValue(middleThickness);
+    return {
+      middleA: aNeedsReducer ? "中接" : "无",
+      middleB: bNeedsReducer ? "中接" : "无",
+      changed: true
     };
   }
 
@@ -42,6 +81,7 @@
 
   const api = {
     dockingMiddleAutoState,
+    dockingSideMiddleAutoState,
     elbowSideMiddleValue,
     teeSideMiddleValue,
     teeBMiddleForFitting

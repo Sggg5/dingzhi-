@@ -49,4 +49,13 @@ assert(largeDimensionY > 405, "large tee dimension should move below the body");
 const largeReducerWidths = Array.from(largeSvg.matchAll(/<reducer width="([^"]+)"/g), match => Number(match[1]));
 assert(largeReducerWidths.length >= 2, "large tee should render A/C reducers");
 assert(largeReducerWidths.every(width => width < 35), "large tee A/C reducers should be visually shortened");
+const bAdapterSvg = TeeDrawing.render({
+  ...config,
+  middleA: "无",
+  middleB: "中接",
+  middleC: "无",
+  diameterB: 50
+}, helpers);
+assert(bAdapterSvg.includes("<path"));
+assert(bAdapterSvg.includes("H=70 mm"));
 console.log("tee drawing tests passed");

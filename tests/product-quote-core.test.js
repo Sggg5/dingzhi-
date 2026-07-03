@@ -89,6 +89,19 @@ closeTo(mixed.annealingWeightKg, 0.6);
 closeTo(mixed.autoDifficultyFactor, 1.15);
 closeTo(mixed.managementCost, mixed.annealingWeightKg * pricing.managementPerKg);
 
+const dockingMiddleDiameter = ProductQuoteCore.calculateDocking({
+  ...common,
+  middlePipeDiameter: 76.1,
+  middlePipeThickness: 2,
+  middleItems: [
+    { type: "直管", length: 100, diameter: 76.1, thickness: 2 }
+  ]
+}, pricing, {
+  ...helpers,
+  tubeWeightKg: (length, diameter, thickness) => length * diameter * thickness / 1000000
+});
+closeTo(dockingMiddleDiameter.productTubeWeightKg, 100 * 76.1 * 2 / 1000000);
+
 const manual = ProductQuoteCore.calculateDocking({
   ...common,
   difficultyFactorInput: "1.5"
@@ -126,6 +139,33 @@ closeTo(tee.heatTreatmentExcludedWeightKg, 0.8);
 closeTo(tee.annealingWeightKg, 0.802);
 closeTo(tee.autoDifficultyFactor, 1.19);
 closeTo(tee.managementCost, tee.annealingWeightKg * pricing.managementPerKg);
+
+const teeBMiddleAdapter = ProductQuoteCore.calculateTee({
+  ...common,
+  diameter: 40,
+  thickness: 1.5,
+  bodyDiameter: 40,
+  bodyThickness: 1.5,
+  bodyLength: 52,
+  length: 52,
+  diameterA: 40,
+  diameterB: 50.8,
+  diameterC: 40,
+  thicknessA: 1.5,
+  thicknessB: 1.5,
+  thicknessC: 1.5,
+  fittingA: "外丝",
+  fittingB: "外丝",
+  fittingC: "外丝",
+  middleA: "无",
+  middleB: "中接",
+  middleC: "无",
+  middleLengthB: 0
+}, pricing, helpers);
+closeTo(teeBMiddleAdapter.middleFittingCost, 8);
+closeTo(teeBMiddleAdapter.middleProcessCost, 0.4);
+closeTo(teeBMiddleAdapter.productTubeWeightKg, 0.052);
+closeTo(teeBMiddleAdapter.autoDifficultyFactor, 1.17);
 
 const elbow90 = ProductQuoteCore.calculateElbow({
   ...common,

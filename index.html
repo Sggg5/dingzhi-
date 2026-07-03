@@ -252,6 +252,7 @@
                     <li>分水器由主管、支管、进水端配件、末尾配件和各支路配件组成，支路数量支持 1-20 口。</li>
                     <li>主管长度 = 进水尺寸 L + 各支路间距 P 累计 + 末尾尺寸 E。</li>
                     <li>支管不加高时不计支管管材；支管加高时按加高长度计算支管重量和材料费。</li>
+                    <li>支路独立配置可选无配件；无配件支路不计配件价格、不画配件、不进入支路配件 BOM。</li>
                     <li>国标大规格默认壁厚：D133 = 2.5，D159 = 2.5，D219 = 3.0。</li>
                   </ul>
                   <h3>3. 加工与后处理</h3>
@@ -272,20 +273,20 @@
                 <div class="quote-logic-card">
                   <h3>1. 组成与长度</h3>
                   <ul>
-                    <li>A/B 两端可分别选择外径、壁厚和连接方式；无配件时不显示标识、不计配件。</li>
-                    <li>对接默认无中间段；启用后中间段可为直管或中接。</li>
-                    <li>中间段为直管时按直管长度计算管材重量；中间段为中接时按中接配件计成本和理论重量。</li>
-                    <li>A/B 外径不一致时可自动启用中接，但用户选择后不锁死。</li>
+                    <li>A/B 两端可分别选择外径、壁厚、连接方式和端部中间段；无配件时不显示标识、不计配件。</li>
+                    <li>中间直管单独配置外径、壁厚和总长要求；总长要求会结合两端配件长度计算。</li>
+                    <li>A端/B端中间段各自支持无、直管、中接；直管按对应长度、直管外径和直管壁厚计算管材重量。</li>
+                    <li>A端或B端规格与中间直管规格不一致时，未手动改过的端部会自动选中接；用户选择后不锁死。</li>
                   </ul>
                   <h3>2. 加工与重量</h3>
                   <ul>
                     <li>对接加工费使用独立对接类加工费表，按配件类型 x 外径取值。</li>
-                    <li>加工费 = A端加工 + B端加工 + 中接加工，再乘成型加工系数和难度系数。</li>
-                    <li>退火/包材重量 = 中间直管重量 + A/B端非法兰配件理论重量 + 中接理论重量。</li>
+                    <li>加工费 = A端加工 + B端加工 + A/B端中接加工，再乘成型加工系数和难度系数。</li>
+                    <li>退火/包材重量 = 中间直管重量 + A/B端非法兰配件理论重量 + A/B端中接理论重量。</li>
                     <li>不带法兰：制造管理 = 加工费 x 2.14；带法兰：制造管理 = 扣除法兰后的产品重量 x 4.13。</li>
                     <li>表面处理只按中间直管材料重量计算，不按配件理论重量计算。</li>
                   </ul>
-                  <p class="logic-formula">对接不含税成本 = 中间直管材料 + A/B端配件 + 中接配件 + 对接加工费 + 退火 + 制造管理 + 包材 + 表面处理。</p>
+                  <p class="logic-formula">对接不含税成本 = 中间直管材料 + A/B端配件 + A/B端中接配件 + 对接加工费 + 退火 + 制造管理 + 包材 + 表面处理。</p>
                 </div>
               </div>
               <div class="settings-block" data-settings-product="tee" hidden>
@@ -298,7 +299,7 @@
                   <ul>
                     <li>三通体由外径、壁厚、三通体直管长度决定，直管长度可从尺寸表带出，也可手输。</li>
                     <li>三通体选择外径时，一般联动 A/B/C 三端规格。</li>
-                    <li>A/C端中间段支持无或中接；B端中间段支持无或直管。</li>
+                    <li>A/C端中间段支持无或中接；B端中间段支持无、直管或中接。</li>
                     <li>B端选择法兰时，默认启用 B端直管，长度带入 50 mm，可手动修改。</li>
                     <li>D133/D159/D219 可使用沟槽、对焊、法兰。</li>
                   </ul>
@@ -306,7 +307,7 @@
                   <ul>
                     <li>三通加工费使用独立三通类加工费表，按配件类型 x 外径取值。</li>
                     <li>加工费 = A端加工 + B端加工 + C端加工 + 中接加工，再乘成型加工系数和难度系数。</li>
-                    <li>退火/包材重量 = 三通体直管重量 + B端直管重量 + A/B/C端非法兰配件理论重量 + A/C中接理论重量。</li>
+                    <li>退火/包材重量 = 三通体直管重量 + B端直管重量 + A/B/C端非法兰配件理论重量 + A/B/C中接理论重量。</li>
                     <li>不带法兰：制造管理 = 加工费 x 2.14；带法兰：制造管理 = 扣除法兰后的产品重量 x 4.13。</li>
                     <li>表面处理只按三通体直管和 B端直管等实际管材重量计算。</li>
                   </ul>
@@ -347,7 +348,8 @@
                   <ul>
                     <li>组合件由直管、45°弯头、90°弯头、三通组件按 A端到 B端顺序连接。</li>
                     <li>直管、三通主管、三通支管、支口直管按实际外径、壁厚、长度计算管材重量和材料成本。</li>
-                    <li>弯头组件按弯头配件价格表计配件成本；A/B端配件、三通支口配件、中接按通用配件含税价格表取值，计算成本时去税。</li>
+                    <li>弯头组件按弯头配件价格表计配件成本，并按中心高 H x 2.5 折算弯头本体材料重量。</li>
+                    <li>A/B端配件、三通支口配件、中接按通用配件含税价格表取值，计算成本时去税。</li>
                   </ul>
                   <h3>2. 组合加工</h3>
                   <ul>
@@ -357,7 +359,7 @@
                   </ul>
                   <h3>3. 后处理与管理</h3>
                   <ul>
-                    <li>退火和包材按管材重量 + 非法兰配件理论重量估算。</li>
+                    <li>退火和包材按管材重量 + 弯头本体折算材料重量 + 非法兰配件理论重量估算。</li>
                     <li>制造管理 = 组合件加工费 x 组合件制造管理加工系数。</li>
                     <li>表面处理按实际管材重量计算，不按配件理论重量计算。</li>
                   </ul>
@@ -620,10 +622,6 @@
           <div class="param-card" id="fittingSection" hidden>
             <div class="fitting-header">
               <h3>管件参数</h3>
-              <label class="docking-total-field" data-docking-field>
-                <span>总长要求 mm</span>
-                <input id="productTotalLength" type="number" min="0" step="1" placeholder="自动">
-              </label>
               <label class="toggle-row docking-middle-switch" data-docking-field>
                 <input id="productHasMiddle" type="checkbox">
                 <span>中间段</span>
@@ -640,6 +638,21 @@
                 <select id="productThickness"></select>
               </label>
 
+              <div class="docking-body-row" data-docking-field>
+                <label>
+                  <span>直管外径 mm</span>
+                  <select id="productMiddleDiameter"></select>
+                </label>
+                <label>
+                  <span>直管壁厚 mm</span>
+                  <select id="productMiddleThickness"></select>
+                </label>
+                <label>
+                  <span>总长要求 mm</span>
+                  <input id="productTotalLength" type="number" min="0" step="1" placeholder="自动">
+                </label>
+              </div>
+
               <div class="docking-groups" data-docking-field>
                 <div class="docking-group">
                   <h4>A端</h4>
@@ -654,6 +667,18 @@
                   <label>
                     <span>A端连接</span>
                     <select id="productFittingA"></select>
+                  </label>
+                  <label>
+                    <span>A端中间段</span>
+                    <select id="productMiddleA">
+                      <option value="无">无</option>
+                      <option value="直管">直管</option>
+                      <option value="中接">中接</option>
+                    </select>
+                  </label>
+                  <label id="productMiddleLengthAWrap" hidden>
+                    <span>A端直管长度 mm</span>
+                    <input id="productMiddleLengthA" type="number" min="0" step="1" value="20">
                   </label>
                 </div>
 
@@ -670,6 +695,18 @@
                   <label>
                     <span>B端连接</span>
                     <select id="productFittingB"></select>
+                  </label>
+                  <label>
+                    <span>B端中间段</span>
+                    <select id="productMiddleB">
+                      <option value="无">无</option>
+                      <option value="直管">直管</option>
+                      <option value="中接">中接</option>
+                    </select>
+                  </label>
+                  <label id="productMiddleLengthBWrap" hidden>
+                    <span>B端直管长度 mm</span>
+                    <input id="productMiddleLengthB" type="number" min="0" step="1" value="20">
                   </label>
                 </div>
               </div>
@@ -753,7 +790,7 @@
                   <select id="teeBodyThickness"></select>
                 </label>
                 <label>
-                  <span>三通体直管长度&nbsp;mm</span>
+                  <span>三通直管长&nbsp;mm</span>
                   <input id="teeBodyLength" type="number" min="0" step="0.1" placeholder="按表自动">
                 </label>
               </div>
@@ -801,6 +838,7 @@
                     <select id="teeMiddleB">
                       <option value="无">无</option>
                       <option value="直管">直管</option>
+                      <option value="中接">中接</option>
                     </select>
                   </label>
                   <label id="teeMiddleLengthBWrap" hidden>

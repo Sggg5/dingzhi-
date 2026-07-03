@@ -15,4 +15,13 @@ assert(mixed.svg.includes("<rect") && mixed.svg.includes("<path"));
 assert(mixed.leftX >= 100 && mixed.rightX <= 500);
 const large = DockingMiddleRenderer.render({ diameterA: 133, diameterB: 159, middleItems: [{ type: "中接" }] }, 100, 500, 200, h);
 assert(!large.svg.includes("NaN"));
+const selectedMiddleDiameter = DockingMiddleRenderer.render({
+  diameterA: 40,
+  diameterB: 40,
+  middlePipeDiameter: 76.1,
+  middlePipeThickness: 2,
+  middleItems: [{ type: "直管", length: 100, diameter: 76.1, thickness: 2 }]
+}, 100, 500, 200, h);
+assert(selectedMiddleDiameter.svg.includes('height="76.1"'));
+assert(selectedMiddleDiameter.svg.includes("直管 76.1 x 2"));
 console.log("docking middle renderer tests passed");

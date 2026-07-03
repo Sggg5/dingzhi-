@@ -23,7 +23,13 @@
       return type === "中接" && Number(diameter) >= 133 ? baseWidth * 0.5 : baseWidth;
     };
     const middleAWidth = sideMiddleVisualWidth(config.middleA, config.diameterA);
-    const middleBWidth = compressedStraightVisualLength(teeBMiddleVisualLengthMm(config)) * pxPerMm * 0.5;
+    const middleBReducerDiameter = Math.max(Number(config.bodyDiameter || config.diameter) || 0, Number(config.diameterB) || 0);
+    const middleBLogicalLength = config.middleB === "直管"
+      ? teeBMiddleVisualLengthMm(config)
+      : config.middleB === "中接"
+      ? teeMiddleLengthMm("中接", middleBReducerDiameter)
+      : 0;
+    const middleBWidth = compressedStraightVisualLength(middleBLogicalLength) * pxPerMm * 0.5 * (config.middleB === "中接" && middleBReducerDiameter >= 133 ? 0.5 : 1);
     const middleCWidth = sideMiddleVisualWidth(config.middleC, config.diameterC);
     const leftX = 600 - lengthVisual / 2;
     const rightX = 600 + lengthVisual / 2;
@@ -34,7 +40,7 @@
     const fittingBX = centerX;
     const bFittingHeight = inlineFittingLength(config.fittingB, config.diameterB, pipeB);
     const bSeatAdjustY = ["外丝", "内丝", "双卡", "环压", "插焊"].includes(config.fittingB) ? -6 : 0;
-    const fittingBY = (config.middleB === "直管" ? branchTopY - middleBWidth : branchTopY) + bSeatAdjustY;
+    const fittingBY = (["直管", "中接"].includes(config.middleB) ? branchTopY - middleBWidth : branchTopY) + bSeatAdjustY;
     const fittingCX = rightX + middleCWidth;
     const fittingALength = inlineFittingLength(config.fittingA, config.diameterA, pipeA);
     const fittingCLength = inlineFittingLength(config.fittingC, config.diameterC, pipeC);
@@ -44,7 +50,7 @@
     const fittingCCenterX = dimensionRight - fittingCLength / 2;
     const fittingBCenterY = fittingBY - bFittingHeight / 2;
     const branchHeightMm = (Number(config.bodyDiameter || config.diameter) || 0) / 2
-      + teeBMiddleVisualLengthMm(config)
+      + middleBLogicalLength
       + (isNoFitting(config.fittingB) ? 0 : inlineFittingLength(config.fittingB, config.diameterB, pipeB));
     const branchDimensionX = dimensionRight + Math.max(58, Math.max(pipeB, bodyHeight) * 0.18);
     const branchDimensionTopY = fittingBY - (isNoFitting(config.fittingB) ? 0 : bFittingHeight);
@@ -64,6 +70,11 @@
       ${config.middleA === "中接" ? reducerSegmentSvg(fittingAX, leftX, mainY, pipeA, bodyHeight) : ""}
       ${config.middleC === "中接" ? reducerSegmentSvg(rightX, fittingCX, mainY, bodyHeight, pipeC) : ""}
       ${config.middleB === "直管" ? `<rect x="${centerX - pipeB / 2}" y="${fittingBY}" width="${pipeB}" height="${branchTopY - fittingBY}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>` : ""}
+      ${config.middleB === "中接" ? `<path d="M ${centerX - pipeB / 2} ${fittingBY}
+        L ${centerX + pipeB / 2} ${fittingBY}
+        L ${centerX + bodyHeight / 2} ${branchTopY}
+        L ${centerX - bodyHeight / 2} ${branchTopY}
+        Z" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}" stroke-linejoin="round"/>` : ""}
     `;
     const objectLayer = `
       <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>

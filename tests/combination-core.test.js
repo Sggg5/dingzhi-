@@ -68,6 +68,7 @@ assert.strictEqual(result.assemblyCost, 4);
 assert.strictEqual(result.endpointProcessCost, 1);
 assert.strictEqual(result.processCost, 5);
 assert.strictEqual(result.jointRows[0].diameter, 40);
+assert.strictEqual(result.tubeWeightKg, 0.25);
 assert(result.costRows.some(row => row[0] === "制造管理" && row[1].includes("2.5")));
 
 const weldFallbackResult = CombinationCore.calculate({
@@ -117,6 +118,7 @@ assert(teeResult.bomRows.some(row => row.name.includes("支口外丝 D40")));
 assert(teeResult.bomRows.some(row => row.name.includes("支口中接 D32-D40")));
 assert(teeResult.bomRows.some(row => row.name.includes("支路90°弯头 D32")));
 assert.strictEqual(teeResult.geometry.branchEnds.length, 1);
+assert(teeResult.tubeWeightKg > 0.08);
 assert(teeResult.fittingCost >= 10);
 assert(teeResult.processCost >= 11);
 

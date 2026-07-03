@@ -352,7 +352,15 @@ function bindFields() {
     productThicknessA: document.querySelector("#productThicknessA"),
     productDiameterB: document.querySelector("#productDiameterB"),
     productThicknessB: document.querySelector("#productThicknessB"),
+    productMiddleA: document.querySelector("#productMiddleA"),
+    productMiddleLengthA: document.querySelector("#productMiddleLengthA"),
+    productMiddleLengthAWrap: document.querySelector("#productMiddleLengthAWrap"),
+    productMiddleB: document.querySelector("#productMiddleB"),
+    productMiddleLengthB: document.querySelector("#productMiddleLengthB"),
+    productMiddleLengthBWrap: document.querySelector("#productMiddleLengthBWrap"),
     productHasMiddle: document.querySelector("#productHasMiddle"),
+    productMiddleDiameter: document.querySelector("#productMiddleDiameter"),
+    productMiddleThickness: document.querySelector("#productMiddleThickness"),
     productMiddlePanel: document.querySelector("#productMiddlePanel"),
     productMiddleCount: document.querySelector("#productMiddleCount"),
     productMiddleRows: document.querySelector("#productMiddleRows"),
@@ -951,6 +959,7 @@ function teeHorizontalTotalLengthMm(config) {
 
 function applyDockingTotalLengthRequirement() {
   if (fields.productType.value !== "对接类") return;
+  if (fields.productMiddleA || fields.productMiddleB) return;
   const totalLength = Number(fields.productTotalLength.value);
   if (!totalLength || totalLength <= 0 || !fields.productHasMiddle.checked) return;
 
@@ -1068,6 +1077,19 @@ function syncTeeMiddleLengthFields() {
   fields.teeMiddleLengthBWrap.hidden = state.hidden;
   fields.teeMiddleLengthB.disabled = state.disabled;
   fields.teeMiddleLengthB.value = state.value;
+}
+
+function syncDockingSideMiddleLengthFields() {
+  [
+    { select: fields.productMiddleA, input: fields.productMiddleLengthA, wrap: fields.productMiddleLengthAWrap },
+    { select: fields.productMiddleB, input: fields.productMiddleLengthB, wrap: fields.productMiddleLengthBWrap }
+  ].forEach(({ select, input, wrap }) => {
+    if (!select || !input || !wrap) return;
+    const state = MiddleFieldCore.straightLengthFieldState(select.value, input.value, 20);
+    wrap.hidden = state.hidden;
+    input.disabled = state.disabled;
+    input.value = state.value;
+  });
 }
 
 function getProductConfig() {
@@ -1285,6 +1307,8 @@ function syncCombinationRules(changedId) {
 function getDockingConfig() {
   const diameterA = Number(fields.productDiameterA.value);
   const diameterB = Number(fields.productDiameterB.value);
+  const middlePipeDiameter = Number(fields.productMiddleDiameter.value) || Math.max(diameterA, diameterB);
+  const middlePipeThickness = Number(fields.productMiddleThickness.value) || defaultWallThickness(middlePipeDiameter);
   const thicknessA = Number(fields.productThicknessA.value);
   const thicknessB = Number(fields.productThicknessB.value);
   const middleItems = readDockingMiddleRows();
@@ -1303,6 +1327,8 @@ function getDockingConfig() {
     diameterB,
     thicknessA,
     thicknessB,
+    middlePipeDiameter,
+    middlePipeThickness,
     diameter: Math.max(diameterA, diameterB),
     thickness: Math.max(thicknessA, thicknessB),
     length: directLength,
@@ -1324,15 +1350,45 @@ function getDockingConfig() {
 }
 
 function readDockingMiddleRows() {
-  if (!fields.productHasMiddle.checked) return [];
-  return Array.from(fields.productMiddleRows.querySelectorAll(".middle-row")).map(row => {
-    const type = row.querySelector("[data-middle-type]").value;
+  const middleDiameter = Number(fields.productMiddleDiameter.value)
+    || Math.max(Number(fields.productDiameterA.value), Number(fields.productDiameterB.value));
+  const middleThickness = Number(fields.productMiddleThickness.value) || defaultWallThickness(middleDiameter);
+  const rows = [];
+  const sideItem = (type, length) => {
+    if (!type || type === "无") return null;
     return {
       type,
       fitting: type === "中接" ? "中接" : "直管",
-      length: Math.max(0, Number(row.querySelector("[data-middle-length]").value) || 0)
+      diameter: middleDiameter,
+      thickness: middleThickness,
+      length: type === "直管" ? Math.max(0, Number(length) || 0) : 0
     };
-  });
+  };
+  const sideA = sideItem(fields.productMiddleA?.value, fields.productMiddleLengthA?.value);
+  const sideB = sideItem(fields.productMiddleB?.value, fields.productMiddleLengthB?.value);
+  if (sideA) rows.push(sideA);
+  const fixedLength = fittingLengthMm(fields.productFittingA.value, Number(fields.productDiameterA.value))
+    + fittingLengthMm(fields.productFittingB.value, Number(fields.productDiameterB.value));
+  const sideItems = [sideA, sideB].filter(Boolean);
+  const reducerLength = sideItems
+    .filter(item => item.type === "中接")
+    .reduce((sum, item) => sum + fittingLengthMm("中接", Math.max(middleDiameter, Number(fields.productDiameterA.value), Number(fields.productDiameterB.value))), 0);
+  const sideStraightLength = sideItems
+    .filter(item => item.type === "直管")
+    .reduce((sum, item) => sum + item.length, 0);
+  const totalLengthRequirement = Math.max(0, Number(fields.productTotalLength.value) || 0);
+  const centerStraightLength = Math.max(0, totalLengthRequirement - fixedLength - reducerLength - sideStraightLength);
+  if (centerStraightLength > 0) {
+    rows.push({
+      type: "直管",
+      fitting: "直管",
+      diameter: middleDiameter,
+      thickness: middleThickness,
+      length: centerStraightLength
+    });
+  }
+  if (sideB) rows.push(sideB);
+  return rows;
 }
 
 function setDockingMiddleType(row, type) {
@@ -1395,6 +1451,7 @@ function syncProductRules(changedId, skipDockingMiddleRows = false) {
     product: Number(fields.productDiameter.value),
     productA: Number(fields.productDiameterA.value),
     productB: Number(fields.productDiameterB.value),
+    productMiddle: Number(fields.productMiddleDiameter.value),
     teeBody: Number(fields.teeBodyDiameter.value),
     teeA: Number(fields.teeDiameterA.value),
     teeB: Number(fields.teeDiameterB.value),
@@ -1407,13 +1464,18 @@ function syncProductRules(changedId, skipDockingMiddleRows = false) {
 
   fillSelect(fields.productDiameterA, diameters);
   fillSelect(fields.productDiameterB, diameters);
+  fillSelect(fields.productMiddleDiameter, diameters);
   fillSelect(fields.productThicknessA, thicknesses);
   fillSelect(fields.productThicknessB, thicknesses);
+  fillSelect(fields.productMiddleThickness, thicknesses);
   if (changedId === "tubeSeries" || !fields.productDiameterA.value) {
     fields.productDiameterA.value = String(stableDiameter(previousDiameters.productA));
   }
   if (changedId === "tubeSeries" || !fields.productDiameterB.value) {
     fields.productDiameterB.value = String(stableDiameter(previousDiameters.productB));
+  }
+  if (changedId === "tubeSeries" || !fields.productMiddleDiameter.value) {
+    fields.productMiddleDiameter.value = String(stableDiameter(previousDiameters.productMiddle));
   }
   if (changedId === "productDiameterA" || changedId === "tubeSeries" || !fields.productThicknessA.value) {
     fields.productThicknessA.value = String(defaultWallThickness(Number(fields.productDiameterA.value)));
@@ -1421,24 +1483,33 @@ function syncProductRules(changedId, skipDockingMiddleRows = false) {
   if (changedId === "productDiameterB" || changedId === "tubeSeries" || !fields.productThicknessB.value) {
     fields.productThicknessB.value = String(defaultWallThickness(Number(fields.productDiameterB.value)));
   }
+  if (changedId === "productMiddleDiameter" || changedId === "tubeSeries" || !fields.productMiddleThickness.value) {
+    fields.productMiddleThickness.value = String(defaultWallThickness(Number(fields.productMiddleDiameter.value)));
+  }
   fillSelect(fields.productFittingA, availableFittings(options.fittingConnections, Number(fields.productDiameterA.value)));
   fillSelect(fields.productFittingB, availableFittings(options.fittingConnections, Number(fields.productDiameterB.value)));
   if (fields.productType.value === "对接类" && !skipDockingMiddleRows) {
-    const autoMiddle = ProductFormRulesCore.dockingMiddleAutoState({
+    fillSelect(fields.productMiddleA, ["无", "直管", "中接"]);
+    fillSelect(fields.productMiddleB, ["无", "直管", "中接"]);
+    const middleDiameter = Number(fields.productMiddleDiameter.value);
+    const middleThickness = Number(fields.productMiddleThickness.value) || defaultWallThickness(middleDiameter);
+    const middleAuto = ProductFormRulesCore.dockingSideMiddleAutoState({
       diameterA: fields.productDiameterA.value,
+      thicknessA: fields.productThicknessA.value,
       diameterB: fields.productDiameterB.value,
-      previousPair: lastDockingDiameterPair,
-      touched: dockingMiddleTouched
+      thicknessB: fields.productThicknessB.value,
+      middleDiameter,
+      middleThickness,
+      changedId,
+      touched: dockingMiddleTouched,
+      currentMiddleA: fields.productMiddleA.value,
+      currentMiddleB: fields.productMiddleB.value
     });
-    if (autoMiddle.shouldAutoMiddle) {
-      fields.productHasMiddle.checked = autoMiddle.hasMiddle;
-      fields.productMiddleCount.value = autoMiddle.middleCount;
+    if (middleAuto.changed) {
+      fields.productMiddleA.value = middleAuto.middleA;
+      fields.productMiddleB.value = middleAuto.middleB;
     }
-    syncDockingMiddleRows();
-    if (autoMiddle.shouldAutoMiddle) {
-      setDockingMiddleType(fields.productMiddleRows.querySelector(".middle-row"), autoMiddle.middleType);
-    }
-    lastDockingDiameterPair = autoMiddle.pair;
+    syncDockingSideMiddleLengthFields();
   }
   applyDockingTotalLengthRequirement();
 
@@ -3214,9 +3285,13 @@ function init() {
   fillSelect(fields.productDiameterA, fittingSettingDiameters("A"));
   fillSelect(fields.productThicknessA, seriesThicknesses());
   fillSelect(fields.productDiameterB, fittingSettingDiameters("A"));
+  fillSelect(fields.productMiddleDiameter, fittingSettingDiameters("A"));
   fillSelect(fields.productThicknessB, seriesThicknesses());
+  fillSelect(fields.productMiddleThickness, seriesThicknesses());
   fillSelect(fields.productFittingA, options.fittingConnections);
   fillSelect(fields.productFittingB, options.fittingConnections);
+  fillSelect(fields.productMiddleA, ["无", "直管", "中接"]);
+  fillSelect(fields.productMiddleB, ["无", "直管", "中接"]);
   fillSelect(fields.teeDiameterA, fittingSettingDiameters("A"));
   fillSelect(fields.teeThicknessA, seriesThicknesses());
   fillSelect(fields.teeFittingA, options.fittingConnections);
@@ -3266,7 +3341,13 @@ function init() {
   fields.productDiameterA.value = "40";
   fields.productThicknessA.value = String(defaultWallThickness(40));
   fields.productDiameterB.value = "40";
+  fields.productMiddleDiameter.value = "40";
   fields.productThicknessB.value = String(defaultWallThickness(40));
+  fields.productMiddleThickness.value = String(defaultWallThickness(40));
+  fields.productMiddleA.value = "无";
+  fields.productMiddleLengthA.value = "20";
+  fields.productMiddleB.value = "无";
+  fields.productMiddleLengthB.value = "20";
   fields.teeDiameterA.value = "40";
   fields.teeThicknessA.value = String(defaultWallThickness(40));
   fields.teeFittingA.value = "外丝";
@@ -3330,7 +3411,14 @@ function init() {
     field.addEventListener("input", scheduleUpdate);
     field.addEventListener("change", scheduleUpdate);
   });
-  [fields.productHasMiddle, fields.productMiddleCount].forEach(field => {
+  [
+    fields.productHasMiddle,
+    fields.productMiddleCount,
+    fields.productMiddleA,
+    fields.productMiddleLengthA,
+    fields.productMiddleB,
+    fields.productMiddleLengthB
+  ].filter(Boolean).forEach(field => {
     field.addEventListener("input", () => {
       dockingMiddleTouched = true;
     });

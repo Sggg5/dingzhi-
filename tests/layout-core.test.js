@@ -1,4 +1,6 @@
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 const LayoutCore = require("../layout-core");
 
 function config(manifoldType, branches, branchSpacing = 180) {
@@ -69,5 +71,17 @@ assert.deepStrictEqual(LayoutCore.branchLayout(config("单排", [])), {
   stationSpacings: [],
   span: 0
 });
+
+const styles = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+function zIndexOf(selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = styles.match(new RegExp(`${escapedSelector}\\s*\\{[\\s\\S]*?z-index:\\s*(\\d+)`, "m"));
+  return match ? Number(match[1]) : NaN;
+}
+
+assert(
+  zIndexOf(".modal-backdrop") > zIndexOf(".settings-panel"),
+  "password modal should appear above the settings panel"
+);
 
 console.log("layout core tests passed");

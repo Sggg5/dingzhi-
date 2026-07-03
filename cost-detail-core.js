@@ -276,6 +276,7 @@
         return;
       }
       if (component.type === "45°弯头" || component.type === "90°弯头") {
+        addPipe(`${itemNo}. 主链${component.type}本体材料`, component.length * 2.5, component.diameter, component.thickness);
         fittingItems.push({ label: `${itemNo}. 主链${component.type}`, fitting: component.type === "45°弯头" ? "45弯头" : "90弯头", diameter: component.diameter });
         return;
       }
@@ -288,6 +289,7 @@
         if (branchComponent.type === "直管") {
           addPipe(`${branchNo} 支口直管`, branchComponent.length, branchComponent.diameter, branchComponent.thickness);
         } else {
+          addPipe(`${branchNo} 支口${branchComponent.type}本体材料`, branchComponent.length * 2.5, branchComponent.diameter, branchComponent.thickness);
           fittingItems.push({ label: `${branchNo} 支口${branchComponent.type}`, fitting: branchComponent.type === "45°弯头" ? "45弯头" : "90弯头", diameter: branchComponent.diameter });
         }
       });
@@ -337,7 +339,7 @@
       ...fittingRows,
       ["组合加工明细", "焊接点按弯头类“对焊”行；三通体与支口按组合件设置项/三通加工表", ""],
       ...processRows,
-      ["管材理论重量合计", "所有直管、三通主管和支管的材料重量", `${formatNumber(result.tubeWeightKg)} kg`],
+      ["管材理论重量合计", "所有直管、三通主管/支管、弯头本体折算材料重量", `${formatNumber(result.tubeWeightKg)} kg`],
       ["非管材退火重量", "弯头、端部/支口配件的非法兰理论重量", `${formatNumber(fittingAnnealingWeight)} kg`],
       [`退火（${formatNumber(result.totalTubeWeightKg)} kg）`, "退火重量 = 管材重量 + 非法兰配件理论重量", result.annealingCost],
       [`制造管理（组合加工 x ${formatFactor(pricing.combination?.managementProcessFactor || 0)}）`, "组合加工费 x 组合件制造管理加工系数", result.managementCost],

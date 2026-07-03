@@ -18,8 +18,16 @@
 
     const straightItems = config.middleItems.filter(item => item.type === "直管");
     const adapterItems = config.middleItems.filter(item => item.type === "中接");
+    const middlePipeDiameter = Number(config.middlePipeDiameter) || Number(config.diameter) || Math.max(Number(config.diameterA), Number(config.diameterB));
+    const middlePipeThickness = Number(config.middlePipeThickness) || Number(config.thickness) || Math.max(Number(config.thicknessA), Number(config.thicknessB));
     const directTubeWeight = straightItems.reduce(
-      (sum, item) => sum + tubeWeightKg(item.length, config.diameter, config.thickness, config.material, false),
+      (sum, item) => sum + tubeWeightKg(
+        item.length,
+        Number(item.diameter) || middlePipeDiameter,
+        Number(item.thickness) || middlePipeThickness,
+        config.material,
+        false
+      ),
       0
     );
     const directTubeCost = tubeMaterialCost(directTubeWeight, config.steelTonPrice);
@@ -123,6 +131,7 @@
     ];
     const middleFittings = [
       { name: config.middleA === "中接" ? "中接" : "无", diameter: Math.max(bodyDiameter, config.diameterA) },
+      { name: config.middleB === "中接" ? "中接" : "无", diameter: Math.max(bodyDiameter, config.diameterB) },
       { name: config.middleC === "中接" ? "中接" : "无", diameter: Math.max(bodyDiameter, config.diameterC) }
     ];
     const endFittingCost = endFittings.reduce((sum, item) => sum + fittingCost(item.name, item.diameter, config.material, config.tubeSeries), 0);
@@ -137,7 +146,7 @@
     const endProcessCost = endFittings.reduce((sum, item) => sum + teeProcessCost(item.name, item.diameter), 0);
     const middleProcessCost = middleFittings.reduce((sum, item) => sum + teeProcessCost(item.name, item.diameter), 0);
     const middleCount = [config.middleA, config.middleB, config.middleC].filter(value => value && value !== "无").length;
-    const hasAdapter = config.middleA === "中接" || config.middleC === "中接";
+    const hasAdapter = config.middleA === "中接" || config.middleB === "中接" || config.middleC === "中接";
     const autoDifficultyFactor = Number((1.12 + (hasAdapter ? 0.05 : 0) + Math.max(0, middleCount - 1) * 0.02).toFixed(2));
     const manualDifficultyFactor = config.difficultyFactorInput === "" ? null : Math.max(0, Number(config.difficultyFactorInput) || 0);
     const difficultyFactor = manualDifficultyFactor ?? autoDifficultyFactor;

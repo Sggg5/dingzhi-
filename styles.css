@@ -1261,6 +1261,25 @@ body.sidebar-collapsed .side-actions {
   white-space: nowrap;
 }
 
+.fitting-header:has([data-docking-field]) {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 10px 12px;
+}
+
+.fitting-header:has([data-docking-field]) h3 {
+  align-self: center;
+}
+
+.fitting-header:has([data-docking-field]) .docking-middle-switch {
+  justify-self: stretch;
+}
+
+.fitting-header:has([data-docking-field]) .docking-middle-switch,
+#productMiddlePanel {
+  display: none;
+}
+
 .docking-total-field {
   display: grid;
   gap: 4px;
@@ -1274,6 +1293,33 @@ body.sidebar-collapsed .side-actions {
 }
 
 .docking-total-field input {
+  height: 36px;
+  padding: 8px 10px;
+}
+
+.docking-body-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #d7e5e2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.docking-middle-diameter-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.docking-middle-diameter-field span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.docking-middle-diameter-field select {
   height: 36px;
   padding: 8px 10px;
 }
@@ -1334,6 +1380,8 @@ body.sidebar-collapsed .side-actions {
   background: #fff;
   flex: 0 0 auto;
   align-self: end;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .docking-middle-panel {
@@ -1698,7 +1746,7 @@ select:hover {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 140;
   display: grid;
   place-items: center;
   padding: 24px;

@@ -220,6 +220,8 @@
               bomRows.push({ name: `${index + 1}.${branchIndex + 1} 支路直管 D${branchComponent.diameter}x${branchComponent.thickness} L${Math.ceil(branchComponent.length)}`, quantity: 1 });
             } else {
               const branchElbowName = branchComponent.type === "45°弯头" ? "45弯头" : "90弯头";
+              const branchElbowMaterialLength = branchComponent.length * 2.5;
+              weight += helpers.tubeWeightKg(branchElbowMaterialLength, branchComponent.diameter, branchComponent.thickness, config.material, false);
               componentCost += helpers.fittingCost(branchElbowName, branchComponent.diameter, config.material, config.tubeSeries);
               componentWeight += helpers.fittingTheoreticalWeightKg(branchElbowName, branchComponent.diameter, config.material, config.steelTonPrice, config.tubeSeries);
               bomRows.push({ name: `${index + 1}.${branchIndex + 1} 支路${branchComponent.type} D${branchComponent.diameter}`, quantity: 1 });
@@ -260,6 +262,10 @@
         }
       } else {
         const fittingName = component.type === "45°弯头" ? "45弯头" : "90弯头";
+        const elbowMaterialLength = component.length * 2.5;
+        const elbowTubeWeight = helpers.tubeWeightKg(elbowMaterialLength, component.diameter, component.thickness, config.material, false);
+        tubeWeight += elbowTubeWeight;
+        tubeCost += helpers.tubeMaterialCost(elbowTubeWeight, config.steelTonPrice);
         componentCost += helpers.fittingCost(fittingName, component.diameter, config.material, config.tubeSeries);
         componentWeight += helpers.fittingTheoreticalWeightKg(fittingName, component.diameter, config.material, config.steelTonPrice, config.tubeSeries);
         bomRows.push({ name: `${index + 1}. ${component.type} D${component.diameter}`, quantity: 1 });

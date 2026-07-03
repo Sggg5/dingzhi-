@@ -13,7 +13,7 @@
     if (isLargeFittingDiameter(diameter)) {
       return availableFittings(["法兰", "沟槽", "对焊"], diameter);
     }
-    return availableFittings((options.fittingConnections || []).filter(name => !["沟槽", "对焊"].includes(name)), diameter);
+    return availableFittings(options.fittingConnections || [], diameter);
   }
 
   function elbowFittingOptions(diameter, options, availableFittings) {

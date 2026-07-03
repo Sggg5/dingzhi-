@@ -130,6 +130,7 @@ const combinationRows = CostDetailCore.combinationRows(
     fittingB: "法兰",
     components: [
       { type: "直管", diameter: 40, thickness: 1.5, length: 120 },
+      { type: "45°弯头", diameter: 40, thickness: 1.5, length: 60 },
       {
         type: "三通", diameter: 40, thickness: 1.5, length: 80,
         branchLength: 60, branchDiameter: 32, branchThickness: 1.5,
@@ -162,6 +163,8 @@ const combinationRows = CostDetailCore.combinationRows(
   }
 );
 assert.strictEqual(combinationRows.some(row => String(row[0]).includes("主链直管")), true);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("主链45°弯头本体材料")), true);
+assert.strictEqual(combinationRows.some(row => String(row[0]).includes("支口90°弯头本体材料")), true);
 assert.strictEqual(combinationRows.some(row => String(row[0]).includes("焊接点 1")), true);
 assert.strictEqual(combinationRows.some(row => String(row[0]).includes("三通体基础加工")), true);
 assert.strictEqual(combinationRows.some(row => String(row[0]).includes("配件明细")), true);

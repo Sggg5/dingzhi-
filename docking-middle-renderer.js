@@ -25,6 +25,15 @@
     const assemblyLeftX = (leftX + rightX - targetWidth) / 2;
     const objectLineWidth = h.drawingColors.objectLineWidth || 3;
     const smallFontSize = h.drawingColors.smallFontSize || 11;
+    const bodyLabelFontSize = h.drawingColors.bodyLabelFontSize || 12;
+    const middlePipeDiameter = Number(config.middlePipeDiameter) || Number(config.diameterA) || Number(config.diameter);
+    const middlePipeThickness = Number(config.middlePipeThickness) || Number(config.thickness) || Number(config.thicknessA);
+    const straightHeight = item => h.pipeVisualDiameter(Number(item.diameter) || middlePipeDiameter);
+    const nextHeightAfter = index => {
+      const nextItem = items[index + 1];
+      if (nextItem && nextItem.type !== "中接") return straightHeight(nextItem);
+      return rightHeight;
+    };
     let cursor = assemblyLeftX;
     let currentHeight = leftHeight;
     const parts = items.map((item, index) => {
@@ -37,16 +46,22 @@
         const reducerEndX = startX + width * 0.88;
         const currentTop = y - currentHeight / 2;
         const currentBottom = y + currentHeight / 2;
-        const nextTop = y - rightHeight / 2;
-        const nextBottom = y + rightHeight / 2;
-        currentHeight = rightHeight;
+        const nextHeight = nextHeightAfter(index);
+        const nextTop = y - nextHeight / 2;
+        const nextBottom = y + nextHeight / 2;
+        currentHeight = nextHeight;
         return `<path d="M ${startX} ${currentTop} L ${reducerStartX} ${currentTop} L ${reducerEndX} ${nextTop}
           L ${endX} ${nextTop} L ${endX} ${nextBottom} L ${reducerEndX} ${nextBottom}
           L ${reducerStartX} ${currentBottom} L ${startX} ${currentBottom} Z"
           fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}" stroke-linejoin="round"/>`;
       }
+      currentHeight = straightHeight(item);
+      const straightDiameter = Number(item.diameter) || middlePipeDiameter;
+      const straightThickness = Number(item.thickness) || middlePipeThickness;
       return `<rect x="${startX}" y="${y - currentHeight / 2}" width="${width}" height="${currentHeight}" rx="0"
         fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}"/>
+        <text x="${(startX + endX) / 2}" y="${y + 4}" text-anchor="middle" font-size="${bodyLabelFontSize}"
+        fill="${h.drawingColors.label}">直管 ${straightDiameter} x ${straightThickness}</text>
         <text x="${(startX + endX) / 2}" y="${y + currentHeight / 2 + 24}" text-anchor="middle" font-size="${smallFontSize}"
         fill="${h.drawingColors.mutedLabel}">${h.drawingLengthText(item.length, "")}</text>`;
     }).join("");
