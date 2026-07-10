@@ -436,6 +436,7 @@
         endPoint = shiftTowards(endPoint, startPoint, fittingPipeOverlap(config.fittingB));
       }
       const halfWidth = Math.max(6, Math.min(39, segment.component.diameter * scale * 0.21));
+      const isSingleStraight = geometry.segments.length === 1 && !geometry.branches.length;
       return {
         kind: "linear",
         startPoint,
@@ -444,7 +445,10 @@
         options: {
           halfWidth,
           dimensionId: `combination-main-${index + 1}`,
-          normal: componentDimensionNormal(startPoint, endPoint),
+          // A single straight component also has an overall dimension below it.
+          // Keep its local pipe-length dimension above the pipe so large fittings
+          // cannot force both labels into the same lower annotation lane.
+          normal: isSingleStraight ? { x: 0, y: -1 } : componentDimensionNormal(startPoint, endPoint),
           ...adjacentElbowDimensionRules(index)
         }
       };

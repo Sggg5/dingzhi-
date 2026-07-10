@@ -66,11 +66,14 @@
   }
 
   function fittingTheoreticalWeightKg(args) {
-    const { fittingName, steelTonPrice, pricing, isNoFitting } = args;
+    const { fittingName, pricing, isNoFitting } = args;
     if (isNoFitting(fittingName)) return 0;
     const lookupFittingName = costLookupFittingName(fittingName);
     const factor = Number(pricing.fittingWeightFactor?.[lookupFittingName]) || 0;
-    const materialKgPrice = (Number(steelTonPrice) + 2000) / 1000;
+    // Fitting mass is a physical property. Use the fixed steel-price baseline
+    // that the fitting table was built from, never the current quote steel price.
+    const referenceSteelTonPrice = Number(pricing.fittingWeightReferenceSteelTonPrice) || 16000;
+    const materialKgPrice = (referenceSteelTonPrice + 2000) / 1000;
     if (factor <= 0 || materialKgPrice <= 0) return 0;
     return fittingCost(args) / (materialKgPrice * factor);
   }

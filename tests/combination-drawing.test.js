@@ -81,6 +81,13 @@ annotationScenarios.forEach((items, index) => {
   }
 });
 
+const largeSingleStraightSvg = renderScenario([
+  { type: "直管", diameter: 159, thickness: 2.5, length: 140 }
+]);
+const largeStraightDimensionGroup = largeSingleStraightSvg.match(/data-dimension-id="combination-main-1"[\s\S]*?<\/g>/)?.[0] || "";
+assert(largeStraightDimensionGroup.includes('data-dimension-vx="0.000000"'), "single straight local dimension should use a vertical offset");
+assert(largeStraightDimensionGroup.includes('data-dimension-vy="-1.000000"'), "single straight local dimension should stay above the pipe, away from the overall dimension");
+
 const singleFortyFiveSvg = renderScenario([{ type: CombinationCore.TYPES[1], diameter: 40, thickness: 1.5, length: 39, direction: "左" }]);
 assert(!singleFortyFiveSvg.includes("combination-elbow-leader"), "single 45-degree combination elbow should use dimension lines instead of leader annotation");
 assert(!/H=39/.test(singleFortyFiveSvg), "single 45-degree combination elbow H dimension should include end fitting length");

@@ -49,7 +49,7 @@ const options = {
 };
 
 const pricing = {
-  settingsVersion: 10,
+  settingsVersion: 11,
   materialFactor: { "304": 1, "316L": 1.32 },
   tubeKgPrice: { "304": 26, "316L": 38 },
   fittingMaterialFactor: { "304": 1, "316L": 1.5 },
@@ -69,6 +69,7 @@ const pricing = {
     "90弯头": 1.8,
     "45弯头": 1.8
   },
+  fittingWeightReferenceSteelTonPrice: 16000,
   teeStraightLengthBySeries: {
     A: { 16: 17, 20: 28, 25.4: 33, 32: 40, 40: 52, 50.8: 62, 76.1: 79, 88.9: 98, 101.6: 114, 133: 116, 159: 152, 219: 182 },
     B: { 18: 19, 22: 28, 28: 33, 35: 40, 42: 52, 54: 62, 76.1: 79, 88.9: 98, 108: 114 }
@@ -247,6 +248,7 @@ installGerman15Defaults(pricing);
 installInsertWeldDefaults(pricing);
 const defaultPricing = JSON.parse(JSON.stringify(pricing));
 const settingsStorageKey = "manifoldQuotePricingV1";
+let settingsRecoveryNotice = "";
 const steelPriceRatio316 = 1.65;
 const defaultSteelTonPrice = { "304": 16000, "316L": 16000 * steelPriceRatio316 };
 const tubeSeriesLabel = { A: "国标", B: "德标" };
@@ -418,6 +420,7 @@ function bindFields() {
 }
 
 let quoteItems = [];
+const quoteListStorageKey = "manifoldQuoteListV1";
 const quotePriceColumnDefinitions = {
   factoryCost: { label: "成本", amountLabel: "成本金额", valueKey: "factoryCost", totalKey: "factoryCostTotal" },
   discountedPrice: { label: "面价折后", amountLabel: "折后金额", valueKey: "discountedPrice", totalKey: "discountedPriceTotal" },
@@ -427,6 +430,36 @@ let quotePriceColumns = ["unitPrice"];
 let dockingMiddleTouched = false;
 let lastDockingDiameterPair = "";
 let teeBodyLengthTouched = false;
+
+function persistQuoteList() {
+  try {
+    localStorage.setItem(
+      quoteListStorageKey,
+      QuoteListStorageCore.serialize(quoteItems, quotePriceColumns)
+    );
+  } catch (error) {
+    console.warn("报价清单保存失败", error);
+  }
+}
+
+function restoreQuoteList() {
+  const raw = localStorage.getItem(quoteListStorageKey);
+  if (!raw) return;
+  try {
+    const saved = QuoteListStorageCore.deserialize(raw, Object.keys(quotePriceColumnDefinitions));
+    if (!saved) throw new Error("invalid quote list");
+    quoteItems = saved.items;
+    quotePriceColumns = saved.columns;
+    document.querySelectorAll("[data-quote-price-column]").forEach(input => {
+      input.checked = quotePriceColumns.includes(input.dataset.quotePriceColumn);
+    });
+  } catch (error) {
+    // Keep a recoverable copy instead of silently deleting a damaged draft.
+    localStorage.setItem(`${quoteListStorageKey}:backup:${Date.now()}`, raw);
+    localStorage.removeItem(quoteListStorageKey);
+    console.warn("报价清单恢复失败，已保留备份", error);
+  }
+}
 
 async function copyPlainText(value) {
   const text = String(value ?? "").trim();
@@ -546,8 +579,10 @@ function fittingLabel(name) {
 const { mergeFittingSeries } = SettingsCore;
 
 function loadPricingSettings() {
+  const rawSettings = localStorage.getItem(settingsStorageKey);
+  if (!rawSettings) return;
   try {
-    const saved = JSON.parse(localStorage.getItem(settingsStorageKey));
+    const saved = JSON.parse(rawSettings);
     if (saved) {
       Object.assign(pricing, saved);
       pricing.fittingMaterialFactor = { ...defaultPricing.fittingMaterialFactor, ...saved.fittingMaterialFactor };
@@ -584,8 +619,14 @@ function loadPricingSettings() {
         pricing.settingsVersion = defaultPricing.settingsVersion;
       }
     }
-  } catch {
+  } catch (error) {
+    // Keep the original value for recovery instead of silently losing a price table.
+    localStorage.setItem(`${settingsStorageKey}:backup:invalid:${Date.now()}`, rawSettings);
     localStorage.removeItem(settingsStorageKey);
+    Object.keys(pricing).forEach(key => delete pricing[key]);
+    Object.assign(pricing, JSON.parse(JSON.stringify(defaultPricing)));
+    settingsRecoveryNotice = "本机价格设置读取失败，已备份原始数据并恢复默认值。请在设置中导入最近导出的价格表。";
+    console.warn("价格设置读取失败，已备份并恢复默认值", error);
   }
 }
 
@@ -2765,11 +2806,13 @@ function addQuoteItem() {
     config,
     result
   });
+  persistQuoteList();
   renderQuoteList();
 }
 
 function removeQuoteItem(id) {
   quoteItems = quoteItems.filter(item => item.id !== id);
+  persistQuoteList();
   renderQuoteList();
 }
 
@@ -2912,6 +2955,28 @@ function exportQuoteListCsv() {
   );
 }
 
+function exportNxParamsJson() {
+  const config = getConfig();
+  const productCodeResult = ProductCodeCore.generate(config);
+  config.productCode = productCodeResult.code;
+  config.productCodeResult = productCodeResult;
+  const result = calculate(config);
+  const params = NxParamExportCore.buildParams(config, result, {
+    productCodeCore: ProductCodeCore,
+    dockingTotalLengthMm,
+    teeHorizontalTotalLengthMm,
+    outputOptions: {
+      sourceQuoteNo: config.quoteNo || fields.quoteNo.value,
+      schemaVersion: 1
+    }
+  });
+  downloadText(
+    NxParamExportCore.fileName(params),
+    NxParamExportCore.jsonText(params),
+    "application/json;charset=utf-8"
+  );
+}
+
 function exportSettingsExcel() {
   const rows = [
     ["配置路径", "数值"],
@@ -2974,6 +3039,10 @@ function renderSettings() {
       update();
     };
   });
+  if (settingsRecoveryNotice) {
+    const status = document.querySelector("#settingsSaveStatus");
+    if (status) status.textContent = settingsRecoveryNotice;
+  }
 
   const head = document.querySelector("#settingsFittingHead");
   const rows = document.querySelector("#settingsFittingRows");
@@ -3406,6 +3475,7 @@ function init() {
   fields.profitRate.value = "68";
   fields.taxRate.value = "17";
   fields.freight.value = "0";
+  restoreQuoteList();
 
   Object.values(fields).forEach(field => {
     field.addEventListener("input", scheduleUpdate);
@@ -3559,6 +3629,7 @@ function init() {
   document.querySelector("#printQuote")?.addEventListener("click", () => window.print());
   document.querySelector("#newQuote").addEventListener("click", () => {
     quoteItems = [];
+    persistQuoteList();
     dimensionOverrides = {};
     fields.quoteNo.value = `FSQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
     update();
@@ -3569,6 +3640,7 @@ function init() {
   document.querySelector("#exportDrawingPng").addEventListener("click", exportDrawingPng);
   document.querySelector("#exportDrawingPdf").addEventListener("click", exportDrawingPdf);
   document.querySelector("#exportList").addEventListener("click", exportQuoteListCsv);
+  document.querySelector("#exportNxParams")?.addEventListener("click", exportNxParamsJson);
   document.querySelector("#toggleDrawingInfoPanels")?.addEventListener("click", () => {
     drawingInfoPanelsVisible = !drawingInfoPanelsVisible;
     document.querySelector("#toggleDrawingInfoPanels").textContent = drawingInfoPanelsVisible ? "\u9690\u85cf\u8bf4\u660e" : "\u663e\u793a\u8bf4\u660e";
@@ -3577,6 +3649,7 @@ function init() {
   document.querySelector("#addQuoteItem").addEventListener("click", addQuoteItem);
   document.querySelector("#clearQuoteItems").addEventListener("click", () => {
     quoteItems = [];
+    persistQuoteList();
     renderQuoteList();
   });
   document.querySelectorAll("[data-quote-price-column]").forEach(input => {
@@ -3584,6 +3657,7 @@ function init() {
       const checkedCount = Array.from(document.querySelectorAll("[data-quote-price-column]")).filter(item => item.checked).length;
       if (!checkedCount) input.checked = true;
       renderQuoteList();
+      persistQuoteList();
     });
   });
   document.querySelectorAll("[data-settings-category]").forEach(button => {

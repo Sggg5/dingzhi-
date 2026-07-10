@@ -32,6 +32,12 @@
       : "制造管理（加工费 x 2.14）";
   }
 
+  function fittingWeightFormula(pricing, helpers) {
+    const { formatNumber } = formatters(helpers);
+    const referenceSteelTonPrice = Number(pricing.fittingWeightReferenceSteelTonPrice) || 16000;
+    return `配件去税成本 ÷ ((固定基准钢价 ${formatNumber(referenceSteelTonPrice)} + 2000)/1000 x 配件重量系数)`;
+  }
+
   function fittingNote(detail, helpers) {
     const { formatFactor, money } = formatters(helpers);
     if (!detail) return "按配件价格表取值；若为316L，再乘316L配件系数；进入成本前去税";
@@ -175,7 +181,7 @@
       ["中接加工（表格取值）", `中接加工基础合计 ${money(result.middleProcessCost)}`, ""],
       ...processDetailRows(middleProcessItems, "docking", helpers),
       [`对接加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中接加工，汇总后乘成型加工系数和难度系数", result.processCost],
-      ["配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
+      ["配件理论重量", fittingWeightFormula(pricing, helpers), `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
       ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
       ["退火/包材重量", `直管 ${formatNumber(result.productTubeWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.productTubeWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],
       [`退火（${formatNumber(result.annealingWeightKg)} kg）`, "退火重量 x 退火费单价", result.annealingCost],
@@ -207,7 +213,7 @@
       ["中间段加工（表格取值）", `中间段加工基础合计 ${money(result.middleProcessCost)}`, ""],
       ...processDetailRows(middleProcessItems, "tee", helpers),
       [`三通加工合计（系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中间段加工，汇总后乘成型加工系数和难度系数", result.processCost],
-      ["配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
+      ["配件理论重量", fittingWeightFormula(pricing, helpers), `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
       ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
       ["退火/包材重量", `三通体/直管 ${formatNumber(result.productTubeWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.productTubeWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],
       [`退火（${formatNumber(result.annealingWeightKg)} kg）`, "退火重量 x 退火费单价", result.annealingCost],
@@ -241,7 +247,7 @@
       ...processDetailRows(middleProcessItems, "elbow", helpers),
       [`弯头加工合计（角度x${formatFactor(result.angleFactor)} / 系数x${formatFactor(config.processFactor)} / 难度x${formatFactor(result.difficultyFactor)}）`, "端部加工 + 中接加工，汇总后乘45/90角度系数、成型加工系数和难度系数", result.processCost],
       ["弯头本体理论重量", "用于退火/包材重量，不用于弯头本体价格；料长按中心高度H相关规则折算", `${formatNumber(result.elbowBodyWeightKg)} kg`],
-      ["A/B及中间配件理论重量", "配件去税成本 ÷ ((钢价+2000)/1000 x 配件重量系数)", `${formatNumber(result.accessoryTheoreticalWeightKg)} kg`],
+      ["A/B及中间配件理论重量", fittingWeightFormula(pricing, helpers), `${formatNumber(result.accessoryTheoreticalWeightKg)} kg`],
       ["弯头理论重量合计", "弯头本体理论重量 + A/B及中间配件理论重量", `${formatNumber(result.fittingTheoreticalWeightKg)} kg`],
       ["法兰不退火重量", "法兰只计配件成本，不计入退火、包材和带法兰管理重量", `${formatNumber(result.heatTreatmentExcludedWeightKg)} kg`],
       ["退火/包材重量", `弯头本体 ${formatNumber(result.elbowBodyWeightKg)} kg + 直管 ${formatNumber(result.middleStraightWeightKg)} kg + 非法兰退火配件 ${formatNumber(nonNegative(result.annealingWeightKg - result.elbowBodyWeightKg - result.middleStraightWeightKg))} kg`, `${formatNumber(result.annealingWeightKg)} kg`],

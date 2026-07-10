@@ -179,6 +179,7 @@
                   <label><span>喷砂 元/kg</span><input id="settingSurfaceSandblast" type="number" min="0" step="0.01"></label>
                   <label><span>抛光 元/kg</span><input id="settingSurfacePolish" type="number" min="0" step="0.01"></label>
                   <label><span>316L配件系数</span><input id="setting316FittingFactor" type="number" min="0" step="0.01"></label>
+                  <label><span>配件重量反推基准钢价 元/吨</span><input id="settingFittingWeightReferenceSteel" type="number" min="0" step="100"></label>
                   <label><span>材料去税系数</span><input id="settingMaterialTax" type="number" min="1" step="0.01"></label>
                   <label><span>成本含税系数</span><input id="settingFittingTax" type="number" min="1" step="0.01"></label>
                 </div>
@@ -244,7 +245,7 @@
                   <ul>
                     <li>管材成本按实际壁厚、外径、长度计算重量，再按管材材料单价去税计入成本。</li>
                     <li>配件价格表维护的是含税价；304 配件 = 含税表价 ÷ 配件含税系数，316L 配件 = 含税表价 x 316L配件系数 ÷ 配件含税系数。</li>
-                    <li>配件理论重量 = 配件去税成本 / (((钢价 + 2000) / 1000) x 配件重量系数)。</li>
+                    <li>配件理论重量 = 配件去税成本 / (((固定反推基准钢价 + 2000) / 1000) x 配件重量系数)；修改当前报价钢价不会改变配件理论重量。</li>
                     <li>含税工厂成本 = 不含税成本小计 x 成本含税系数；面价折后 = 含税工厂成本 / 成本率；单价面价 = 面价折后 / 面价折扣。</li>
                   </ul>
                   <h3>2. 分水器组成</h3>
@@ -432,6 +433,7 @@
             <button id="exportDrawingPng" class="header-tool" type="button"><span>⇩</span>导出PNG</button>
             <button id="exportDrawingPdf" class="header-tool" type="button"><span>▣</span>导出PDF</button>
             <button id="exportList" class="header-tool" type="button"><span>▤</span>导出清单</button>
+            <button id="exportNxParams" class="header-tool" type="button"><span>◇</span>导出参数</button>
           </div>
         </aside>
 
@@ -1089,6 +1091,7 @@
   <script src="./product-mode-core.js"></script>
   <script src="./display-core.js"></script>
   <script src="./export-core.js"></script>
+  <script src="./quote-list-storage-core.js"></script>
   <script src="./settings-render-core.js"></script>
   <script src="./cost-detail-core.js"></script>
   <script src="./drawing-core.js"></script>
@@ -1098,6 +1101,7 @@
   <script src="./fitting-renderer.js"></script>
   <script src="./branch-fitting-renderer.js"></script>
   <script src="./product-geometry-core.js"></script>
+  <script src="./nx-param-export-core.js"></script>
   <script src="./docking-middle-renderer.js"></script>
   <script src="./manifold-drawing.js"></script>
   <script src="./docking-drawing.js"></script>

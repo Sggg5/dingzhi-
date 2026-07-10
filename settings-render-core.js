@@ -16,6 +16,7 @@
     settingSurfaceSandblast: ["surfaceTreatmentPerKg", "喷砂"],
     settingSurfacePolish: ["surfaceTreatmentPerKg", "抛光"],
     setting316FittingFactor: ["fittingMaterialFactor", "316L"],
+    settingFittingWeightReferenceSteel: ["fittingWeightReferenceSteelTonPrice"],
     settingMaterialTax: ["materialTaxDivisor"],
     settingFittingTax: ["fittingTaxDivisor"]
   };

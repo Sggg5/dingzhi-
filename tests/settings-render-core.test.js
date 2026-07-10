@@ -42,6 +42,7 @@ assert(SettingsRenderCore.processRowsHtml({
 }).includes('data-docking-process-diameter="40"'));
 
 assert.deepStrictEqual(SettingsRenderCore.BASIC_SETTING_PATHS.settingAnnealing, ["annealingPerKg"]);
+assert.deepStrictEqual(SettingsRenderCore.BASIC_SETTING_PATHS.settingFittingWeightReferenceSteel, ["fittingWeightReferenceSteelTonPrice"]);
 assert.strictEqual(SettingsRenderCore.valueAtPath({ a: { b: 2 } }, ["a", "b"]), 2);
 const mutable = { a: { b: 2 } };
 SettingsRenderCore.setValueAtPath(mutable, ["a", "b"], 3);

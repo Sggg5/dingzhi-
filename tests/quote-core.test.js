@@ -18,6 +18,7 @@ closeTo(QuoteCore.tubeMaterialCost(10, 16000, 1.13), 10 / 1000 * 18000 / 1.13);
 
 const pricing = {
   fittingTaxDivisor: 1.13,
+  fittingWeightReferenceSteelTonPrice: 16000,
   fittingMaterialFactor: { "304": 1, "316L": 1.5 },
   fittingWeightFactor: { "外丝": 4.2, "法兰": 1.8 },
   fittingByDiameter: {},
@@ -46,6 +47,21 @@ const fittingWeight = QuoteCore.fittingTheoreticalWeightKg({
   steelTonPrice: 16000
 });
 closeTo(fittingWeight, (7.99 / 1.13) / (18 * 4.2));
+closeTo(QuoteCore.fittingTheoreticalWeightKg({
+  ...baseArgs,
+  fittingName: "外丝",
+  diameter: 40,
+  series: "A",
+  steelTonPrice: 33500
+}), fittingWeight);
+closeTo(QuoteCore.fittingTheoreticalWeightKg({
+  ...baseArgs,
+  fittingName: "外丝",
+  diameter: 40,
+  series: "A",
+  material: "316L",
+  steelTonPrice: 33500
+}), fittingWeight * 1.5);
 closeTo(QuoteCore.heatTreatmentFittingWeightKg({
   ...baseArgs,
   fittingName: "法兰",
