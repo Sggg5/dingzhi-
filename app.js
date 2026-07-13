@@ -49,10 +49,10 @@ const options = {
 };
 
 const pricing = {
-  settingsVersion: 11,
+  settingsVersion: 12,
   materialFactor: { "304": 1, "316L": 1.32 },
   tubeKgPrice: { "304": 26, "316L": 38 },
-  fittingMaterialFactor: { "304": 1, "316L": 1.5 },
+  fittingMaterialFactor: { "304": 1, "316L": 1.6 },
   fittingWeightFactor: {
     "外丝": 4.2,
     "内丝": 4.2,
@@ -248,12 +248,14 @@ installGerman15Defaults(pricing);
 installInsertWeldDefaults(pricing);
 const defaultPricing = JSON.parse(JSON.stringify(pricing));
 const settingsStorageKey = "manifoldQuotePricingV1";
+const settingsPasswordStorageKey = "manifoldQuoteSettingsPasswordV1";
 let settingsRecoveryNotice = "";
 const steelPriceRatio316 = 1.65;
 const defaultSteelTonPrice = { "304": 16000, "316L": 16000 * steelPriceRatio316 };
 const tubeSeriesLabel = { A: "国标", B: "德标" };
 const updatedRingPressA = { 20: 1.10, 25.4: 1.68, 32: 3.03, 40: 4.18, 50.8: 4.68, 76.1: 18.38, 88.9: 23.68, 101.6: 27.52 };
 let settingsUnlocked = false;
+let settingsPasswordMode = "unlock";
 let settingsDirty = false;
 let activeSettingsCategory = "manifold";
 let activeSettingsSection = "dimensions";
@@ -421,6 +423,9 @@ function bindFields() {
 
 let quoteItems = [];
 const quoteListStorageKey = "manifoldQuoteListV1";
+const productDraftStorageKey = "manifoldProductDraftV1";
+const quoteHistoryStorageKey = "manifoldQuoteHistoryV1";
+let quoteHistory = [];
 const quotePriceColumnDefinitions = {
   factoryCost: { label: "成本", amountLabel: "成本金额", valueKey: "factoryCost", totalKey: "factoryCostTotal" },
   discountedPrice: { label: "面价折后", amountLabel: "折后金额", valueKey: "discountedPrice", totalKey: "discountedPriceTotal" },
@@ -459,6 +464,269 @@ function restoreQuoteList() {
     localStorage.removeItem(quoteListStorageKey);
     console.warn("报价清单恢复失败，已保留备份", error);
   }
+}
+
+function setDraftFieldValue(field, value) {
+  if (!field || value === undefined || value === null) return;
+  if (field.type === "checkbox") {
+    field.checked = Boolean(value);
+    return;
+  }
+  const nextValue = String(value);
+  if (field.tagName === "SELECT") {
+    if (!Array.from(field.options).some(option => option.value === nextValue)) return;
+  }
+  field.value = nextValue;
+}
+
+function persistProductDraft(config) {
+  try {
+    localStorage.setItem(productDraftStorageKey, ProductDraftStorageCore.serialize(config));
+  } catch (error) {
+    console.warn("产品参数草稿保存失败", error);
+  }
+}
+
+function restoreCommonDraft(config) {
+  setDraftFieldValue(fields.customerName, config.customerName);
+  setDraftFieldValue(fields.quoteNo, config.quoteNo);
+  setDraftFieldValue(fields.material, config.material);
+  fields.material.dataset.previousValue = config.material || "304";
+  setDraftFieldValue(fields.tubeSeries, config.tubeSeries);
+  setDraftFieldValue(fields.quantity, config.quantity);
+  setDraftFieldValue(fields.surfaceTreatment, config.surfaceTreatment);
+  setDraftFieldValue(fields.steelTonPrice, config.steelTonPrice);
+  setDraftFieldValue(fields.profitRate, Number(config.costRate || 0.68) * 100);
+  setDraftFieldValue(fields.taxRate, Number(config.faceDiscountRate || 0.17) * 100);
+  setDraftFieldValue(fields.freight, config.freight);
+  setDraftFieldValue(fields.difficultyFactor, config.difficultyFactorInput || "");
+  fields.difficultyFactor.dataset.manual = config.difficultyFactorInput ? "true" : "false";
+  dimensionOverrides = config.dimensionOverrides || {};
+}
+
+function restoreManifoldDraft(config) {
+  syncRules("draft-restore");
+  [
+    [fields.manifoldType, config.manifoldType],
+    [fields.mainDiameter, config.mainDiameter],
+    [fields.wallThickness, config.wallThickness],
+    [fields.mainPositiveTolerance, config.mainPositiveTolerance],
+    [fields.branchDiameter, config.branchDiameter],
+    [fields.branchThickness, config.branchThickness],
+    [fields.branchPositiveTolerance, config.branchPositiveTolerance],
+    [fields.branchCount, config.branchCount],
+    [fields.branchSpacing, config.branchSpacing],
+    [fields.branchHeight, config.branchHeight],
+    [fields.inletAllowance, config.inletAllowance],
+    [fields.tailAllowance, config.tailAllowance],
+    [fields.mainFittingDiameter, config.mainFittingDiameter],
+    [fields.mainFitting, config.mainFitting],
+    [fields.mainAdapterEnabled, config.mainAdapterEnabled],
+    [fields.branchFitting, config.branchFitting],
+    [fields.tailFittingDiameter, config.tailFittingDiameter],
+    [fields.tailFitting, config.tailFitting],
+    [fields.tailAdapterEnabled, config.tailAdapterEnabled],
+    [fields.customBranches, config.customBranches]
+  ].forEach(([field, value]) => setDraftFieldValue(field, value));
+
+  if (!config.customBranches) return;
+  setDraftFieldValue(fields.branchCount, config.branches?.length || config.branchCount);
+  fields.branchRows.innerHTML = "";
+  syncBranchRows();
+  fields.branchRows.querySelectorAll(".branch-row").forEach((row, index) => {
+    const branch = config.branches?.[index];
+    if (!branch) return;
+    setDraftFieldValue(row.querySelector("[data-branch-diameter]"), branch.diameter);
+    setDraftFieldValue(row.querySelector("[data-branch-thickness]"), branch.thickness);
+    setDraftFieldValue(row.querySelector("[data-branch-positive]"), branch.positiveTolerance);
+    const fitting = row.querySelector("[data-branch-fitting]");
+    fillSelect(fitting, availableFittings(options.branchFittings, Number(branch.diameter)));
+    setDraftFieldValue(fitting, branch.fitting);
+    setDraftFieldValue(row.querySelector("[data-branch-height]"), branch.height);
+    setDraftFieldValue(row.querySelector("[data-branch-side]"), branch.side || "自动");
+    setDraftFieldValue(row.querySelector("[data-branch-spacing]"), branch.spacingAfter);
+  });
+}
+
+function restoreDockingDraft(config) {
+  syncProductRules("draft-restore", true);
+  [
+    [fields.productDiameterA, config.diameterA], [fields.productThicknessA, config.thicknessA],
+    [fields.productDiameterB, config.diameterB], [fields.productThicknessB, config.thicknessB],
+    [fields.productMiddleDiameter, config.middlePipeDiameter || config.diameter],
+    [fields.productMiddleThickness, config.middlePipeThickness || config.thickness],
+    [fields.productTotalLength, config.totalLengthRequirement],
+    [fields.productProcessFactor, config.processFactor],
+    [fields.productHasMiddle, config.dockingMiddleEnabled ?? Boolean(config.middleItems?.length)],
+    [fields.productMiddleA, config.middleA || "无"], [fields.productMiddleLengthA, config.middleLengthA || 20],
+    [fields.productMiddleB, config.middleB || "无"], [fields.productMiddleLengthB, config.middleLengthB || 20]
+  ].forEach(([field, value]) => setDraftFieldValue(field, value));
+  fillSelect(fields.productFittingA, availableFittings(options.fittingConnections, Number(config.diameterA)));
+  fillSelect(fields.productFittingB, availableFittings(options.fittingConnections, Number(config.diameterB)));
+  setDraftFieldValue(fields.productFittingA, config.fittingA);
+  setDraftFieldValue(fields.productFittingB, config.fittingB);
+  dockingMiddleTouched = true;
+  syncDockingSideMiddleLengthFields();
+}
+
+function restoreTeeDraft(config) {
+  syncProductRules("draft-restore", true);
+  [
+    [fields.teeBodyDiameter, config.bodyDiameter], [fields.teeBodyThickness, config.bodyThickness], [fields.teeBodyLength, config.bodyLength],
+    [fields.teeDiameterA, config.diameterA], [fields.teeThicknessA, config.thicknessA],
+    [fields.teeDiameterB, config.diameterB], [fields.teeThicknessB, config.thicknessB],
+    [fields.teeDiameterC, config.diameterC], [fields.teeThicknessC, config.thicknessC],
+    [fields.teeMiddleA, config.middleA], [fields.teeMiddleB, config.middleB], [fields.teeMiddleC, config.middleC],
+    [fields.teeMiddleLengthB, config.middleLengthB], [fields.productProcessFactor, config.processFactor]
+  ].forEach(([field, value]) => setDraftFieldValue(field, value));
+  [[fields.teeFittingA, config.fittingA, config.diameterA], [fields.teeFittingB, config.fittingB, config.diameterB], [fields.teeFittingC, config.fittingC, config.diameterC]].forEach(([field, fitting, diameter]) => {
+    fillSelect(field, teeAvailableFittings(Number(diameter)));
+    setDraftFieldValue(field, fitting);
+  });
+  teeBodyLengthTouched = true;
+  syncTeeMiddleLengthFields();
+}
+
+function restoreElbowDraft(config) {
+  syncProductRules("draft-restore", true);
+  [
+    [fields.elbowBodyDiameter, config.bodyDiameter], [fields.elbowBodyThickness, config.bodyThickness],
+    [fields.elbowDiameterA, config.diameterA], [fields.elbowThicknessA, config.thicknessA],
+    [fields.elbowDiameterB, config.diameterB], [fields.elbowThicknessB, config.thicknessB],
+    [fields.productLength, config.length], [fields.productAngle, config.angle],
+    [fields.elbowMiddleA, config.middleA], [fields.elbowMiddleLengthA, config.middleLengthA],
+    [fields.elbowMiddleB, config.middleB], [fields.elbowMiddleLengthB, config.middleLengthB],
+    [fields.productProcessFactor, config.processFactor]
+  ].forEach(([field, value]) => setDraftFieldValue(field, value));
+  [[fields.elbowFittingA, config.fittingA, config.diameterA], [fields.elbowFittingB, config.fittingB, config.diameterB]].forEach(([field, fitting, diameter]) => {
+    fillSelect(field, elbowAvailableFittings(Number(diameter)));
+    setDraftFieldValue(field, fitting);
+  });
+  syncElbowMiddleLengthFields();
+}
+
+function restoreCombinationDraft(config) {
+  renderCombinationRows(config.components);
+  syncCombinationRules("draft-restore");
+  setDraftFieldValue(fields.combinationFittingA, config.fittingA);
+  setDraftFieldValue(fields.combinationFittingB, config.fittingB);
+}
+
+function applyProductDraftConfig(rawConfig) {
+  const config = ConfigCore.normalizeConfig(rawConfig);
+  setDraftFieldValue(fields.productType, config.productType);
+  restoreCommonDraft(config);
+  syncProductMode();
+  if (config.productType === "分水器类") restoreManifoldDraft(config);
+  else if (config.productType === "对接类") restoreDockingDraft(config);
+  else if (config.productType === "三通类") restoreTeeDraft(config);
+  else if (config.productType === "弯头类") restoreElbowDraft(config);
+  else restoreCombinationDraft(config);
+}
+
+function restoreProductDraft() {
+  const raw = localStorage.getItem(productDraftStorageKey);
+  if (!raw) return;
+  try {
+    const draft = ProductDraftStorageCore.deserialize(raw);
+    if (!draft) throw new Error("invalid product draft");
+    applyProductDraftConfig(draft.config);
+  } catch (error) {
+    localStorage.setItem(`${productDraftStorageKey}:backup:${Date.now()}`, raw);
+    localStorage.removeItem(productDraftStorageKey);
+    console.warn("产品参数草稿恢复失败，已保留备份", error);
+  }
+}
+
+function persistQuoteHistory() {
+  try {
+    localStorage.setItem(quoteHistoryStorageKey, QuoteHistoryStorageCore.serialize(quoteHistory));
+  } catch (error) {
+    console.warn("报价历史保存失败", error);
+  }
+}
+
+function restoreQuoteHistory() {
+  const raw = localStorage.getItem(quoteHistoryStorageKey);
+  if (!raw) return;
+  try {
+    quoteHistory = QuoteHistoryStorageCore.deserialize(raw);
+  } catch (error) {
+    localStorage.setItem(`${quoteHistoryStorageKey}:backup:${Date.now()}`, raw);
+    localStorage.removeItem(quoteHistoryStorageKey);
+    quoteHistory = [];
+    console.warn("报价历史恢复失败，已保留备份", error);
+  }
+}
+
+function renderQuoteHistory() {
+  const total = document.querySelector("#quoteHistoryTotal");
+  const rows = document.querySelector("#quoteHistoryRows");
+  if (!total || !rows) return;
+  total.textContent = `${quoteHistory.length} 个版本`;
+  rows.innerHTML = quoteHistory.length
+    ? quoteHistory.map(entry => {
+      const savedAt = new Date(entry.savedAt).toLocaleString("zh-CN", { hour12: false });
+      const itemCount = Array.isArray(entry.items) ? entry.items.length : 0;
+      return `<article class="quote-history-item">
+        <div>
+          <strong>${entry.quoteNo}</strong>
+          <span>${entry.productName} · ${entry.material} · ${entry.tubeSeries === "A" ? "国标" : "德标"}</span>
+          <small>${savedAt} · 钢价 ${formatNumber(entry.steelTonPrice)} 元/吨 · 设置v${entry.pricingVersion} · ${itemCount} 项清单</small>
+        </div>
+        <div class="quote-history-actions">
+          <b>${money(entry.result?.totalPrice || entry.result?.unitPrice || 0)}</b>
+          <button class="tiny-button neutral" type="button" data-restore-history="${entry.id}">恢复</button>
+          <button class="tiny-button" type="button" data-delete-history="${entry.id}">删除</button>
+        </div>
+      </article>`;
+    }).join("")
+    : '<p class="quote-history-empty">暂无保存版本</p>';
+  rows.querySelectorAll("[data-restore-history]").forEach(button => {
+    button.addEventListener("click", () => restoreQuoteHistoryEntry(button.dataset.restoreHistory));
+  });
+  rows.querySelectorAll("[data-delete-history]").forEach(button => {
+    button.addEventListener("click", () => {
+      quoteHistory = quoteHistory.filter(entry => entry.id !== button.dataset.deleteHistory);
+      persistQuoteHistory();
+      renderQuoteHistory();
+    });
+  });
+}
+
+function saveQuoteHistoryVersion() {
+  const config = getConfig();
+  const productCodeResult = ProductCodeCore.generate(config);
+  config.productCode = productCodeResult.code;
+  config.productCodeResult = productCodeResult;
+  const result = calculate(config);
+  if (!assertQuoteReady(result, "保存报价版本")) return;
+  const entry = QuoteHistoryStorageCore.createEntry({
+    config,
+    result,
+    items: quoteItems,
+    columns: quotePriceColumns,
+    pricingVersion: pricing.settingsVersion
+  });
+  quoteHistory = [entry, ...quoteHistory].slice(0, QuoteHistoryStorageCore.MAX_ENTRIES);
+  persistQuoteHistory();
+  renderQuoteHistory();
+  showCopyToast("报价版本已保存");
+}
+
+function restoreQuoteHistoryEntry(id) {
+  const entry = quoteHistory.find(item => item.id === id);
+  if (!entry) return;
+  quoteItems = Array.isArray(entry.items) ? entry.items : [];
+  quotePriceColumns = QuoteListStorageCore.normalizeColumns(entry.columns, Object.keys(quotePriceColumnDefinitions));
+  document.querySelectorAll("[data-quote-price-column]").forEach(input => {
+    input.checked = quotePriceColumns.includes(input.dataset.quotePriceColumn);
+  });
+  persistQuoteList();
+  applyProductDraftConfig(entry.config);
+  persistProductDraft(getConfig());
+  update();
+  showCopyToast("已恢复报价版本");
 }
 
 async function copyPlainText(value) {
@@ -616,6 +884,11 @@ function loadPricingSettings() {
       if (saved.settingsVersion !== defaultPricing.settingsVersion) {
         const previousVersion = saved.settingsVersion ?? "unknown";
         localStorage.setItem(`${settingsStorageKey}:backup:${previousVersion}`, JSON.stringify(saved));
+        // Upgrade the former system default while preserving any deliberately
+        // customized 316L fitting coefficient.
+        if (Number(saved.fittingMaterialFactor?.["316L"]) === 1.5) {
+          pricing.fittingMaterialFactor["316L"] = defaultPricing.fittingMaterialFactor["316L"];
+        }
         pricing.settingsVersion = defaultPricing.settingsVersion;
       }
     }
@@ -658,32 +931,86 @@ function closeSettingsPanel() {
   document.querySelector("#toggleSettings").innerHTML = "<span>⚙</span>设置";
 }
 
+function lockSettings() {
+  settingsUnlocked = false;
+  closeSettingsPanel();
+  const status = document.querySelector("#settingsSaveStatus");
+  if (status) status.textContent = "设置已锁定";
+}
+
 function toggleSidebar() {
   document.body.classList.toggle("sidebar-collapsed");
 }
 
-function openSettingsPasswordModal() {
+function passwordError(message) {
+  const error = document.querySelector("#settingsPasswordError");
+  error.textContent = message;
+  error.hidden = false;
+}
+
+async function settingsPasswordHash(value) {
+  return SettingsPasswordCore.hash(value);
+}
+
+async function matchesSettingsPassword(value) {
+  const savedHash = localStorage.getItem(settingsPasswordStorageKey);
+  if (!savedHash) return value === "Franta";
+  return savedHash === await settingsPasswordHash(value);
+}
+
+function openSettingsPasswordModal(mode = "unlock") {
   const modal = document.querySelector("#settingsPasswordModal");
   const input = document.querySelector("#settingsPasswordInput");
+  const newPasswordWrap = document.querySelector("#settingsPasswordNewWrap");
+  const newPasswordInput = document.querySelector("#settingsPasswordNewInput");
+  const title = document.querySelector("#settingsPasswordTitle");
+  const currentLabel = document.querySelector("#settingsPasswordCurrentLabel");
   const error = document.querySelector("#settingsPasswordError");
+  settingsPasswordMode = mode;
+  const isChange = mode === "change";
+  title.textContent = isChange ? "修改设置密码" : "设置密码";
+  currentLabel.textContent = isChange ? "请输入当前密码" : "请输入密码";
+  newPasswordWrap.hidden = !isChange;
   modal.hidden = false;
   error.hidden = true;
   input.value = "";
+  newPasswordInput.value = "";
   setTimeout(() => input.focus(), 0);
 }
 
 function closeSettingsPasswordModal() {
   document.querySelector("#settingsPasswordModal").hidden = true;
+  settingsPasswordMode = "unlock";
 }
 
-function confirmSettingsPassword() {
+async function confirmSettingsPassword() {
   const input = document.querySelector("#settingsPasswordInput");
-  const error = document.querySelector("#settingsPasswordError");
-  if (input.value !== "Franta") {
-    error.hidden = false;
+  const newPasswordInput = document.querySelector("#settingsPasswordNewInput");
+  if (!await matchesSettingsPassword(input.value)) {
+    passwordError("密码不正确");
     input.select();
     return;
   }
+
+  // Migrate the original default password on its first successful use.
+  if (!localStorage.getItem(settingsPasswordStorageKey)) {
+    localStorage.setItem(settingsPasswordStorageKey, await settingsPasswordHash(input.value));
+  }
+
+  if (settingsPasswordMode === "change") {
+    const validationMessage = SettingsPasswordCore.validateNewPassword(newPasswordInput.value);
+    if (validationMessage) {
+      passwordError(validationMessage);
+      newPasswordInput.select();
+      return;
+    }
+    localStorage.setItem(settingsPasswordStorageKey, await settingsPasswordHash(newPasswordInput.value));
+    closeSettingsPasswordModal();
+    const status = document.querySelector("#settingsSaveStatus");
+    if (status) status.textContent = "设置密码已更新";
+    return;
+  }
+
   settingsUnlocked = true;
   closeSettingsPasswordModal();
   openSettingsPanel();
@@ -1376,6 +1703,11 @@ function getDockingConfig() {
     joinMode,
     middleFitting: adapterItems[0]?.fitting || "直管",
     middleItems,
+    dockingMiddleEnabled: fields.productHasMiddle.checked,
+    middleA: fields.productMiddleA.value,
+    middleB: fields.productMiddleB.value,
+    middleLengthA: Math.max(0, Number(fields.productMiddleLengthA.value) || 0),
+    middleLengthB: Math.max(0, Number(fields.productMiddleLengthB.value) || 0),
     totalLengthRequirement: Math.max(0, Number(fields.productTotalLength.value) || 0),
     fittingA: fields.productFittingA.value,
     fittingB: fields.productFittingB.value,
@@ -2148,6 +2480,21 @@ function withQuoteValidation(config, result, costRows) {
   };
 }
 
+function quoteRiskMessage(issues, action) {
+  const summary = (issues || []).slice(0, 3)
+    .map(issue => `${issue.type}：${issue.item}`)
+    .join("\n");
+  const remaining = Math.max(0, (issues || []).length - 3);
+  return `无法${action}。请先处理 ${issues.length} 项报价数据风险：\n${summary}${remaining ? `\n另有 ${remaining} 项风险` : ""}`;
+}
+
+function assertQuoteReady(result, action) {
+  const issues = result?.quoteIssues || [];
+  if (!issues.length) return true;
+  window.alert(quoteRiskMessage(issues, action));
+  return false;
+}
+
 function selectHtml(values, selected, attrName, formatter = value => value) {
   return `<select ${attrName}>${values.map(value => `
     <option value="${value}" ${String(value) === String(selected) ? "selected" : ""}>${formatter(value)}</option>
@@ -2793,6 +3140,8 @@ function addQuoteItem() {
   config.productCode = productCodeResult.code;
   config.productCodeResult = productCodeResult;
   const result = calculate(config);
+  persistProductDraft(config);
+  if (!assertQuoteReady(result, "加入报价清单")) return;
   quoteItems.push({
     id: Date.now(),
     name: quoteItemName(config),
@@ -2948,6 +3297,15 @@ function exportDrawingPdf() {
 }
 
 function exportQuoteListCsv() {
+  const riskyItems = quoteItems.filter(item => item.result?.quoteIssues?.length);
+  if (riskyItems.length) {
+    const issues = riskyItems.flatMap(item => item.result.quoteIssues.map(issue => ({
+      ...issue,
+      item: `${item.name} · ${issue.item}`
+    })));
+    window.alert(quoteRiskMessage(issues, "导出报价清单"));
+    return;
+  }
   downloadText(
     ExportCore.quoteListFileName(fields.quoteNo.value),
     ExportCore.quoteListCsv(quoteItems, formatNumber, selectedQuotePriceColumns()),
@@ -2987,6 +3345,81 @@ function exportSettingsExcel() {
     ExportCore.settingsWorkbookXml(rows, SettingsCore.escapeXml),
     "application/vnd.ms-excel;charset=utf-8"
   );
+}
+
+function exportWorkspaceBackup() {
+  const config = getConfig();
+  const backup = WorkspaceBackupCore.create({
+    pricing: SettingsCore.clone(pricing),
+    quoteItems,
+    quoteColumns: quotePriceColumns,
+    productDraft: config,
+    quoteHistory,
+    settingsPasswordHash: localStorage.getItem(settingsPasswordStorageKey)
+  });
+  downloadText(
+    WorkspaceBackupCore.fileName(),
+    JSON.stringify(backup, null, 2),
+    "application/json;charset=utf-8"
+  );
+}
+
+function applyWorkspaceBackup(backup) {
+  const priorPricing = SettingsCore.clone(pricing);
+  const priorSettingText = localStorage.getItem(settingsStorageKey);
+  const priorPasswordHash = localStorage.getItem(settingsPasswordStorageKey);
+  try {
+    // Reuse the established pricing migration path so older backups gain new defaults.
+    localStorage.setItem(settingsStorageKey, JSON.stringify(backup.pricing));
+    Object.keys(pricing).forEach(key => delete pricing[key]);
+    Object.assign(pricing, SettingsCore.clone(defaultPricing));
+    loadPricingSettings();
+
+    const restoredList = QuoteListStorageCore.deserialize(
+      QuoteListStorageCore.serialize(backup.quoteList.items, backup.quoteList.columns),
+      Object.keys(quotePriceColumnDefinitions)
+    );
+    quoteItems = restoredList.items;
+    quotePriceColumns = restoredList.columns;
+    quoteHistory = QuoteHistoryStorageCore.deserialize(QuoteHistoryStorageCore.serialize(backup.quoteHistory));
+    if (backup.productDraft) applyProductDraftConfig(backup.productDraft);
+    if (typeof backup.settingsPasswordHash === "string") {
+      localStorage.setItem(settingsPasswordStorageKey, backup.settingsPasswordHash);
+    }
+
+    persistQuoteList();
+    persistQuoteHistory();
+    persistProductDraft(getConfig());
+    savePricingSettings();
+    renderSettings();
+    update();
+    const status = document.querySelector("#settingsSaveStatus");
+    if (status) status.textContent = `已恢复完整备份（${backup.createdAt || "未知时间"}）`;
+  } catch (error) {
+    Object.keys(pricing).forEach(key => delete pricing[key]);
+    Object.assign(pricing, priorPricing);
+    if (priorSettingText === null) localStorage.removeItem(settingsStorageKey);
+    else localStorage.setItem(settingsStorageKey, priorSettingText);
+    if (priorPasswordHash === null) localStorage.removeItem(settingsPasswordStorageKey);
+    else localStorage.setItem(settingsPasswordStorageKey, priorPasswordHash);
+    throw error;
+  }
+}
+
+function importWorkspaceBackupFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const backup = WorkspaceBackupCore.parse(String(reader.result || ""));
+      if (!window.confirm("恢复完整备份会覆盖当前价格设置、产品草稿、报价清单和历史版本，是否继续？")) return;
+      applyWorkspaceBackup(backup);
+    } catch (error) {
+      console.warn("完整备份恢复失败", error);
+      window.alert("恢复失败：请选择本系统导出的完整备份 JSON 文件。");
+    }
+  };
+  reader.readAsText(file, "utf-8");
 }
 
 function importSettingsExcelFile(file) {
@@ -3316,6 +3749,12 @@ function update() {
   document.querySelector("#ruleStatus").textContent = result.quoteIssues?.length
     ? `数据风险 ${result.quoteIssues.length} 项`
     : ruleText;
+  const addQuoteButton = document.querySelector("#addQuoteItem");
+  if (addQuoteButton) {
+    const blocked = Boolean(result.quoteIssues?.length);
+    addQuoteButton.disabled = blocked;
+    addQuoteButton.title = blocked ? `存在 ${result.quoteIssues.length} 项报价数据风险，请先处理` : "加入报价清单";
+  }
   document.querySelector("#drawingScale").textContent = isManifoldType(config.productType)
     ? (config.customBranches ? `${config.branchCount} 路独立预览` : `${config.branchCount} 路预览`)
     : `${productKindName(config.productType)}预览`;
@@ -3325,6 +3764,7 @@ function update() {
   renderSpec(config, result);
   renderCost(result);
   renderQuoteList();
+  renderQuoteHistory();
 }
 
 function init() {
@@ -3475,7 +3915,9 @@ function init() {
   fields.profitRate.value = "68";
   fields.taxRate.value = "17";
   fields.freight.value = "0";
+  restoreProductDraft();
   restoreQuoteList();
+  restoreQuoteHistory();
 
   Object.values(fields).forEach(field => {
     field.addEventListener("input", scheduleUpdate);
@@ -3634,9 +4076,8 @@ function init() {
     fields.quoteNo.value = `FSQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
     update();
   });
-  document.querySelector("#saveQuote").addEventListener("click", () => {
-    document.querySelector(".saved-state").textContent = "已保存";
-  });
+  document.querySelector("#saveQuote")?.addEventListener("click", saveQuoteHistoryVersion);
+  document.querySelector("#saveQuoteVersion")?.addEventListener("click", saveQuoteHistoryVersion);
   document.querySelector("#exportDrawingPng").addEventListener("click", exportDrawingPng);
   document.querySelector("#exportDrawingPdf").addEventListener("click", exportDrawingPdf);
   document.querySelector("#exportList").addEventListener("click", exportQuoteListCsv);
@@ -3689,18 +4130,32 @@ function init() {
     if (event.key === "Enter") confirmSettingsPassword();
     if (event.key === "Escape") closeSettingsPasswordModal();
   });
+  document.querySelector("#settingsPasswordNewInput").addEventListener("keydown", event => {
+    if (event.key === "Enter") confirmSettingsPassword();
+    if (event.key === "Escape") closeSettingsPasswordModal();
+  });
   document.querySelector("#cancelSettingsPassword").addEventListener("click", closeSettingsPasswordModal);
   document.querySelector("#closeSettingsPassword").addEventListener("click", closeSettingsPasswordModal);
   document.querySelector("#settingsPasswordModal").addEventListener("click", event => {
     if (event.target.id === "settingsPasswordModal") closeSettingsPasswordModal();
   });
   document.querySelector("#saveSettings").addEventListener("click", savePricingSettings);
+  document.querySelector("#changeSettingsPassword").addEventListener("click", () => openSettingsPasswordModal("change"));
+  document.querySelector("#lockSettings").addEventListener("click", lockSettings);
   document.querySelector("#exportSettingsExcel")?.addEventListener("click", exportSettingsExcel);
   document.querySelector("#importSettingsExcel")?.addEventListener("click", () => {
     document.querySelector("#importSettingsExcelFile")?.click();
   });
   document.querySelector("#importSettingsExcelFile")?.addEventListener("change", event => {
     importSettingsExcelFile(event.target.files?.[0]);
+    event.target.value = "";
+  });
+  document.querySelector("#exportWorkspaceBackup")?.addEventListener("click", exportWorkspaceBackup);
+  document.querySelector("#importWorkspaceBackup")?.addEventListener("click", () => {
+    document.querySelector("#importWorkspaceBackupFile")?.click();
+  });
+  document.querySelector("#importWorkspaceBackupFile")?.addEventListener("change", event => {
+    importWorkspaceBackupFile(event.target.files?.[0]);
     event.target.value = "";
   });
   document.querySelector("#resetSettings").addEventListener("click", () => {

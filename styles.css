@@ -2106,6 +2106,88 @@ select:hover {
   text-align: right;
 }
 
+.quote-history {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.quote-history-heading,
+.quote-history-item,
+.quote-history-actions {
+  align-items: center;
+  display: flex;
+}
+
+.quote-history-heading {
+  gap: 10px;
+}
+
+.quote-history-heading span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quote-history-heading .secondary-button {
+  margin-left: auto;
+}
+
+.quote-history-rows {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quote-history-item {
+  background: #f8fbfa;
+  border: 1px solid #e1ebe8;
+  gap: 16px;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 8px 10px;
+}
+
+.quote-history-item strong,
+.quote-history-item span,
+.quote-history-item small {
+  display: block;
+}
+
+.quote-history-item span {
+  color: #35534d;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.quote-history-item small {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.quote-history-actions {
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.quote-history-actions b {
+  color: var(--green-dark);
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+.tiny-button.neutral {
+  background: #eef8f5;
+  border-color: #b8d7cf;
+  color: #0e7164;
+}
+
+.quote-history-empty {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
 .quote-spec code {
   display: block;
   margin-bottom: 4px;
