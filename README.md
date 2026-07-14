@@ -8,7 +8,7 @@
 - 弯头类
 - 组合件
 
-系统同时负责参数配置、报价计算、成本拆分、BOM 清单、图纸预览、PNG/PDF/清单导出、设置数据维护。
+系统同时负责参数配置、报价计算、成本拆分、BOM 清单、图纸预览、PNG/PDF/DXF/清单导出、设置数据维护。
 
 ## 运行方式
 
@@ -34,6 +34,7 @@ http://127.0.0.1:4173/
 - `cost-detail-core.js`：成本拆分明细，展示表格取值、材质系数、去税换算、加工费取值和最终计入金额。
 - `display-core.js`：顶部标题、配置明细、成本行、报价清单展示文本。
 - `settings-core.js`：设置数据克隆、合并、导入导出路径和本地保存。
+- `dxf-export-core.js`：面向中望/AutoCAD 兼容的 R12 DXF 文件、机械图图层表、文字样式及原生图元序列化。
 - `quote-list-storage-core.js`：报价清单草稿的本机序列化、恢复和容量限制。
 - `product-draft-storage-core.js`：当前产品参数草稿的本机保存与恢复。
 - `quote-history-storage-core.js`：报价版本快照、恢复和本机历史容量限制。
@@ -483,6 +484,7 @@ http://127.0.0.1:4173/
 
 - 导出 PNG：保存当前 SVG 图纸为 PNG。
 - 导出 PDF：打开仅包含图纸的打印页，可选择浏览器 PDF 或系统 PDF 打印机。
+- 导出 DXF：输出兼容性优先的 R12 ASCII DXF，单位为毫米，A3 横向图框映射为毫米坐标；包含中望机械版可用的 `CENTER2`、`DASHED2`、`PHANTOM4` 线型、文字样式、图层与 `BLOCKS` 节。文字样式使用本机中望机械版自带的 `txt.shx + GBCBIG.SHX`；中文使用 AutoCAD `\\U+XXXX` Unicode 转义，避免旧 CAD 将 UTF-8 读为问号。图层按机械制图用途建立：`01_OUTLINE` 轮廓实线、`02_THIN` 细线、`03_CENTER` 红色 `CENTER2` 中心线、`04_HIDDEN` 洋红 `DASHED2` 虚线、`05_HATCH` 剖面、`06_TEXT` 绿色文字、`07_DIMENSION` 天蓝色标注、`08_SYMBOL` 符号、`09_PHANTOM` 双点划线、`10_OUTLINE_HIDDEN` 轮廓虚线、`11_SECTION` 剖图、`12_FRAME` 图框、`13_NO_PLOT` 消隐。圆形符号导出为原生 `CIRCLE`，由直线和圆弧构成的弯头轮廓、中心线导出为原生 `LINE + ARC`；无法无损转换的复杂 SVG 曲线才降级为传统 `POLYLINE/VERTEX`，便于在 AutoCAD、中望、浩辰等软件中继续编辑。
 - 导出清单：导出报价清单数据，价格列按当前清单勾选项输出。
 - 设置导出/导入：用于价格、长度、加工费等基础表批量维护。
 

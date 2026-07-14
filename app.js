@@ -3224,6 +3224,279 @@ function serializedDrawingSvg() {
   return new XMLSerializer().serializeToString(source);
 }
 
+const dxfPaperScale = 0.35;
+const dxfSvgBottom = 835;
+
+function dxfLayerForElement(element) {
+  const rawLayer = String(element.closest("[data-layer]")?.dataset.layer || "").toLowerCase();
+  if (rawLayer.includes("frame") || rawLayer.includes("title")) return "12_FRAME";
+  if (rawLayer.includes("center")) return "03_CENTER";
+  if (rawLayer.includes("dimension")) return "07_DIMENSION";
+  if (rawLayer.includes("info") || rawLayer.includes("bom") || rawLayer.includes("technical")) return "06_TEXT";
+  if (rawLayer.includes("text") || rawLayer.includes("label")) return "06_TEXT";
+  return "01_OUTLINE";
+}
+
+function dxfPointFromSvg(element, x, y) {
+  const svg = document.querySelector("#drawing");
+  let point = { x: Number(x) || 0, y: Number(y) || 0 };
+  try {
+    const rootMatrix = svg.getCTM?.();
+    const elementMatrix = element.getCTM?.();
+    if (rootMatrix?.inverse && elementMatrix && typeof DOMPoint !== "undefined") {
+      const matrix = rootMatrix.inverse().multiply(elementMatrix);
+      const transformed = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      point = { x: transformed.x, y: transformed.y };
+    }
+  } catch (error) {
+    console.warn("DXF transform fallback", error);
+  }
+  return { x: point.x * dxfPaperScale, y: (dxfSvgBottom - point.y) * dxfPaperScale };
+}
+
+function dxfArrow(point, direction, layer) {
+  const length = Math.hypot(direction.x, direction.y);
+  if (!length) return null;
+  const unit = { x: direction.x / length, y: direction.y / length };
+  const normal = { x: -unit.y, y: unit.x };
+  const depth = 3.2;
+  const halfWidth = 1.45;
+  return {
+    type: "POLYLINE",
+    layer,
+    closed: true,
+    points: [
+      point,
+      { x: point.x + unit.x * depth + normal.x * halfWidth, y: point.y + unit.y * depth + normal.y * halfWidth },
+      { x: point.x + unit.x * depth - normal.x * halfWidth, y: point.y + unit.y * depth - normal.y * halfWidth }
+    ]
+  };
+}
+
+function dxfPointsFromAttribute(element) {
+  const values = (element.getAttribute("points") || "").trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
+  const points = [];
+  for (let index = 0; index + 1 < values.length; index += 2) {
+    points.push(dxfPointFromSvg(element, values[index], values[index + 1]));
+  }
+  return points;
+}
+
+function dxfPathPoints(element) {
+  try {
+    const length = element.getTotalLength();
+    const count = Math.max(8, Math.min(240, Math.ceil(length / 5)));
+    return Array.from({ length: count + 1 }, (_, index) => {
+      const point = element.getPointAtLength((length * index) / count);
+      return dxfPointFromSvg(element, point.x, point.y);
+    });
+  } catch (error) {
+    console.warn("DXF path sampling fallback", error);
+    return [];
+  }
+}
+
+function dxfAngleDegrees(point, center) {
+  return (Math.atan2(point.y - center.y, point.x - center.x) * 180 / Math.PI + 360) % 360;
+}
+
+function dxfSvgArcCenter(start, end, rx, ry, rotation, largeArc, sweep) {
+  // SVG endpoint arc conversion, from the SVG 1.1 implementation notes.
+  // We only promote circular, unrotated arcs. Other curves retain the safe
+  // polyline fallback below so exported geometry never disappears.
+  if (!rx || !ry || Math.abs(rx - ry) > 0.01 || Math.abs(rotation) > 0.01) return null;
+  const radius = Math.abs(rx);
+  const dx = (start.x - end.x) / 2;
+  const dy = (start.y - end.y) / 2;
+  const squaredDistance = dx * dx + dy * dy;
+  if (!squaredDistance) return null;
+  const adjustedRadius = Math.max(radius, Math.sqrt(squaredDistance));
+  const factorSquared = Math.max(0, (adjustedRadius * adjustedRadius - squaredDistance) / squaredDistance);
+  const factor = (largeArc === sweep ? -1 : 1) * Math.sqrt(factorSquared);
+  return {
+    x: factor * dy + (start.x + end.x) / 2,
+    y: -factor * dx + (start.y + end.y) / 2,
+    radius: adjustedRadius
+  };
+}
+
+function dxfPathEntities(element, layer) {
+  const source = String(element.getAttribute("d") || "").trim();
+  // The production elbow body only uses M/L/A/Z. Export those as real DXF
+  // LINE/ARC entities; Bézier or transformed paths continue through the
+  // sampled fallback to preserve every existing drawing variant.
+  if (!source || /[CcQqSsTt]/.test(source)) return null;
+  const tokens = source.match(/[a-zA-Z]|[-+]?(?:\\d*\\.\\d+|\\d+\\.?)(?:[eE][-+]?\\d+)?/g);
+  if (!tokens?.length) return null;
+  const entities = [];
+  let index = 0;
+  let command = "";
+  let current = null;
+  let subpathStart = null;
+  const read = count => {
+    if (index + count > tokens.length || tokens.slice(index, index + count).some(token => /[a-zA-Z]/.test(token))) return null;
+    const values = tokens.slice(index, index + count).map(Number);
+    index += count;
+    return values;
+  };
+  const point = (x, y, relative) => ({ x: relative && current ? current.x + x : x, y: relative && current ? current.y + y : y });
+  const pushLine = (from, to) => {
+    const start = dxfPointFromSvg(element, from.x, from.y);
+    const end = dxfPointFromSvg(element, to.x, to.y);
+    entities.push({ type: "LINE", layer, x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+  };
+
+  while (index < tokens.length) {
+    if (/[a-zA-Z]/.test(tokens[index])) command = tokens[index++];
+    if (!command) return null;
+    const relative = command === command.toLowerCase();
+    const type = command.toUpperCase();
+    if (type === "Z") {
+      if (current && subpathStart && (current.x !== subpathStart.x || current.y !== subpathStart.y)) pushLine(current, subpathStart);
+      current = subpathStart;
+      command = "";
+      continue;
+    }
+    if (type === "M") {
+      const values = read(2);
+      if (!values) return null;
+      current = point(values[0], values[1], relative);
+      subpathStart = current;
+      command = relative ? "l" : "L";
+      continue;
+    }
+    if (!current) return null;
+    if (type === "L") {
+      const values = read(2);
+      if (!values) return null;
+      const next = point(values[0], values[1], relative);
+      pushLine(current, next);
+      current = next;
+      continue;
+    }
+    if (type === "H" || type === "V") {
+      const values = read(1);
+      if (!values) return null;
+      const next = type === "H" ? { x: relative ? current.x + values[0] : values[0], y: current.y } : { x: current.x, y: relative ? current.y + values[0] : values[0] };
+      pushLine(current, next);
+      current = next;
+      continue;
+    }
+    if (type === "A") {
+      const values = read(7);
+      if (!values) return null;
+      const next = point(values[5], values[6], relative);
+      const center = dxfSvgArcCenter(current, next, values[0], values[1], values[2], Number(values[3]) === 1, Number(values[4]) === 1);
+      if (!center) return null;
+      const dxfCenter = dxfPointFromSvg(element, center.x, center.y);
+      const dxfStart = dxfPointFromSvg(element, current.x, current.y);
+      const dxfEnd = dxfPointFromSvg(element, next.x, next.y);
+      const dxfRadius = Math.hypot(dxfStart.x - dxfCenter.x, dxfStart.y - dxfCenter.y);
+      const startAngle = dxfAngleDegrees(dxfStart, dxfCenter);
+      const endAngle = dxfAngleDegrees(dxfEnd, dxfCenter);
+      // SVG's y axis points down; after conversion to CAD's y-up plane, sweep
+      // direction is reversed. ARC geometry is direction-independent, so swap
+      // endpoints for clockwise SVG sweeps and preserve the exact visible arc.
+      entities.push({
+        type: "ARC", layer, x: dxfCenter.x, y: dxfCenter.y, r: dxfRadius,
+        startAngle: Number(values[4]) === 1 ? endAngle : startAngle,
+        endAngle: Number(values[4]) === 1 ? startAngle : endAngle
+      });
+      current = next;
+      continue;
+    }
+    return null;
+  }
+  return entities.length ? entities : null;
+}
+
+function dxfEntitiesFromDrawing() {
+  const svg = document.querySelector("#drawing");
+  const entities = [];
+  svg.querySelectorAll("line, rect, circle, ellipse, polyline, polygon, path, text").forEach(element => {
+    if (element.closest("defs, marker")) return;
+    const tag = element.tagName.toLowerCase();
+    const layer = dxfLayerForElement(element);
+    if (tag === "line") {
+      const start = dxfPointFromSvg(element, element.getAttribute("x1"), element.getAttribute("y1"));
+      const end = dxfPointFromSvg(element, element.getAttribute("x2"), element.getAttribute("y2"));
+      entities.push({ type: "LINE", layer, x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+      if (element.hasAttribute("marker-start")) entities.push(dxfArrow(start, { x: end.x - start.x, y: end.y - start.y }, "07_DIMENSION"));
+      if (element.hasAttribute("marker-end")) entities.push(dxfArrow(end, { x: start.x - end.x, y: start.y - end.y }, "07_DIMENSION"));
+      return;
+    }
+    if (tag === "rect") {
+      const x = Number(element.getAttribute("x")) || 0;
+      const y = Number(element.getAttribute("y")) || 0;
+      const width = Number(element.getAttribute("width")) || 0;
+      const height = Number(element.getAttribute("height")) || 0;
+      entities.push({ type: "POLYLINE", layer, closed: true, points: [
+        dxfPointFromSvg(element, x, y), dxfPointFromSvg(element, x + width, y),
+        dxfPointFromSvg(element, x + width, y + height), dxfPointFromSvg(element, x, y + height)
+      ] });
+      return;
+    }
+    if (tag === "polyline" || tag === "polygon") {
+      entities.push({ type: "POLYLINE", layer, closed: tag === "polygon", points: dxfPointsFromAttribute(element) });
+      return;
+    }
+    if (tag === "circle") {
+      const cx = Number(element.getAttribute("cx")) || 0;
+      const cy = Number(element.getAttribute("cy")) || 0;
+      const radius = Number(element.getAttribute("r")) || 0;
+      const center = dxfPointFromSvg(element, cx, cy);
+      const edge = dxfPointFromSvg(element, cx + radius, cy);
+      entities.push({ type: "CIRCLE", layer, x: center.x, y: center.y, r: Math.hypot(edge.x - center.x, edge.y - center.y) });
+      return;
+    }
+    if (tag === "ellipse") {
+      const cx = Number(element.getAttribute("cx")) || 0;
+      const cy = Number(element.getAttribute("cy")) || 0;
+      const rx = Number(element.getAttribute("rx")) || 0;
+      const ry = Number(element.getAttribute("ry")) || 0;
+      const points = Array.from({ length: 32 }, (_, index) => {
+        const angle = (Math.PI * 2 * index) / 32;
+        return dxfPointFromSvg(element, cx + Math.cos(angle) * rx, cy + Math.sin(angle) * ry);
+      });
+      entities.push({ type: "POLYLINE", layer, closed: true, points });
+      return;
+    }
+    if (tag === "path") {
+      const pathEntities = dxfPathEntities(element, layer);
+      if (pathEntities) entities.push(...pathEntities);
+      else entities.push({ type: "POLYLINE", layer, closed: /[zZ]\s*$/.test(element.getAttribute("d") || ""), points: dxfPathPoints(element) });
+      return;
+    }
+    const x = element.x?.baseVal?.[0]?.value ?? element.getAttribute("x") ?? 0;
+    const y = element.y?.baseVal?.[0]?.value ?? element.getAttribute("y") ?? 0;
+    const point = dxfPointFromSvg(element, x, y);
+    const fontSize = Math.max(2.5, (Number(element.getAttribute("font-size")) || 12) * dxfPaperScale);
+    const matrix = element.getCTM?.();
+    const rootMatrix = svg.getCTM?.();
+    const angle = matrix && rootMatrix?.inverse ? -Math.atan2(rootMatrix.inverse().multiply(matrix).b, rootMatrix.inverse().multiply(matrix).a) * 180 / Math.PI : 0;
+    entities.push({
+      type: "TEXT",
+      layer: layer === "01_OUTLINE" ? "06_TEXT" : layer,
+      x: point.x,
+      y: point.y,
+      height: fontSize,
+      angle,
+      align: element.getAttribute("text-anchor") === "middle" ? "center" : "left",
+      text: element.textContent
+    });
+  });
+  return entities.filter(Boolean);
+}
+
+function exportDrawingDxf() {
+  const entities = dxfEntitiesFromDrawing();
+  if (!entities.length) {
+    window.alert("当前图纸没有可导出的 DXF 图元。");
+    return;
+  }
+  downloadText(drawingFileName("dxf"), DxfExportCore.document(entities), "application/dxf;charset=utf-8");
+}
+
 function drawingFileName(extension) {
   return ExportCore.drawingFileName(fields.quoteNo.value, extension);
 }
@@ -4080,8 +4353,8 @@ function init() {
   document.querySelector("#saveQuoteVersion")?.addEventListener("click", saveQuoteHistoryVersion);
   document.querySelector("#exportDrawingPng").addEventListener("click", exportDrawingPng);
   document.querySelector("#exportDrawingPdf").addEventListener("click", exportDrawingPdf);
+  document.querySelector("#exportDrawingDxf").addEventListener("click", exportDrawingDxf);
   document.querySelector("#exportList").addEventListener("click", exportQuoteListCsv);
-  document.querySelector("#exportNxParams")?.addEventListener("click", exportNxParamsJson);
   document.querySelector("#toggleDrawingInfoPanels")?.addEventListener("click", () => {
     drawingInfoPanelsVisible = !drawingInfoPanelsVisible;
     document.querySelector("#toggleDrawingInfoPanels").textContent = drawingInfoPanelsVisible ? "\u9690\u85cf\u8bf4\u660e" : "\u663e\u793a\u8bf4\u660e";

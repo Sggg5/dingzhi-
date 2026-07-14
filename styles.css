@@ -265,6 +265,10 @@ body.sidebar-collapsed .topbar {
   color: var(--brand);
 }
 
+#exportNxParams {
+  display: none !important;
+}
+
 .header-print {
   display: inline-flex;
   gap: 8px;
