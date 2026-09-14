@@ -142,4 +142,30 @@ const blankBranchSvg = ManifoldDrawing.render(
   helpers
 );
 assert.strictEqual((blankBranchSvg.match(/<branch-fitting>/g) || []).length, 1);
+
+let denseDimensionFontSize = null;
+const denseBranches = Array.from({ length: 20 }, () => ({ diameter: 20, fitting: "外丝", height: 100 }));
+const denseSvg = ManifoldDrawing.render(
+  { ...config, branches: denseBranches },
+  { mainLength: 2420, inletAllowance: 100, tailAllowance: 40 },
+  {
+    ...helpers,
+    branchLayout: () => ({
+      span: 2280,
+      offsets: Array.from({ length: 20 }, (_, index) => index * 120),
+      stations: Array.from({ length: 20 }, (_, index) => index * 120),
+      stationSpacings: Array.from({ length: 19 }, () => 120)
+    }),
+    DrawingCore: {
+      ...helpers.DrawingCore,
+      horizontalDimension: ({ label, fontSize }) => {
+        if (String(label).startsWith("P=")) denseDimensionFontSize = fontSize;
+        return `<dimension>${label}</dimension>`;
+      }
+    }
+  }
+);
+assert(denseSvg.includes(">20外丝</text>"));
+assert(denseSvg.includes("<dimension>P=120</dimension>"));
+assert.strictEqual(denseDimensionFontSize, 8);
 console.log("manifold drawing tests passed");

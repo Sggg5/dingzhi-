@@ -5,11 +5,12 @@
 })(typeof globalThis !== "undefined" ? globalThis : window, function createWorkspaceBackupCore() {
   const SCHEMA_VERSION = 1;
 
-  function create({ pricing, quoteItems, quoteColumns, productDraft, quoteHistory, settingsPasswordHash }) {
+  function create({ pricing, pricingTrace, quoteItems, quoteColumns, productDraft, quoteHistory, settingsPasswordHash }) {
     return {
       schemaVersion: SCHEMA_VERSION,
       createdAt: new Date().toISOString(),
       pricing,
+      pricingTrace: pricingTrace || null,
       quoteList: { items: quoteItems || [], columns: quoteColumns || ["unitPrice"] },
       productDraft: productDraft || null,
       quoteHistory: quoteHistory || [],
@@ -24,6 +25,7 @@
     }
     if (!value.quoteList || !Array.isArray(value.quoteList.items)) value.quoteList = { items: [], columns: ["unitPrice"] };
     if (!Array.isArray(value.quoteHistory)) value.quoteHistory = [];
+    if (value.pricingTrace !== null && typeof value.pricingTrace !== "object") value.pricingTrace = null;
     if (value.settingsPasswordHash !== null && typeof value.settingsPasswordHash !== "string") value.settingsPasswordHash = null;
     return value;
   }

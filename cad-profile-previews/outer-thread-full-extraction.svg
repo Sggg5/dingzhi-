@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1030" viewBox="0 0 1400 1030">
+<style>
+  text { font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #173432; }
+  .title { font-size: 28px; font-weight: 700; }
+  .subtitle { font-size: 15px; fill: #5b6f6d; }
+  .size { font-size: 18px; font-weight: 700; }
+  .datum { font-size: 13px; fill: #d63f3f; dominant-baseline: middle; }
+</style>
+<rect width="100%" height="100%" fill="#f3f7f6"/>
+<text x="28" y="45" class="title">国I 16-101.6 外丝 DXF 完整轮廓提取</text>
+<text x="28" y="76" class="subtitle">合并轮廓实线层、0 层和 1 层；排除标注层。红色虚线为源图左侧连接基准面，尚未接入系统。</text>
+<text x="28" y="101" class="subtitle">D101.6: 16实体 / D88.9: 16实体 / D76.1: 16实体 / D50.8: 28实体 / D40: 26实体 / D32: 19实体 / D25.4: 25实体 / D20: 23实体 / D16: 20实体</text>
+<rect x="28" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="155" class="size">D101.6 外丝</text>
+<polyline points="194.28,183.16 211.11,183.16" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="212.03,175.68 217.04,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="217.04,167.00 233.13,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.13,167.00 240.80,180.30" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="241.59,180.76 243.38,180.76" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="243.38,180.76 311.89,185.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="313.75,364.85 313.72,187.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="194.31,368.85 211.14,368.85" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="212.06,376.32 217.07,385.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="217.07,385.00 233.16,384.99" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.16,384.99 240.83,371.69" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="194.31,364.28 194.25,183.16" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="241.62,371.24 243.41,371.24" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="243.41,371.24 311.92,366.79" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="313.72,187.12 311.89,185.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="311.92,366.79 313.75,364.85" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="194.25" y1="161.00" x2="194.25" y2="391.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="186.25" y="276.00" text-anchor="end" class="datum">连接基准面</text><rect x="482" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="155" class="size">D88.9 外丝</text>
+<polyline points="641.15,366.92 641.15,185.08" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="641.19,185.08 660.02,185.08" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="661.04,176.72 666.65,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="666.65,167.00 684.65,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="684.65,167.00 693.25,181.88" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="694.13,182.39 696.13,182.39" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="696.13,182.39 772.81,187.34" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="641.19,366.92 660.02,366.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="661.04,375.28 666.65,385.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="666.65,385.00 684.65,385.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="684.65,385.00 693.25,370.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="694.13,369.61 696.13,369.61" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="696.13,369.61 772.81,364.66" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="774.85,362.48 774.85,189.52" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="774.85,189.52 772.81,187.34" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="772.81,364.66 774.85,362.48" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="641.15" y1="161.00" x2="641.15" y2="391.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="633.15" y="276.00" text-anchor="end" class="datum">连接基准面</text><rect x="936" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="155" class="size">D76.1 外丝</text>
+<polyline points="1086.03,364.45 1086.03,187.55" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1086.07,187.55 1107.47,187.55" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1108.63,178.04 1115.01,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1115.01,167.00 1135.47,167.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1135.47,167.00 1145.23,183.91" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1146.24,184.49 1148.51,184.49" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1148.51,184.49 1235.65,190.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1086.07,364.45 1107.47,364.45" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1108.63,373.96 1115.01,385.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1115.01,385.00 1135.47,385.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1135.47,385.00 1145.23,368.09" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1146.24,367.51 1148.51,367.51" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1148.51,367.51 1235.65,361.88" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1237.97,359.41 1237.97,192.59" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1237.97,192.59 1235.65,190.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1235.65,361.88 1237.97,359.41" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="1086.03" y1="161.00" x2="1086.03" y2="391.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1078.03" y="276.00" text-anchor="end" class="datum">连接基准面</text><rect x="28" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="447" class="size">D50.8 外丝</text>
+<polyline points="197.27,653.26 210.98,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.45,677.00 247.62,668.05" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="247.62,668.05 252.43,667.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="252.42,667.94 252.43,667.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,653.26 197.27,653.26" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="258.26,667.77 252.43,667.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,653.26 181.83,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="255.47,468.16 247.62,467.95" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,482.74 181.83,487.77" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="197.27,482.74 181.83,482.74" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="197.27,482.74 210.98,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.45,459.00 247.62,467.95" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,473.37 326.17,479.38" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,479.38 326.17,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,487.77 181.83,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="247.62,467.95 322.81,469.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,473.37 322.81,469.92" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,662.63 326.17,656.62" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,656.62 326.17,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="247.62,668.05 322.81,666.08" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="326.17,662.63 322.81,666.08" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="210.98,459.00 242.45,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="210.98,677.00 242.45,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.45,677.00 247.62,668.05" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="197.27,653.26 210.98,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,653.26 197.27,653.26" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="181.83,653.26 181.83,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.45,677.00 210.98,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="181.83" y1="453.00" x2="181.83" y2="683.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="173.83" y="568.00" text-anchor="end" class="datum">连接基准面</text><rect x="482" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="447" class="size">D40 外丝</text>
+<polyline points="712.50,669.60 713.97,669.56" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="643.88,654.24 657.02,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="703.16,673.74 704.85,670.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="629.21,653.18 642.04,653.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="706.64,669.76 712.50,669.60" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="786.79,480.69 786.79,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="642.04,482.82 629.21,482.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="643.88,481.76 657.02,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="701.28,459.00 704.85,465.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="780.23,468.17 786.79,474.73" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="629.21,568.00 629.21,482.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="629.21,568.00 629.21,653.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="706.64,466.25 780.23,468.17" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="786.79,474.73 786.79,480.69" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="786.79,655.31 786.79,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="701.28,677.00 704.85,670.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="780.23,667.83 786.79,661.27" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="706.64,669.76 780.23,667.83" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="786.79,661.27 786.79,655.31" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="642.04,482.82 642.23,482.82 642.41,482.79 642.59,482.75 642.77,482.69 642.94,482.62 643.10,482.54 643.26,482.44 643.40,482.33 643.54,482.20 643.66,482.07 643.78,481.92 643.88,481.76" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="704.85,465.18 704.95,465.34 705.06,465.48 705.18,465.62 705.31,465.74 705.45,465.85 705.60,465.95 705.76,466.03 705.93,466.10 706.10,466.16 706.27,466.20 706.45,466.23 706.64,466.25" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="643.88,654.24 643.78,654.08 643.66,653.93 643.54,653.80 643.40,653.67 643.26,653.56 643.10,653.46 642.94,653.38 642.77,653.31 642.59,653.25 642.41,653.21 642.23,653.19 642.04,653.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="706.64,669.76 706.45,669.77 706.27,669.80 706.10,669.84 705.93,669.90 705.76,669.97 705.60,670.05 705.45,670.15 705.31,670.26 705.18,670.39 705.06,670.52 704.95,670.66 704.85,670.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="643.88,654.24 643.78,654.08 643.66,653.93 643.54,653.80 643.40,653.67 643.26,653.56 643.10,653.46 642.94,653.38 642.77,653.31 642.59,653.25 642.41,653.21 642.23,653.19 642.04,653.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="657.02,677.00 701.28,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="657.02,459.00 701.28,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="629.21" y1="453.00" x2="629.21" y2="683.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="621.21" y="568.00" text-anchor="end" class="datum">连接基准面</text><rect x="936" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="447" class="size">D32 外丝</text>
+<polyline points="1154.20,670.18 1159.00,670.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1093.72,646.04 1111.59,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1152.42,673.27 1154.20,670.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1076.64,646.04 1093.72,646.04" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1076.64,646.04 1076.64,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1076.64,489.96 1076.64,497.28" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1093.72,489.96 1076.64,489.96" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1093.72,489.96 1111.59,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1150.26,459.00 1154.20,465.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1247.36,473.13 1247.36,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1076.64,497.28 1076.64,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1154.20,465.82 1242.48,468.13" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1242.48,468.13 1247.36,473.13" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1150.26,677.00 1154.20,670.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1247.36,662.87 1247.36,568.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1154.20,670.18 1242.48,667.87" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1242.48,667.87 1247.36,662.87" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1111.59,459.00 1150.26,459.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1111.59,677.00 1150.26,677.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="1076.64" y1="453.00" x2="1076.64" y2="683.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1068.64" y="568.00" text-anchor="end" class="datum">连接基准面</text><rect x="28" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="739" class="size">D25.4 外丝</text>
+<polyline points="233.18,969.00 242.89,952.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="187.37,930.52 202.91,944.68" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="165.16,930.52 187.37,930.52" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,959.38 208.47,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,860.00 342.84,895.86" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.18,969.00 208.47,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,944.68 202.91,957.29" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="165.16,930.52 165.16,860.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,957.29 202.91,959.38" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="165.16,789.48 165.16,796.14" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="187.37,789.48 165.16,789.48" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,775.32 187.37,789.48" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,760.62 202.91,775.32" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="202.91,760.62 208.47,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.18,751.00 208.47,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.18,751.00 242.89,767.82" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,775.99 342.84,789.20" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="165.16,796.14 165.16,860.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,789.20 342.84,860.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.89,767.82 337.29,770.30" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,775.99 337.29,770.30" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="233.18,969.00 242.89,952.18" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,944.01 342.84,895.86" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="242.89,952.18 337.29,949.70" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="342.84,944.01 337.29,949.70" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="165.16" y1="745.00" x2="165.16" y2="975.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="157.16" y="860.00" text-anchor="end" class="datum">连接基准面</text><rect x="482" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="739" class="size">D20 外丝</text>
+<polyline points="640.57,952.04 650.37,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="686.42,969.00 696.94,950.77" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="627.09,927.43 640.57,940.57" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="613.60,927.43 627.09,927.43" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="686.42,969.00 650.37,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="802.40,939.66 802.40,939.59 802.40,939.52 802.40,939.45 802.40,939.37 802.40,939.30 802.40,939.22 802.40,939.14 802.40,939.06 802.40,938.98 802.40,938.90 802.40,938.82 802.40,938.73 802.40,938.59 802.40,938.44 802.40,938.28 802.40,938.13 802.40,937.97 802.40,937.80 802.40,937.63 802.40,937.46 802.40,937.28 802.40,937.10 802.40,936.92 802.40,936.73 802.40,936.54 802.40,936.35 802.40,936.15 802.40,935.95 802.40,935.74 802.40,935.53 802.40,935.32 802.40,935.10 802.40,934.88 802.40,934.65 802.40,934.43 802.40,934.19 802.40,933.96 802.40,933.72 802.40,933.47 802.40,933.23 802.40,932.98 802.40,932.72 802.40,932.46 802.40,932.20 802.40,931.94 802.40,931.67 802.40,931.40 802.40,931.12 802.40,930.84 802.40,930.56 802.40,930.27 802.40,929.98 802.40,929.69 802.40,929.39 802.40,929.09 802.40,928.78 802.40,928.47 802.40,928.16 802.40,927.85 802.40,927.53 802.40,927.21 802.40,926.89 802.40,926.56 802.40,926.23 802.40,925.89 802.40,925.56 802.40,925.22 802.40,924.87 802.40,924.53 802.40,924.18 802.40,923.82 802.40,923.47 802.40,923.11 802.40,922.75 802.40,922.38 802.40,922.01 802.40,921.64 802.40,921.27 802.40,920.89 802.40,920.51 802.40,920.13 802.40,919.75 802.40,919.36 802.40,918.97 802.40,918.57 802.40,918.17 802.40,917.77 802.40,917.37 802.40,916.96 802.40,916.55 802.40,916.14 802.40,915.73 802.40,915.31 802.40,914.89 802.40,914.47 802.40,914.04 802.40,913.61 802.40,913.18 802.40,912.75 802.40,912.31 802.40,911.87 802.40,911.43 802.40,910.98 802.40,910.53 802.40,910.08 802.40,909.63 802.40,909.18 802.40,908.72 802.40,908.26 802.40,907.80 802.40,907.33 802.40,906.87 802.40,906.40 802.40,905.93 802.40,905.45 802.40,904.98 802.40,904.50 802.40,904.02 802.40,903.54 802.40,903.05 802.40,902.57 802.40,902.08 802.40,901.59 802.40,901.10 802.40,900.61 802.40,900.11 802.40,899.61 802.40,899.11 802.40,898.61 802.40,898.11 802.40,897.61 802.40,897.10 802.40,896.65 802.40,896.21 802.40,895.76 802.40,895.31 802.40,894.86 802.40,894.41 802.40,893.95 802.40,893.50 802.40,893.04 802.40,892.59 802.40,892.13 802.40,891.67 802.40,891.20 802.40,890.74 802.40,890.28 802.40,889.81 802.40,889.34 802.40,888.88 802.40,888.41 802.40,887.94 802.40,887.47 802.40,887.00 802.40,886.53 802.40,886.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="613.60,927.43 613.60,860.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="699.77,770.91 795.66,773.42" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="802.40,780.34 802.40,939.66" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="613.60,800.66 613.60,860.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="627.09,792.57 640.57,779.43" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="613.60,792.57 627.09,792.57" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="640.57,779.43 640.57,767.96" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="650.37,751.00 640.57,767.96" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="696.94,769.23 686.42,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="613.60,800.66 613.60,792.57" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="686.42,751.00 650.37,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="802.40,780.34 795.66,773.42" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="699.77,949.09 795.66,946.58" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="802.40,939.66 795.66,946.58" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="696.94,769.23 697.10,769.47 697.27,769.70 697.47,769.91 697.68,770.11 697.90,770.28 698.14,770.44 698.39,770.57 698.65,770.69 698.92,770.78 699.20,770.85 699.48,770.89 699.77,770.91" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="699.77,949.09 699.48,949.11 699.20,949.15 698.92,949.22 698.65,949.31 698.39,949.43 698.14,949.56 697.90,949.72 697.68,949.89 697.47,950.09 697.27,950.30 697.10,950.53 696.94,950.77" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="640.57,952.04 640.57,940.57" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="613.60" y1="745.00" x2="613.60" y2="975.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="605.60" y="860.00" text-anchor="end" class="datum">连接基准面</text><rect x="936" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="739" class="size">D16 外丝</text>
+<polyline points="1080.48,953.11 1089.65,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1126.85,969.00 1139.69,946.76" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1262.52,943.54 1264.98,943.48" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1126.85,969.00 1089.65,969.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1273.56,860.00 1273.56,934.67" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1089.65,751.00 1126.85,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1126.85,751.00 1139.69,773.24" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1273.56,860.00 1273.56,785.33" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1050.44,791.35 1076.18,791.35" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1076.18,791.35 1076.77,791.31 1077.33,791.19 1077.85,791.01 1078.35,790.76 1078.81,790.45 1079.22,790.09 1079.58,789.68 1079.89,789.22 1080.14,788.73 1080.32,788.20 1080.44,787.64 1080.48,787.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1080.48,787.49 1080.48,766.89" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1080.48,766.89 1089.65,751.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1139.69,773.24 1264.98,776.52" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1264.98,776.52 1273.56,785.33" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1139.69,946.76 1264.98,943.48" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1264.98,943.48 1273.56,934.67" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1080.48,953.11 1080.48,932.51" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1050.44,791.35 1050.44,928.65" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1050.44,928.65 1076.18,928.65" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1080.48,932.94 1080.47,932.66 1080.44,932.38 1080.39,932.10 1080.33,931.83 1080.25,931.56 1080.15,931.30 1080.03,931.05 1079.90,930.80 1079.75,930.56 1079.59,930.33 1079.41,930.12 1079.22,929.91 1079.01,929.72 1078.79,929.54 1078.57,929.37 1078.33,929.23 1078.08,929.09 1077.83,928.98 1077.57,928.88 1077.30,928.80 1077.03,928.74 1076.75,928.69 1076.47,928.66 1076.18,928.65" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="1050.44" y1="745.00" x2="1050.44" y2="975.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1042.44" y="860.00" text-anchor="end" class="datum">连接基准面</text>
+</svg>

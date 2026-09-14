@@ -1,6 +1,6 @@
 (function (global) {
   const PRODUCT_PROCESS_DIAMETERS = [16, 20, 25.4, 32, 40, 50.8, 76.1, 88.9, 101.6, 133, 159, 219, 18, 22, 28, 35, 42, 54, 108];
-  const PRODUCT_PROCESS_FITTINGS = ["外丝", "内丝", "双卡", "环压", "插焊", "法兰", "移动螺母", "堵头", "沟槽", "对焊"];
+  const PRODUCT_PROCESS_FITTINGS = ["外丝", "内丝", "双卡", "单卡", "环压", "插焊", "法兰", "移动螺母", "堵头", "沟槽", "对焊"];
   const SETTING_SERIES = ["A", "B"];
   const BASIC_SETTING_PATHS = {
     settingProcessBase: ["processBaseForTwoBranches"],

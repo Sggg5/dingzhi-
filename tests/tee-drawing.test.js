@@ -6,6 +6,8 @@ const helpers = {
     verticalDimension: ({ label, x, y1, y2 }) => `<vertical-dimension x="${x}" y1="${y1}" y2="${y2}">${label}</vertical-dimension>`
   },
   clamp: (v, min, max) => Math.min(max, Math.max(min, v)),
+  cadFittingLength: () => 36,
+  cadFittingSvg: name => `<cad-inline name="${name}"/>`,
   compressedStraightVisualLength: v => v,
   drawingColors: { pipeFill: "#eee", stroke: "#333", label: "#123", dimension: "#777" },
   drawingTotalLengthText: (v, _diameter, prefix = "L=") => `${prefix}${v} mm`,
@@ -18,7 +20,8 @@ const helpers = {
   teeBMiddleVisualLengthMm: c => c.middleLengthB || 0,
   teeHorizontalTotalLengthMm: () => 200,
   teeMiddleLengthMm: type => type === "中接" ? 20 : 0,
-  verticalInlineFittingSvg: name => `<vertical name="${name}"/>`
+  verticalInlineFittingSvg: name => `<vertical name="${name}"/>`,
+  verticalCadFittingSvg: name => `<cad-vertical name="${name}"/>`
 };
 const config = {
   diameter: 40, bodyDiameter: 40, bodyThickness: 1.5, bodyLength: 52,
@@ -30,6 +33,8 @@ const svg = TeeDrawing.render(config, helpers);
 assert(svg.includes("<reducer"));
 assert(svg.includes('name="外丝"'));
 assert(svg.includes('name="法兰"'));
+assert(svg.includes("<cad-inline"));
+assert(svg.includes("<cad-vertical"));
 assert(svg.includes("A端") && svg.includes("B端") && svg.includes("C端"));
 assert(svg.includes("<vertical-dimension"));
 assert(svg.includes("H=100 mm"));

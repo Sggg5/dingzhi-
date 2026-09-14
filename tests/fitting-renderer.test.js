@@ -1,4 +1,6 @@
 const assert = require("assert");
+require("../fitting-profile-core");
+require("../cad-profile-data");
 const FittingRenderer = require("../fitting-renderer");
 
 const path = name => (...args) => `<${name} x="${args[0]}"/>`;

@@ -38,6 +38,7 @@
     const fitting = config.mainFitting;
     const diameter = config.mainFittingDiameter || config.mainDiameter;
     if (fitting === "直管") return 0;
+    if (fitting === "堵头") return Math.max(14, height * 0.21);
     if (fitting === "法兰") return flangeVisualWidth(diameter, height, deps.fittingLengthMm);
     if (fitting === "双卡") return doubleCardVisualSize(diameter, deps).width - 6;
     if (deps.isRingPressLike(fitting)) {

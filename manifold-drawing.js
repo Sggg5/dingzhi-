@@ -47,6 +47,10 @@
     const startX = dimensionStart + visualInletAllowance;
     const branchXs = layout.offsets.map(offset => startX + offset * spanScale);
     const stationXs = layout.stations.map(offset => startX + offset * spanScale);
+    const stationPitch = stationXs.length > 1
+      ? Math.min(...stationXs.slice(1).map((x, index) => Math.abs(x - stationXs[index])))
+      : Infinity;
+    const denseBranchLayout = config.branches.length >= 12 && stationPitch < 52;
     const endX = stationXs[stationXs.length - 1] || startX;
     const mainLeft = startX - visualInletAllowance + inletLength;
     const mainRight = endX + visualTailAllowance - tailLength;
@@ -61,15 +65,19 @@
     const totalLengthText = `总长 ${drawingTotalLengthText(result.mainLength, config.mainDiameter)}`;
     const titleSpec = `D${config.mainDiameter}x${titleBranchSummary(config)} 分水器`;
     const bomRows = drawingBomRows(config);
-    const lowerShiftY = config.manifoldType === "单排" ? 0 : 50;
+    const lowerShiftY = 0;
     const infoBoxHeight = Math.max(110, 54 + bomRows.length * 15);
     const infoBoxWidth = 300;
     const labelFontSize = drawingColors.labelFontSize || 13;
     const infoFontSize = drawingColors.infoFontSize || 13;
     const smallFontSize = drawingColors.smallFontSize || 11;
+    const branchLabelFontSize = denseBranchLayout ? Math.min(9, labelFontSize) : labelFontSize;
+    const branchSmallFontSize = denseBranchLayout ? Math.min(8, smallFontSize) : smallFontSize;
+    const dimensionFontSize = denseBranchLayout ? 8 : smallFontSize;
     const layer = DrawingCore.layer || ((name, body, attributes = "") => `<g data-layer="${name}"${attributes ? ` ${attributes}` : ""}>${body || ""}</g>`);
+    const compactDimensionLabel = label => denseBranchLayout ? String(label).replace(/\s*mm$/, "") : label;
     const dimLine = (x1, x2, y, label, longStart = false, longEnd = false) => DrawingCore.horizontalDimension({
-      x1, x2, y, label,
+      x1, x2, y, label: compactDimensionLabel(label), fontSize: dimensionFontSize,
       color: drawingColors.dimension, labelColor: drawingColors.label, lineWidth: 1.4,
       extensionStart: { fromY: y - 18, toY: longStart ? y + 47 : y + 12 },
       extensionEnd: { fromY: y - 18, toY: longEnd ? y + 47 : y + 12 }
@@ -98,17 +106,17 @@
         bottomBranchClearBottom = Math.max(bottomBranchClearBottom, fittingY + fittingSize.height + 6, labelY + 18, numberY + 14);
       }
       const heightLabel = branch.height > 0
-        ? `<text x="${x}" y="${isBottom ? labelY - 15 : labelY + 15}" text-anchor="middle" font-size="${smallFontSize}" fill="${drawingColors.mutedLabel}">加高 ${branch.height}</text>`
+        ? `<text x="${x}" y="${isBottom ? labelY - 15 : labelY + 15}" text-anchor="middle" font-size="${branchSmallFontSize}" fill="${drawingColors.mutedLabel}">${denseBranchLayout ? "加高" : "加高 "}${branch.height}</text>`
         : "";
       const topPipe = branchPipeHeight > 0 ? `<rect x="${x - branchWidth / 2}" y="${mainY - mainHeight / 2 - branchPipeHeight}" width="${branchWidth}" height="${branchPipeHeight}" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.secondaryLineWidth}"/>` : "";
       const topFitting = branchFittingSvg(branch, x, topFittingY, branchWidth);
       const topConnector = branchPipeHeight > 0 ? `<line x1="${x}" y1="${topFittingY + fittingSize.height}" x2="${x}" y2="${mainY - mainHeight / 2 - branchPipeHeight}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.secondaryLineWidth}"/>` : "";
       const branchGraphic = isBottom ? `<g transform="translate(0 ${2 * mainY}) scale(1 -1)">${topPipe}${topFitting}${topConnector}</g>` : `${topPipe}${topFitting}${topConnector}`;
       return `
-        <circle cx="${x}" cy="${numberY}" r="10" fill="#fff" stroke="${drawingColors.label}" stroke-width="1.3"/>
-        <text x="${x}" y="${numberY + 4}" text-anchor="middle" font-size="${smallFontSize}" fill="${drawingColors.label}">${index + 1}</text>
+        <circle cx="${x}" cy="${numberY}" r="${denseBranchLayout ? 8 : 10}" fill="#fff" stroke="${drawingColors.label}" stroke-width="1.3"/>
+        <text x="${x}" y="${numberY + (denseBranchLayout ? 3 : 4)}" text-anchor="middle" font-size="${branchSmallFontSize}" fill="${drawingColors.label}">${index + 1}</text>
         ${branchGraphic}
-        <text x="${x}" y="${labelY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${branch.diameter}${branch.fitting === "直管" ? "" : ` ${branch.fitting}`}</text>
+        <text x="${x}" y="${labelY}" text-anchor="middle" font-size="${branchLabelFontSize}" fill="${drawingColors.label}">${branch.diameter}${branch.fitting === "直管" ? "" : `${denseBranchLayout ? "" : " "}${branch.fitting}`}</text>
         ${heightLabel}
       `;
     }).join("");
@@ -116,9 +124,7 @@
       ? baseDimensionY
       : Math.max(baseDimensionY, bottomBranchClearBottom + 18);
     const totalDimensionY = dimensionY + 45;
-    const infoBoxY = config.manifoldType === "单排"
-      ? Math.max(430, totalDimensionY + 44)
-      : Math.max(500 + lowerShiftY, totalDimensionY + 44);
+    const infoBoxY = config.manifoldType === "单排" ? 430 : 500;
     contentBottom = Math.max(contentBottom, totalDimensionY + 18);
     const mainContent = `
       <rect x="${mainLeft}" y="${mainY - mainHeight / 2}" width="${mainRight - mainLeft}" height="${mainHeight}" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>
@@ -148,7 +154,7 @@
           ? { left: 132, right: 1160, top: 110, bottom: infoBoxY - 38 }
           : { left: 132, right: 1160, top: 118, bottom: 585 },
         content: mainContent,
-        minScale: 0.58,
+        minScale: config.manifoldType === "单排" ? 0.58 : 0.44,
         fitOnlyOnOverflow: showInfoPanels
       })
       : mainContent;

@@ -42,10 +42,10 @@ const options = {
   branchCounts: [1, 20],
   spacing: Array.from({ length: 11 }, (_, index) => 120 + index * 10),
   branchHeight: [0, 40, 50, 60, 70, 80, 90, 100],
-  mainFittings: ["直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
+  mainFittings: ["直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母", "堵头"],
   branchFittings: ["无配件", "直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
   tailFittings: ["堵头", "直管", "外丝", "内丝", "双卡", "环压", "法兰", "移动螺母"],
-  fittingConnections: ["无配件", "外丝", "内丝", "双卡", "环压", "插焊", "法兰", "移动螺母", "沟槽", "对焊"]
+  fittingConnections: ["无配件", "外丝", "内丝", "双卡", "单卡", "环压", "插焊", "法兰", "移动螺母", "沟槽", "对焊", "堵头"]
 };
 
 const pricing = {
@@ -57,6 +57,7 @@ const pricing = {
     "外丝": 4.2,
     "内丝": 4.2,
     "双卡": 4.2,
+    "单卡": 4.2,
     "环压": 1.8,
     "插焊": 1.8,
     "法兰": 1.8,
@@ -244,12 +245,23 @@ function installInsertWeldDefaults(target) {
   target.elbowProcessByDiameter["插焊"] = { ...target.elbowProcessByDiameter["环压"] };
 }
 
+function installGermanSingleCardDefaults(target) {
+  target.fittingBySeries.B["单卡"] = { ...target.fittingBySeries.B["双卡"] };
+  target.fittingLengthBySeries.B["单卡"] = { ...target.fittingLengthBySeries.B["双卡"] };
+  target.dockingProcessByDiameter["单卡"] = { ...target.dockingProcessByDiameter["双卡"] };
+  target.teeProcessByDiameter["单卡"] = { ...target.teeProcessByDiameter["双卡"] };
+  target.elbowProcessByDiameter["单卡"] = { ...target.elbowProcessByDiameter["双卡"] };
+}
+
 installGerman15Defaults(pricing);
 installInsertWeldDefaults(pricing);
+installGermanSingleCardDefaults(pricing);
 const defaultPricing = JSON.parse(JSON.stringify(pricing));
 const settingsStorageKey = "manifoldQuotePricingV1";
+const pricingTraceStorageKey = "manifoldQuotePricingTraceV1";
 const settingsPasswordStorageKey = "manifoldQuoteSettingsPasswordV1";
 let settingsRecoveryNotice = "";
+let pricingTrace = null;
 const steelPriceRatio316 = 1.65;
 const defaultSteelTonPrice = { "304": 16000, "316L": 16000 * steelPriceRatio316 };
 const tubeSeriesLabel = { A: "国标", B: "德标" };
@@ -293,10 +305,12 @@ const drawingColors = {
   fittingFill: DrawingCore.CAD_STANDARD.colors.fittingFill,
   capFill: DrawingCore.CAD_STANDARD.colors.capFill,
   stroke: DrawingCore.CAD_STANDARD.colors.object,
-  fittingStroke: DrawingCore.CAD_STANDARD.colors.fitting,
+  // Visible outlines belong to one mechanical-drawing line class. Fittings
+  // keep their own fill, but their contour color must match the pipe body.
+  fittingStroke: DrawingCore.CAD_STANDARD.colors.object,
   objectLineWidth: DrawingCore.CAD_STANDARD.line.visibleHeavy,
   secondaryLineWidth: DrawingCore.CAD_STANDARD.line.visible,
-  fittingLineWidth: DrawingCore.CAD_STANDARD.line.visible,
+  fittingLineWidth: DrawingCore.CAD_STANDARD.line.visibleHeavy,
   dimension: DrawingCore.CAD_STANDARD.colors.dimension,
   centerLine: DrawingCore.CAD_STANDARD.colors.center,
   centerLineWidth: DrawingCore.CAD_STANDARD.line.center,
@@ -404,6 +418,8 @@ function bindFields() {
     teeBodyDiameter: document.querySelector("#teeBodyDiameter"),
     teeBodyThickness: document.querySelector("#teeBodyThickness"),
     teeBodyLength: document.querySelector("#teeBodyLength"),
+    teeBodyLengthStatus: document.querySelector("#teeBodyLengthStatus"),
+    elbowLengthStatus: document.querySelector("#elbowLengthStatus"),
     productGenericFittingA: document.querySelector("#productGenericFittingA"),
     productGenericFittingB: document.querySelector("#productGenericFittingB"),
     productFittingC: document.querySelector("#productFittingC"),
@@ -435,6 +451,9 @@ let quotePriceColumns = ["unitPrice"];
 let dockingMiddleTouched = false;
 let lastDockingDiameterPair = "";
 let teeBodyLengthTouched = false;
+let lastTeeBodySelectionKey = "";
+let elbowLengthTouched = false;
+let lastElbowSelectionKey = "";
 
 function persistQuoteList() {
   try {
@@ -584,6 +603,7 @@ function restoreTeeDraft(config) {
     setDraftFieldValue(field, fitting);
   });
   teeBodyLengthTouched = true;
+  lastTeeBodySelectionKey = `${fields.tubeSeries.value}:${fields.teeBodyDiameter.value}`;
   syncTeeMiddleLengthFields();
 }
 
@@ -602,6 +622,8 @@ function restoreElbowDraft(config) {
     fillSelect(field, elbowAvailableFittings(Number(diameter)));
     setDraftFieldValue(field, fitting);
   });
+  elbowLengthTouched = true;
+  lastElbowSelectionKey = `${fields.tubeSeries.value}:${fields.elbowBodyDiameter.value}:${fields.productAngle.value}`;
   syncElbowMiddleLengthFields();
 }
 
@@ -672,7 +694,7 @@ function renderQuoteHistory() {
         <div>
           <strong>${entry.quoteNo}</strong>
           <span>${entry.productName} · ${entry.material} · ${entry.tubeSeries === "A" ? "国标" : "德标"}</span>
-          <small>${savedAt} · 钢价 ${formatNumber(entry.steelTonPrice)} 元/吨 · 设置v${entry.pricingVersion} · ${itemCount} 项清单</small>
+          <small>${savedAt} · 钢价 ${formatNumber(entry.steelTonPrice)} 元/吨 · 设置v${entry.pricingVersion} · 修订 R${entry.pricingRevision || "-"} ${entry.pricingFingerprint || ""} · ${itemCount} 项清单</small>
         </div>
         <div class="quote-history-actions">
           <b>${money(entry.result?.totalPrice || entry.result?.unitPrice || 0)}</b>
@@ -706,7 +728,8 @@ function saveQuoteHistoryVersion() {
     result,
     items: quoteItems,
     columns: quotePriceColumns,
-    pricingVersion: pricing.settingsVersion
+    pricingVersion: pricing.settingsVersion,
+    pricingTrace: currentPricingTrace()
   });
   quoteHistory = [entry, ...quoteHistory].slice(0, QuoteHistoryStorageCore.MAX_ENTRIES);
   persistQuoteHistory();
@@ -841,7 +864,7 @@ function fillSelect(select, values, formatter = value => value) {
 }
 
 function fittingLabel(name) {
-  return name === "堵头" ? "管帽盖" : name;
+  return name === "堵头" ? "管帽" : name;
 }
 
 const { mergeFittingSeries } = SettingsCore;
@@ -905,10 +928,37 @@ function loadPricingSettings() {
 
 function savePricingSettings() {
   pricing.settingsVersion = defaultPricing.settingsVersion;
+  const recorded = PricingTraceCore.record(pricingTrace, pricing, "保存设置");
+  const previousSettings = localStorage.getItem(settingsStorageKey);
+  if (recorded.changed && previousSettings) {
+    localStorage.setItem(`${settingsStorageKey}:backup:${Date.now()}`, previousSettings);
+  }
   localStorage.setItem(settingsStorageKey, JSON.stringify(pricing));
+  pricingTrace = recorded.trace;
+  localStorage.setItem(pricingTraceStorageKey, JSON.stringify(pricingTrace));
   settingsDirty = false;
   const status = document.querySelector("#settingsSaveStatus");
-  if (status) status.textContent = "价格已保存到本机";
+  if (status) status.textContent = `价格已保存到本机 · 修订 R${recorded.entry.revision} · ${recorded.entry.fingerprint}`;
+}
+
+function loadPricingTrace(traceValue = null) {
+  try {
+    const raw = traceValue ? JSON.stringify(traceValue) : localStorage.getItem(pricingTraceStorageKey);
+    pricingTrace = PricingTraceCore.normalize(raw ? JSON.parse(raw) : null, pricing);
+  } catch (error) {
+    const raw = localStorage.getItem(pricingTraceStorageKey);
+    if (raw) localStorage.setItem(`${pricingTraceStorageKey}:backup:invalid:${Date.now()}`, raw);
+    pricingTrace = PricingTraceCore.create(pricing, "恢复设置");
+  }
+  localStorage.setItem(pricingTraceStorageKey, JSON.stringify(pricingTrace));
+}
+
+function currentPricingTrace() {
+  if (!pricingTrace) loadPricingTrace();
+  const recorded = PricingTraceCore.record(pricingTrace, pricing, settingsDirty ? "未保存设置报价" : "报价引用");
+  pricingTrace = recorded.trace;
+  if (recorded.changed) localStorage.setItem(pricingTraceStorageKey, JSON.stringify(pricingTrace));
+  return recorded.entry;
 }
 
 function markSettingsDirty() {
@@ -1397,7 +1447,7 @@ function syncProductMode() {
   document.querySelectorAll("[data-generic-product-field]").forEach(element => {
     element.hidden = ProductModeCore.genericProductFieldHidden(mode, element.hasAttribute("data-elbow-field"));
   });
-  const productLengthLabel = document.querySelector("#productLengthWrap span");
+  const productLengthLabel = document.querySelector("#productLengthLabel");
   if (productLengthLabel) {
     productLengthLabel.textContent = mode.productLengthLabel;
   }
@@ -1445,6 +1495,23 @@ function syncTeeMiddleLengthFields() {
   fields.teeMiddleLengthBWrap.hidden = state.hidden;
   fields.teeMiddleLengthB.disabled = state.disabled;
   fields.teeMiddleLengthB.value = state.value;
+}
+
+function syncStandardLengthIndicators() {
+  const applyMode = (status, input, manual, automaticTitle) => {
+    if (!status || !input) return;
+    const mode = manual ? "manual" : "auto";
+    status.dataset.mode = mode;
+    status.textContent = manual ? "手动" : "自动";
+    input.dataset.valueMode = mode;
+    input.title = manual ? "当前为手动输入值；切换系列或主体规格后恢复标准值" : automaticTitle;
+  };
+  if (fields.productType.value === "三通类") {
+    applyMode(fields.teeBodyLengthStatus, fields.teeBodyLength, teeBodyLengthTouched, "当前按三通尺寸表自动取值");
+  }
+  if (fields.productType.value === "弯头类") {
+    applyMode(fields.elbowLengthStatus, fields.productLength, elbowLengthTouched, "当前按弯头中心高度表自动取值");
+  }
 }
 
 function syncDockingSideMiddleLengthFields() {
@@ -1966,9 +2033,13 @@ function syncProductRules(changedId, skipDockingMiddleRows = false) {
       bodyDiameter,
       currentMiddle: fields.elbowMiddleB.value
     });
-    if (!fields.productLength.value || changedId === "elbowBodyDiameter" || changedId === "productAngle" || changedId === "productType") {
+    const elbowSelectionKey = `${fields.tubeSeries.value}:${bodyDiameter}:${fields.productAngle.value}`;
+    const elbowSelectionChanged = Boolean(lastElbowSelectionKey && lastElbowSelectionKey !== elbowSelectionKey);
+    if (!fields.productLength.value || changedId === "elbowBodyDiameter" || changedId === "productAngle" || changedId === "tubeSeries" || changedId === "productType" || elbowSelectionChanged) {
       fields.productLength.value = String(productDefaultLength("弯头类", bodyDiameter, fields.productAngle.value));
+      elbowLengthTouched = false;
     }
+    lastElbowSelectionKey = elbowSelectionKey;
   }
 
   fillSelect(fields.teeBodyDiameter, diameters);
@@ -1981,10 +2052,13 @@ function syncProductRules(changedId, skipDockingMiddleRows = false) {
   if (changedId === "teeBodyDiameter" || changedId === "tubeSeries" || !fields.teeBodyThickness.value) {
     fields.teeBodyThickness.value = String(defaultWallThickness(Number(fields.teeBodyDiameter.value)));
   }
-  if (changedId === "teeBodyDiameter" || changedId === "tubeSeries" || (!fields.teeBodyLength.value && !teeBodyLengthTouched)) {
+  const teeBodySelectionKey = `${fields.tubeSeries.value}:${fields.teeBodyDiameter.value}`;
+  const teeBodySelectionChanged = Boolean(lastTeeBodySelectionKey && lastTeeBodySelectionKey !== teeBodySelectionKey);
+  if (changedId === "teeBodyDiameter" || changedId === "tubeSeries" || teeBodySelectionChanged || (!fields.teeBodyLength.value && !teeBodyLengthTouched)) {
     fields.teeBodyLength.value = String(productDefaultLength("三通类", Number(fields.teeBodyDiameter.value)));
     teeBodyLengthTouched = false;
   }
+  lastTeeBodySelectionKey = teeBodySelectionKey;
   if (fields.productType.value === "三通类") {
     const bodyDiameter = Number(fields.teeBodyDiameter.value);
     if (changedId === "teeBodyDiameter" || changedId === "tubeSeries") {
@@ -2583,7 +2657,7 @@ function syncRules(changedId) {
   const tailFittingDiameter = Number(fields.tailFittingDiameter.value);
   const mainFittings = availableFittings(options.mainFittings, mainFittingDiameter);
   const tailFittings = availableFittings(options.tailFittings, tailFittingDiameter);
-  fillSelect(fields.mainFitting, mainFittings);
+  fillSelect(fields.mainFitting, mainFittings, fittingLabel);
   fillSelect(fields.tailFitting, tailFittings, fittingLabel);
   const canUseMainAdapter = mainFittingDiameter !== mainDiameter && fields.mainFitting.value !== "直管";
   const canUseTailAdapter = tailFittingDiameter !== mainDiameter && fields.tailFitting.value !== "直管";
@@ -2692,6 +2766,39 @@ function inlineFittingLength(fitting, diameter, height) {
   return FittingVisualCore.inlineFittingLength(fitting, diameter, height, fittingVisualDependencies());
 }
 
+function dockingCadFittingLength(fitting, diameter, height) {
+  const fallback = inlineFittingLength(fitting, diameter, height);
+  return typeof DockingCadRenderer !== "undefined"
+    ? DockingCadRenderer.fittingLength(fitting, diameter, height, fallback)
+    : fallback;
+}
+
+function dockingCadFittingSvg(fitting, diameter, x, y, height, side = "left") {
+  const cadSvg = typeof DockingCadRenderer !== "undefined"
+    ? DockingCadRenderer.fitting(fitting, diameter, x, y, height, side, drawingColors)
+    : "";
+  return cadSvg || inlineFittingSvg(fitting, diameter, x, y, height, side);
+}
+
+function dockingCadFittingEnvelopeHeight(fitting, diameter, height) {
+  const fallback = inlineFittingEnvelopeHeight(fitting, diameter, height);
+  return typeof DockingCadRenderer !== "undefined" && typeof DockingCadRenderer.fittingEnvelopeHeight === "function"
+    ? DockingCadRenderer.fittingEnvelopeHeight(fitting, diameter, height, fallback)
+    : fallback;
+}
+
+function verticalDockingCadFittingSvg(fitting, diameter, x, y, height, side = "top") {
+  if (isNoFitting(fitting)) return "";
+  const angle = side === "bottom" ? -90 : 90;
+  return `<g transform="rotate(${angle} ${x} ${y})">${dockingCadFittingSvg(fitting, diameter, x, y, height, "left")}</g>`;
+}
+
+function dockingCadStraightSvg(diameter, x1, x2, y, height) {
+  return typeof DockingCadRenderer !== "undefined"
+    ? DockingCadRenderer.straight(diameter, x1, x2, y, height, drawingColors)
+    : "";
+}
+
 function inlineFittingEnvelopeHeight(fitting, diameter, height) {
   return FittingVisualCore.inlineFittingEnvelopeHeight(fitting, diameter, height, fittingVisualDependencies());
 }
@@ -2718,10 +2825,22 @@ function elbowRoundBodySvg(startX, startY, endX, endY, width, angle) {
   return ProductGeometryCore.elbowRoundBody(startX, startY, endX, endY, width, angle, drawingColors);
 }
 
+function elbowCadBodyGeometry(diameter, angle, startX, startY, pipeHeight) {
+  return typeof ProductBodyCadRenderer !== "undefined" && ProductBodyCadRenderer.elbow
+    ? ProductBodyCadRenderer.elbow(diameter, angle, startX, startY, pipeHeight, drawingColors)
+    : null;
+}
+
+function teeCadBodyGeometry(diameter, centerX, mainY, pipeHeight) {
+  return typeof ProductBodyCadRenderer !== "undefined" && ProductBodyCadRenderer.tee
+    ? ProductBodyCadRenderer.tee(diameter, centerX, mainY, pipeHeight, drawingColors)
+    : null;
+}
+
 function dockingMiddleAssembly(config, leftX, rightX, y) {
   return DockingMiddleRenderer.render(config, leftX, rightX, y, {
     clamp, dockingMiddleLengthMm, drawingColors, drawingLengthText, fittingLengthMm,
-    pipeVisualDiameter, productDefaultLength
+    dockingCadStraightSvg, pipeVisualDiameter, productDefaultLength
   });
 }
 
@@ -2892,12 +3011,8 @@ function installDimensionDrag() {
 
 function drawProduct(config, result) {
   const svg = document.querySelector("#drawing");
-  const titleEndSpec = (diameter, fitting) => `${diameter}${isNoFitting(fitting) ? "" : fittingLabel(fitting)}`;
-  const title = config.productType === "对接类"
-    ? `${titleEndSpec(config.diameterA, config.fittingA)}x${titleEndSpec(config.diameterB, config.fittingB)} 对接`
-    : config.productType === "弯头类"
-    ? `${titleEndSpec(config.diameterA, config.fittingA)}x${titleEndSpec(config.diameterB, config.fittingB)} 弯头`
-    : `${titleEndSpec(config.diameterA, config.fittingA)}x${titleEndSpec(config.diameterB, config.fittingB)}x${titleEndSpec(config.diameterC, config.fittingC)} 三通`;
+  const title = DisplayCore.connectedProductName(config, { fittingLabel, isNoFitting })
+    .replace(/\s\d+°弯头$/, " 弯头");
   const middleItems = config.middleItems || [];
   const middleSummary = middleItems.length === 0
     ? "无中间"
@@ -2917,10 +3032,13 @@ function drawProduct(config, result) {
       DrawingCore,
       clamp,
       dockingMiddleAssembly,
+      dockingMiddleLengthMm,
       dockingTotalLengthMm,
       drawingColors,
       drawingTotalLengthText,
       fittingLabel,
+      dockingFittingLength: dockingCadFittingLength,
+      dockingFittingSvg: dockingCadFittingSvg,
       inlineFittingLength,
       inlineFittingSvg,
       isNoFitting,
@@ -2929,15 +3047,21 @@ function drawProduct(config, result) {
     }),
     "弯头类": ElbowDrawing.render(config, {
       DrawingCore, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
-      elbowMiddleLengthMm, elbowRoundBodySvg, fittingLabel, inlineFittingEnvelopeHeight,
-      inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter, reducerSegmentSvg,
+      cadFittingEnvelopeHeight: dockingCadFittingEnvelopeHeight,
+      cadFittingLength: dockingCadFittingLength,
+      cadFittingSvg: dockingCadFittingSvg,
+      elbowCadBodyGeometry, elbowMiddleLengthMm, elbowRoundBodySvg, fittingLabel,
+      inlineFittingEnvelopeHeight, inlineFittingLength, inlineFittingSvg,
+      isNoFitting, pipeVisualDiameter, reducerSegmentSvg,
       showInfoPanels: drawingInfoPanelsVisible
     }),
     "三通类": TeeDrawing.render(config, {
       DrawingCore, clamp, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
+      cadFittingEnvelopeHeight: dockingCadFittingEnvelopeHeight,
+      cadFittingLength: dockingCadFittingLength, cadFittingSvg: dockingCadFittingSvg,
       fittingLabel, inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter,
       reducerSegmentSvg, teeBMiddleVisualLengthMm, teeHorizontalTotalLengthMm, teeMiddleLengthMm,
-      verticalInlineFittingSvg,
+      teeCadBodyGeometry, verticalCadFittingSvg: verticalDockingCadFittingSvg, verticalInlineFittingSvg,
       showInfoPanels: drawingInfoPanelsVisible
     })
   }[config.productType];
@@ -3100,6 +3224,7 @@ function quoteItemName(config) {
   return DisplayCore.quoteItemName(config, {
     drawingLengthValue,
     fittingLabel,
+    isNoFitting,
     isManifoldType,
     productKindName,
     tubeSeriesLabel
@@ -3140,6 +3265,7 @@ function addQuoteItem() {
   config.productCode = productCodeResult.code;
   config.productCodeResult = productCodeResult;
   const result = calculate(config);
+  const trace = currentPricingTrace();
   persistProductDraft(config);
   if (!assertQuoteReady(result, "加入报价清单")) return;
   quoteItems.push({
@@ -3152,6 +3278,8 @@ function addQuoteItem() {
     discountedPriceTotal: result.discountedPrice * config.quantity,
     unitPrice: result.unitPrice,
     totalPrice: result.unitPrice * config.quantity,
+    pricingRevision: trace.revision,
+    pricingFingerprint: trace.fingerprint,
     config,
     result
   });
@@ -3185,7 +3313,8 @@ function renderQuoteList() {
       <tr>
         <td class="quote-spec">
           <code>${item.config.productCode || "\u5f85\u786e\u8ba4"}</code>
-          <div>${item.name}</div>
+          <div>${item.config ? quoteItemName(item.config) : item.name}</div>
+          <small class="quote-trace">价格修订 R${item.pricingRevision || "-"} ${item.pricingFingerprint || "未记录"}</small>
         </td>
         <td class="quote-number">${item.quantity}</td>
         ${quotePriceColumns.map(columnKey => {
@@ -3229,8 +3358,13 @@ const dxfSvgBottom = 835;
 
 function dxfLayerForElement(element) {
   const rawLayer = String(element.closest("[data-layer]")?.dataset.layer || "").toLowerCase();
-  if (rawLayer.includes("frame") || rawLayer.includes("title")) return "12_FRAME";
-  if (rawLayer.includes("center")) return "03_CENTER";
+  const stroke = String(element.getAttribute("stroke") || "").toLowerCase();
+  const dashArray = String(element.getAttribute("stroke-dasharray") || "").trim();
+  // Center lines are often nested inside the object layer, not a dedicated
+  // SVG group. Their CAD identity is the center-line dash pattern/color.
+  if (rawLayer.includes("center") || stroke === "#8b928e" || stroke === "#8a918f" || dashArray === "7 6" || dashArray === "10 4 2 4") return "03_CENTER";
+  if (rawLayer.includes("frame-accent") || rawLayer.includes("title-accent")) return "12_FRAME";
+  if (rawLayer.includes("frame") || rawLayer.includes("title")) return "14_FRAME_MAIN";
   if (rawLayer.includes("dimension")) return "07_DIMENSION";
   if (rawLayer.includes("info") || rawLayer.includes("bom") || rawLayer.includes("technical")) return "06_TEXT";
   if (rawLayer.includes("text") || rawLayer.includes("label")) return "06_TEXT";
@@ -3254,6 +3388,16 @@ function dxfPointFromSvg(element, x, y) {
   return { x: point.x * dxfPaperScale, y: (dxfSvgBottom - point.y) * dxfPaperScale };
 }
 
+function dxfTextHeight(element) {
+  const sourceHeight = Number(element.getAttribute("font-size")) || 12;
+  const sourceText = String(element.textContent || "").trim();
+  const inTitleBlock = Boolean(element.closest('[data-layer="titleblock"]'));
+  // ISO date strings need a smaller CAD text height than the on-screen SVG
+  // preview; otherwise their Latin glyph width fills the complete title cell.
+  if (inTitleBlock && /^\d{4}-\d{2}-\d{2}$/.test(sourceText)) return 2.2;
+  return Math.max(2.5, sourceHeight * dxfPaperScale);
+}
+
 function dxfArrow(point, direction, layer) {
   const length = Math.hypot(direction.x, direction.y);
   if (!length) return null;
@@ -3262,9 +3406,10 @@ function dxfArrow(point, direction, layer) {
   const depth = 3.2;
   const halfWidth = 1.45;
   return {
-    type: "POLYLINE",
+    // A closed POLYLINE only outlines an arrow in CAD.  Use a SOLID so the
+    // exported mechanical-drawing arrow is truly closed and filled.
+    type: "SOLID",
     layer,
-    closed: true,
     points: [
       point,
       { x: point.x + unit.x * depth + normal.x * halfWidth, y: point.y + unit.y * depth + normal.y * halfWidth },
@@ -3410,11 +3555,97 @@ function dxfPathEntities(element, layer) {
   return entities.length ? entities : null;
 }
 
+function dxfDimensionGroup(group, index) {
+  const svg = document.querySelector("#drawing");
+  const mainLine = [...group.querySelectorAll("line")].find(line => line.hasAttribute("marker-start") && line.hasAttribute("marker-end"));
+  if (!mainLine) return null;
+  const start = dxfPointFromSvg(mainLine, mainLine.getAttribute("x1"), mainLine.getAttribute("y1"));
+  const end = dxfPointFromSvg(mainLine, mainLine.getAttribute("x2"), mainLine.getAttribute("y2"));
+  const kind = group.dataset.dimensionKind || "horizontal";
+  const label = group.querySelector("text");
+  const textX = label?.getAttribute("x") ?? (Number(mainLine.getAttribute("x1")) + Number(mainLine.getAttribute("x2"))) / 2;
+  const textY = label?.getAttribute("y") ?? (Number(mainLine.getAttribute("y1")) + Number(mainLine.getAttribute("y2"))) / 2;
+  const labelPoint = dxfPointFromSvg(label || mainLine, textX, textY);
+
+  // Native DIMENSION takes the model-side ends of the extension lines as 13/14,
+  // while 10 is a point on the drawn dimension line.
+  const svgStart = { x: Number(mainLine.getAttribute("x1")), y: Number(mainLine.getAttribute("y1")) };
+  const svgEnd = { x: Number(mainLine.getAttribute("x2")), y: Number(mainLine.getAttribute("y2")) };
+  const extensionLines = [...group.querySelectorAll("line")].filter(line => line !== mainLine);
+  const extensionOrigin = (anchor) => {
+    const candidate = extensionLines
+      .map(line => ({ a: { x: Number(line.getAttribute("x1")), y: Number(line.getAttribute("y1")) }, b: { x: Number(line.getAttribute("x2")), y: Number(line.getAttribute("y2")) } }))
+      .map(segment => ({ segment, distance: Math.min(Math.hypot(segment.a.x - anchor.x, segment.a.y - anchor.y), Math.hypot(segment.b.x - anchor.x, segment.b.y - anchor.y)) }))
+      .sort((left, right) => left.distance - right.distance)[0];
+    if (!candidate || candidate.distance > 1.5) return anchor;
+    const nearA = Math.hypot(candidate.segment.a.x - anchor.x, candidate.segment.a.y - anchor.y)
+      <= Math.hypot(candidate.segment.b.x - anchor.x, candidate.segment.b.y - anchor.y);
+    return nearA ? candidate.segment.b : candidate.segment.a;
+  };
+  const source1 = extensionOrigin(svgStart);
+  const source2 = extensionOrigin(svgEnd);
+  const origin1 = dxfPointFromSvg(mainLine, source1.x, source1.y);
+  const origin2 = dxfPointFromSvg(mainLine, source2.x, source2.y);
+  const angle = (Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI + 360) % 360;
+  const dimensionType = 32 + (kind === "aligned" ? 1 : 0);
+  const blockEntities = [];
+
+  group.querySelectorAll("line, text").forEach(element => {
+    if (element.tagName.toLowerCase() === "line") {
+      const lineStart = dxfPointFromSvg(element, element.getAttribute("x1"), element.getAttribute("y1"));
+      const lineEnd = dxfPointFromSvg(element, element.getAttribute("x2"), element.getAttribute("y2"));
+      blockEntities.push({ type: "LINE", layer: "07_DIMENSION", x1: lineStart.x, y1: lineStart.y, x2: lineEnd.x, y2: lineEnd.y });
+      if (element.hasAttribute("marker-start")) blockEntities.push(dxfArrow(lineStart, { x: lineEnd.x - lineStart.x, y: lineEnd.y - lineStart.y }, "07_DIMENSION"));
+      if (element.hasAttribute("marker-end")) blockEntities.push(dxfArrow(lineEnd, { x: lineStart.x - lineEnd.x, y: lineStart.y - lineEnd.y }, "07_DIMENSION"));
+      return;
+    }
+    const x = element.x?.baseVal?.[0]?.value ?? element.getAttribute("x") ?? 0;
+    const y = element.y?.baseVal?.[0]?.value ?? element.getAttribute("y") ?? 0;
+    const point = dxfPointFromSvg(element, x, y);
+    const matrix = element.getCTM?.();
+    const rootMatrix = svg.getCTM?.();
+    const textAngle = matrix && rootMatrix?.inverse
+      ? -Math.atan2(rootMatrix.inverse().multiply(matrix).b, rootMatrix.inverse().multiply(matrix).a) * 180 / Math.PI
+      : 0;
+    blockEntities.push({
+      type: "TEXT", layer: "06_TEXT", x: point.x, y: point.y,
+      height: dxfTextHeight(element),
+      angle: textAngle,
+      align: element.getAttribute("text-anchor") === "middle" ? "center" : "left",
+      verticalAlign: element.getAttribute("dominant-baseline") === "middle" ? "middle" : "baseline",
+      text: element.textContent
+    });
+  });
+  // R12 native dimensions use an anonymous *D block for their picture. This is
+  // internal CAD structure, not a user-facing ordinary drawing block.
+  const block = `*D${index + 1}`;
+  return {
+    elements: [...group.querySelectorAll("line, text")],
+    block: { name: block, layer: "07_DIMENSION", entities: blockEntities.filter(Boolean) },
+    entity: {
+      type: "DIMENSION", layer: "07_DIMENSION", block,
+      x: start.x, y: start.y, textX: labelPoint.x, textY: labelPoint.y,
+      x1: origin1.x, y1: origin1.y, x2: origin2.x, y2: origin2.y,
+      angle, dimensionType, text: label?.textContent || ""
+    }
+  };
+}
+
 function dxfEntitiesFromDrawing() {
   const svg = document.querySelector("#drawing");
   const entities = [];
+  const blocks = [];
+  const dimensionElements = new Set();
+  svg.querySelectorAll("[data-dimension-id], [data-dimension-kind]").forEach((group, index) => {
+    const dimension = dxfDimensionGroup(group, index);
+    if (!dimension) return;
+    entities.push(dimension.entity);
+    blocks.push(dimension.block);
+    dimension.elements.forEach(element => dimensionElements.add(element));
+  });
   svg.querySelectorAll("line, rect, circle, ellipse, polyline, polygon, path, text").forEach(element => {
     if (element.closest("defs, marker")) return;
+    if (dimensionElements.has(element)) return;
     const tag = element.tagName.toLowerCase();
     const layer = dxfLayerForElement(element);
     if (tag === "line") {
@@ -3470,31 +3701,35 @@ function dxfEntitiesFromDrawing() {
     const x = element.x?.baseVal?.[0]?.value ?? element.getAttribute("x") ?? 0;
     const y = element.y?.baseVal?.[0]?.value ?? element.getAttribute("y") ?? 0;
     const point = dxfPointFromSvg(element, x, y);
-    const fontSize = Math.max(2.5, (Number(element.getAttribute("font-size")) || 12) * dxfPaperScale);
+    const fontSize = dxfTextHeight(element);
     const matrix = element.getCTM?.();
     const rootMatrix = svg.getCTM?.();
     const angle = matrix && rootMatrix?.inverse ? -Math.atan2(rootMatrix.inverse().multiply(matrix).b, rootMatrix.inverse().multiply(matrix).a) * 180 / Math.PI : 0;
     entities.push({
       type: "TEXT",
-      layer: layer === "01_OUTLINE" ? "06_TEXT" : layer,
+      // Workshop DXF convention: every visible text uses the dedicated green
+      // text layer, including title-frame and dimension text.
+      layer: "06_TEXT",
       x: point.x,
       y: point.y,
       height: fontSize,
       angle,
       align: element.getAttribute("text-anchor") === "middle" ? "center" : "left",
+      verticalAlign: element.getAttribute("dominant-baseline") === "middle" ? "middle" : "baseline",
       text: element.textContent
     });
   });
-  return entities.filter(Boolean);
+  return { entities: entities.filter(Boolean), blocks };
 }
 
 function exportDrawingDxf() {
-  const entities = dxfEntitiesFromDrawing();
+  const drawing = dxfEntitiesFromDrawing();
+  const { entities, blocks } = drawing;
   if (!entities.length) {
     window.alert("当前图纸没有可导出的 DXF 图元。");
     return;
   }
-  downloadText(drawingFileName("dxf"), DxfExportCore.document(entities), "application/dxf;charset=utf-8");
+  downloadText(drawingFileName("dxf"), DxfExportCore.document(entities, { blocks }), "application/dxf;charset=utf-8");
 }
 
 function drawingFileName(extension) {
@@ -3624,6 +3859,7 @@ function exportWorkspaceBackup() {
   const config = getConfig();
   const backup = WorkspaceBackupCore.create({
     pricing: SettingsCore.clone(pricing),
+    pricingTrace,
     quoteItems,
     quoteColumns: quotePriceColumns,
     productDraft: config,
@@ -3647,6 +3883,7 @@ function applyWorkspaceBackup(backup) {
     Object.keys(pricing).forEach(key => delete pricing[key]);
     Object.assign(pricing, SettingsCore.clone(defaultPricing));
     loadPricingSettings();
+    loadPricingTrace(backup.pricingTrace);
 
     const restoredList = QuoteListStorageCore.deserialize(
       QuoteListStorageCore.serialize(backup.quoteList.items, backup.quoteList.columns),
@@ -3777,6 +4014,29 @@ function renderSettings() {
   renderDockingProcessSettings();
   renderTeeSettings();
   renderElbowSettings();
+  renderQuoteLogicSettings();
+}
+
+function renderQuoteLogicSettings() {
+  const recorded = pricingTrace?.entries?.find(entry => entry.revision === pricingTrace.currentRevision);
+  const fingerprint = PricingTraceCore.fingerprint(pricing);
+  const traceLabel = recorded?.fingerprint === fingerprint
+    ? `R${recorded.revision} · ${fingerprint}`
+    : `未保存 · ${fingerprint}`;
+  const values = {
+    logicPricingRevision: traceLabel,
+    logicMaterialTax: Number(pricing.materialTaxDivisor || 0).toFixed(2),
+    logicFittingTax: Number(pricing.fittingTaxDivisor || 0).toFixed(2),
+    logic316FittingFactor: `×${Number(pricing.fittingMaterialFactor?.["316L"] || 0).toFixed(2)}`,
+    logicFittingWeightReference: `${formatNumber(pricing.fittingWeightReferenceSteelTonPrice || 0)} 元/吨`,
+    logicCostTaxMultiplier: `×${Number(pricing.fittingTaxDivisor || 0).toFixed(2)}`,
+    logicManifoldProcessRule: "≤55 mm ×1；>55 mm ×3",
+    logicAfterTreatmentRates: `${formatNumber(pricing.annealingPerKg || 0)} / ${formatNumber(pricing.managementPerKg || 0)} / ${formatNumber(pricing.packagingPerKg || 0)} 元/kg`
+  };
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.querySelector(`#${id}`);
+    if (element) element.textContent = value;
+  });
 }
 
 function renderFittingLengthSettings() {
@@ -3966,30 +4226,38 @@ function switchSettingsSection(section) {
 }
 
 let scheduledUpdateFrame = null;
+let scheduledUpdateSourceId = "";
 
-function scheduleUpdate() {
+function scheduleUpdate(event) {
+  if (!scheduledUpdateSourceId && event?.target?.id) {
+    scheduledUpdateSourceId = event.target.id;
+  }
   if (scheduledUpdateFrame !== null) return;
   const scheduleFrame = window.requestAnimationFrame || (callback => setTimeout(callback, 0));
   scheduledUpdateFrame = scheduleFrame(() => {
     scheduledUpdateFrame = null;
-    update();
+    const changedId = scheduledUpdateSourceId;
+    scheduledUpdateSourceId = "";
+    update(changedId);
   });
 }
 
-function update() {
+function update(changedFieldId = "") {
   const active = document.activeElement;
+  const changedId = changedFieldId || active?.id;
   const isBranchFreeInput = active?.matches?.("[data-branch-spacing], [data-branch-height], [data-branch-positive]");
   const isDockingMiddleFreeInput = active?.matches?.("[data-middle-length], #productProcessFactor");
   syncProductMode();
   if (isManifoldType()) {
-    syncRules(active?.id);
+    syncRules(changedId);
   } else if (fields.productType.value === "组合件") {
-    syncCombinationRules(active?.id);
+    syncCombinationRules(changedId);
   } else {
-    syncProductRules(active?.id, isDockingMiddleFreeInput);
+    syncProductRules(changedId, isDockingMiddleFreeInput);
   }
   syncElbowMiddleLengthFields();
   syncTeeMiddleLengthFields();
+  syncStandardLengthIndicators();
   if (isManifoldType() && !isBranchFreeInput) {
     syncBranchRows();
   }
@@ -4044,6 +4312,7 @@ function init() {
   bindFields();
   bindCopyActions();
   loadPricingSettings();
+  loadPricingTrace();
   fields.customerName.value = "福兰特定制产品";
   fields.quoteNo.value = `分水-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-001`;
   fields.productType.value = "分水器类";
@@ -4057,7 +4326,7 @@ function init() {
   fillSelect(fields.branchDiameter, branchOptions(40), value => `${value}`);
   fillSelect(fields.branchThickness, seriesThicknesses());
   document.querySelector("#branchHeightOptions").innerHTML = options.branchHeight.map(value => `<option value="${value}">${value === 0 ? "不加高" : `${value}`}</option>`).join("");
-  fillSelect(fields.mainFitting, options.mainFittings);
+  fillSelect(fields.mainFitting, options.mainFittings, fittingLabel);
   fillSelect(fields.mainFittingDiameter, seriesDiameters());
   fillSelect(fields.branchFitting, options.branchFittings);
   fillSelect(fields.tailFitting, options.tailFittings, fittingLabel);
@@ -4159,6 +4428,9 @@ function init() {
   fields.elbowMiddleB.value = "无";
   fields.elbowMiddleLengthB.value = "20";
   teeBodyLengthTouched = false;
+  lastTeeBodySelectionKey = "";
+  elbowLengthTouched = false;
+  lastElbowSelectionKey = "";
   fields.productTotalLength.value = "";
   fields.productHasMiddle.checked = false;
   fields.productMiddleCount.value = "1";
@@ -4305,6 +4577,11 @@ function init() {
   fields.teeBodyLength.addEventListener("input", () => {
     teeBodyLengthTouched = fields.teeBodyLength.value.trim() !== "";
   });
+  fields.productLength.addEventListener("input", () => {
+    if (fields.productType.value === "弯头类") {
+      elbowLengthTouched = fields.productLength.value.trim() !== "";
+    }
+  });
   document.querySelectorAll("[data-product-type]").forEach(button => {
     button.addEventListener("click", () => {
       fields.productType.value = button.dataset.productType;
@@ -4315,6 +4592,9 @@ function init() {
       dockingMiddleTouched = false;
       lastDockingDiameterPair = "";
       teeBodyLengthTouched = false;
+      lastTeeBodySelectionKey = "";
+      elbowLengthTouched = false;
+      lastElbowSelectionKey = "";
       dimensionOverrides = {};
       update();
     });
@@ -4328,6 +4608,9 @@ function init() {
     dockingMiddleTouched = false;
     lastDockingDiameterPair = "";
     teeBodyLengthTouched = false;
+    lastTeeBodySelectionKey = "";
+    elbowLengthTouched = false;
+    lastElbowSelectionKey = "";
     dimensionOverrides = {};
     update();
   });

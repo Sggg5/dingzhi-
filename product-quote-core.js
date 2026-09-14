@@ -313,7 +313,7 @@
       (sum, branch) => sum + fittingCost(branch.fitting, branch.diameter, config.material, config.tubeSeries),
       0
     );
-    const processMultiplier = config.mainDiameter > 50.8 ? 3 : 1;
+    const processMultiplier = config.mainDiameter > 55 ? 3 : 1;
     const baseProcessCost = pricing.processBaseForTwoBranches
       + Math.max(0, config.branchCount - 2) * pricing.processPerExtraBranch
       + activeBranches.filter(branch => branch.height > 0).length * pricing.heightProcessPerBranch;

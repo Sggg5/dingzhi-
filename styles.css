@@ -861,6 +861,52 @@ body.sidebar-collapsed .side-actions {
   line-height: 1.7;
 }
 
+.quote-logic-overview {
+  margin-bottom: 18px;
+}
+
+.quote-logic-common {
+  max-width: 1180px;
+}
+
+.logic-current-values {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+  margin-bottom: 16px;
+}
+
+.logic-current-values > div {
+  background: #f2f8f6;
+  border-left: 3px solid var(--brand);
+  min-height: 50px;
+  padding: 9px 11px;
+}
+
+.logic-current-values span,
+.logic-current-values strong {
+  display: block;
+}
+
+.logic-current-values span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.logic-current-values strong {
+  color: var(--brand-dark);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .logic-current-values {
+    grid-template-columns: 1fr;
+  }
+}
+
 .quote-logic-card h3 {
   margin: 18px 0 8px;
   color: var(--brand-dark);
@@ -1428,6 +1474,32 @@ label span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+}
+
+.field-label-with-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.value-mode-badge {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid #c8ddd8;
+  border-radius: 4px;
+  background: #eef7f5;
+  color: var(--brand);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.value-mode-badge[data-mode="manual"] {
+  border-color: #ddc992;
+  background: #fff8e7;
+  color: #8a5a00;
 }
 
 input,
@@ -2201,6 +2273,14 @@ select:hover {
   font-weight: 700;
 }
 
+.quote-trace {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
 .link-button {
   border: 0;
   background: transparent;
@@ -2525,4 +2605,12 @@ th {
   .top-summary strong {
     font-size: 22px;
   }
+}
+.compact-docking-fitting path,
+.compact-docking-fitting line,
+.compact-docking-fitting rect,
+.compact-docking-fitting circle,
+.compact-docking-fitting polyline,
+.compact-docking-fitting polygon {
+  vector-effect: non-scaling-stroke;
 }

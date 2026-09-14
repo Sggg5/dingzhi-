@@ -56,6 +56,7 @@ const helpers = {
   fittingLabel: value => value,
   formatFactor: value => Number(value).toFixed(2),
   formatNumber: value => Number(value).toFixed(2),
+  isNoFitting: value => value === "无配件",
   isManifoldType: value => value === "分水器类",
   productKindName: value => value.replace("类", ""),
   spacingSpec: () => "1-2:180mm",
@@ -88,7 +89,21 @@ assert.strictEqual(DisplayCore.quoteItemName({
   thicknessB: 1.5,
   fittingB: "法兰",
   middleItems: [{ type: "直管", length: 100 }, { type: "中接" }]
-}, helpers), "304 对接 A端D40x1.5外丝，B端D50.8x1.5法兰，直管L100+中接");
+}, helpers), "304 40外丝x50.8法兰 对接，直管L100+中接");
+
+assert.strictEqual(DisplayCore.quoteItemName({
+  productType: "三通类",
+  material: "304",
+  bodyDiameter: 88.9,
+  bodyThickness: 2,
+  length: 98,
+  diameterA: 88.9,
+  fittingA: "沟槽",
+  diameterB: 50.8,
+  fittingB: "外丝",
+  diameterC: 88.9,
+  fittingC: "沟槽"
+}, helpers), "304 88.9沟槽x50.8外丝x88.9沟槽 三通，三通直管L98");
 
 assert.strictEqual(DisplayCore.quoteItemName({
   productType: "分水器类",

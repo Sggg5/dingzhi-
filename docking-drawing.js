@@ -10,9 +10,12 @@
       DrawingCore,
       clamp,
       dockingMiddleAssembly,
+      dockingMiddleLengthMm,
       dockingTotalLengthMm,
       drawingColors,
       drawingTotalLengthText,
+      dockingFittingLength,
+      dockingFittingSvg,
       fittingLabel,
       inlineFittingLength,
       inlineFittingSvg,
@@ -20,30 +23,44 @@
       pipeVisualDiameter,
       showInfoPanels = true
     } = helpers;
+    const fittingLength = dockingFittingLength || inlineFittingLength;
+    const fittingSvg = dockingFittingSvg || inlineFittingSvg;
     const middleItems = config.middleItems || [];
-    const hasMiddleAdapter = middleItems.some(item => item.type === "中接");
-    const totalMiddleLength = middleItems
-      .filter(item => item.type === "直管")
-      .reduce((sum, item) => sum + item.length, 0);
-    const pipeA = pipeVisualDiameter(config.diameterA);
-    const pipeB = pipeVisualDiameter(config.diameterB);
-    const directVisualLength = !hasMiddleAdapter && totalMiddleLength > 0
-      ? clamp(totalMiddleLength * 2.2, 240, 620)
-      : 600;
-    const leftEnd = 600 - directVisualLength / 2;
-    const rightEnd = 600 + directVisualLength / 2;
-    const middleX = 600;
+    const middleLengthMm = typeof dockingMiddleLengthMm === "function"
+      ? dockingMiddleLengthMm(config)
+      : middleItems.filter(item => item.type === "直管").reduce((sum, item) => sum + (Number(item.length) || 0), 0);
     const hasMiddleItems = middleItems.length > 0;
+    const basePipeA = pipeVisualDiameter(config.diameterA);
+    const basePipeB = pipeVisualDiameter(config.diameterB);
+    const baseCompactWidth = fittingLength(config.fittingA, config.diameterA, basePipeA)
+      + fittingLength(config.fittingB, config.diameterB, basePipeB);
+    // Very short docking products are unreadable at the same visual scale as
+    // long pipes. Enlarge only the geometry span; quoted and dimensioned
+    // lengths remain the physical values.
+    const compactScale = hasMiddleItems
+      ? 1
+      : clamp(200 / Math.max(1, baseCompactWidth), 1, 3.4);
+    const pipeA = basePipeA * compactScale;
+    const pipeB = basePipeB * compactScale;
+    const baseFittingLengthA = fittingLength(config.fittingA, config.diameterA, basePipeA);
+    const baseFittingLengthB = fittingLength(config.fittingB, config.diameterB, basePipeB);
+    const middleVisualLength = middleItems.length > 0
+      ? clamp(Math.max(1, middleLengthMm || 0) * 2.2, 120, 620)
+      : 0;
+    const middleX = 600;
+    const leftEnd = middleX - middleVisualLength / 2;
+    const rightEnd = middleX + middleVisualLength / 2;
     const assembly = hasMiddleItems
       ? dockingMiddleAssembly(config, leftEnd, rightEnd, 280)
       : { svg: "", leftX: leftEnd, rightX: rightEnd };
-    const noMiddleGap = [config.fittingA, config.fittingB]
-      .some(fitting => ["法兰", "移动螺母", "移动螺纹"].includes(fitting)) ? 0 : 12;
-    const leftConnectionX = hasMiddleItems ? assembly.leftX : middleX - noMiddleGap / 2;
-    const rightConnectionX = hasMiddleItems ? assembly.rightX : middleX + noMiddleGap / 2;
+    // With no middle component, both fittings meet at the same connection
+    // datum plane. A physical clearance must be modelled as a component,
+    // rather than introduced as a drawing-only gap.
+    const leftConnectionX = hasMiddleItems ? assembly.leftX : middleX;
+    const rightConnectionX = hasMiddleItems ? assembly.rightX : middleX;
     const totalLength = dockingTotalLengthMm(config);
-    const dimensionLeft = leftConnectionX - inlineFittingLength(config.fittingA, config.diameterA, pipeA);
-    const dimensionRight = rightConnectionX + inlineFittingLength(config.fittingB, config.diameterB, pipeB);
+    const dimensionLeft = leftConnectionX - baseFittingLengthA * compactScale;
+    const dimensionRight = rightConnectionX + baseFittingLengthB * compactScale;
     const leftLabelX = hasMiddleItems ? (dimensionLeft + leftConnectionX) / 2 : dimensionLeft - 28;
     const rightLabelX = hasMiddleItems ? (dimensionRight + rightConnectionX) / 2 : dimensionRight + 28;
     const leftFittingCenterX = (dimensionLeft + leftConnectionX) / 2;
@@ -67,10 +84,13 @@
       labelY: dimensionY - 12,
       fontSize: dimensionFontSize
     }) : "";
+    const scaleAtDatum = (svg, datumX) => compactScale === 1
+      ? svg
+      : `<g class="compact-docking-fitting" transform="translate(${datumX} 280) scale(${compactScale}) translate(${-datumX} -280)">${svg}</g>`;
     const objectLayer = `
       ${hasMiddleItems ? assembly.svg : ""}
-      ${inlineFittingSvg(config.fittingA, config.diameterA, leftConnectionX, 280, pipeA, "left")}
-      ${inlineFittingSvg(config.fittingB, config.diameterB, rightConnectionX, 280, pipeB, "right")}
+      ${scaleAtDatum(fittingSvg(config.fittingA, config.diameterA, leftConnectionX, 280, basePipeA, "left"), leftConnectionX)}
+      ${scaleAtDatum(fittingSvg(config.fittingB, config.diameterB, rightConnectionX, 280, basePipeB, "right"), rightConnectionX)}
     `;
     const labelLayer = `
       ${!isNoFitting(config.fittingA) ? `
@@ -100,7 +120,8 @@
           ? { left: 150, right: 1050, top: 145, bottom: 455 }
           : { left: 145, right: 1055, top: 130, bottom: 585 },
         content,
-        minScale: 0.62
+        minScale: 0.62,
+        maxScale: 1.4
       })
       : content;
   }

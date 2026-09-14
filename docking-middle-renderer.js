@@ -19,10 +19,13 @@
       return Math.max(40, (Number(item.length) || h.productDefaultLength("对接类", config.diameterA)) * pxPerMm);
     });
     const totalRawWidth = rawWidths.reduce((sum, width) => sum + width, 0);
-    const targetWidth = Math.min(availableWidth, Math.max(120, totalRawWidth));
+    // A middle assembly is defined by the two component connection datum
+    // planes. Scale its internal parts into that exact span so no visual gap
+    // remains between a fitting and the first/last middle component.
+    const targetWidth = Math.max(0, availableWidth);
     const scale = totalRawWidth > 0 ? targetWidth / totalRawWidth : 1;
     const widths = rawWidths.map(width => width * scale);
-    const assemblyLeftX = (leftX + rightX - targetWidth) / 2;
+    const assemblyLeftX = leftX;
     const objectLineWidth = h.drawingColors.objectLineWidth || 3;
     const smallFontSize = h.drawingColors.smallFontSize || 11;
     const bodyLabelFontSize = h.drawingColors.bodyLabelFontSize || 12;
@@ -58,14 +61,18 @@
       currentHeight = straightHeight(item);
       const straightDiameter = Number(item.diameter) || middlePipeDiameter;
       const straightThickness = Number(item.thickness) || middlePipeThickness;
-      return `<rect x="${startX}" y="${y - currentHeight / 2}" width="${width}" height="${currentHeight}" rx="0"
-        fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}"/>
+      const cadStraight = typeof h.dockingCadStraightSvg === "function"
+        ? h.dockingCadStraightSvg(straightDiameter, startX, endX, y, currentHeight)
+        : "";
+      const straightBody = cadStraight || `<rect x="${startX}" y="${y - currentHeight / 2}" width="${width}" height="${currentHeight}" rx="0"
+        fill="${h.drawingColors.pipeFill}" stroke="${h.drawingColors.stroke}" stroke-width="${objectLineWidth}"/>`;
+      return `${straightBody}
         <text x="${(startX + endX) / 2}" y="${y + 4}" text-anchor="middle" font-size="${bodyLabelFontSize}"
         fill="${h.drawingColors.label}">直管 ${straightDiameter} x ${straightThickness}</text>
         <text x="${(startX + endX) / 2}" y="${y + currentHeight / 2 + 24}" text-anchor="middle" font-size="${smallFontSize}"
         fill="${h.drawingColors.mutedLabel}">${h.drawingLengthText(item.length, "")}</text>`;
     }).join("");
-    return { svg: parts, leftX: assemblyLeftX, rightX: assemblyLeftX + targetWidth };
+    return { svg: parts, leftX: assemblyLeftX, rightX };
   }
   return { render };
 });

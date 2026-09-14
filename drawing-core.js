@@ -85,26 +85,30 @@
   function engineeringFrame(quoteNo = "") {
     const f = CAD_STANDARD.frame;
     return `
-      <rect x="3" y="35" width="1194" height="800" fill="${f.fill}" stroke="${f.stroke}" stroke-width="${f.outerLine}"/>
-      <rect x="104" y="51" width="1072" height="768" fill="none" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
-      <line x1="600" y1="35" x2="600" y2="68" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
-      <line x1="600" y1="819" x2="600" y2="835" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+      <g data-layer="frame-accent">
+        <rect x="3" y="35" width="1194" height="800" fill="${f.fill}" stroke="${f.stroke}" stroke-width="${f.outerLine}"/>
+        <line x1="104" y1="95" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="345" y1="51" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="398" x2="104" y2="398" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="445" x2="104" y2="445" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="485" x2="104" y2="485" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="525" x2="104" y2="525" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="590" x2="104" y2="590" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="655" x2="104" y2="655" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+        <line x1="3" y1="725" x2="104" y2="725" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
+      </g>
+      <g data-layer="frame-main">
+        <rect x="104" y="51" width="1072" height="768" fill="none" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+        <line x1="600" y1="35" x2="600" y2="68" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+        <line x1="600" y1="819" x2="600" y2="835" stroke="${f.stroke}" stroke-width="${f.borderLine}"/>
+        <line x1="104" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.heavyTableLine}"/>
+      </g>
       <text x="300" y="50" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">1</text>
       <text x="900" y="50" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">2</text>
       <text x="300" y="832" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">1</text>
       <text x="900" y="832" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">2</text>
-      <line x1="104" y1="95" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="345" y1="51" x2="345" y2="95" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
       <text x="225" y="80" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">${quoteNo}</text>
-      <line x1="3" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="398" x2="104" y2="398" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="445" x2="104" y2="445" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="485" x2="104" y2="485" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="525" x2="104" y2="525" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="590" x2="104" y2="590" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="655" x2="104" y2="655" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="3" y1="725" x2="104" y2="725" stroke="${f.stroke}" stroke-width="${f.tableLine}"/>
-      <line x1="104" y1="380" x2="126" y2="380" stroke="${f.stroke}" stroke-width="${f.heavyTableLine}"/>
       <text x="52" y="260" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">A</text>
       <text x="1187" y="260" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">A</text>
       <text x="1187" y="605" text-anchor="middle" font-size="${f.indexFont}" fill="${f.stroke}">B</text>
@@ -193,12 +197,14 @@
         <rect x="0" y="0" width="722" height="144" fill="${f.fill}" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="260" y1="0" x2="260" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="505" y1="0" x2="505" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
-        <line x1="0" y1="21" x2="260" y2="21" stroke="${f.stroke}"/>
-        <line x1="0" y1="42" x2="260" y2="42" stroke="${f.stroke}"/>
-        <line x1="0" y1="63" x2="260" y2="63" stroke="${f.stroke}"/>
+        <g data-layer="title-accent">
+          <line x1="0" y1="21" x2="260" y2="21" stroke="${f.stroke}"/>
+          <line x1="0" y1="42" x2="260" y2="42" stroke="${f.stroke}"/>
+          <line x1="0" y1="63" x2="260" y2="63" stroke="${f.stroke}"/>
+          <line x1="30" y1="0" x2="30" y2="84" stroke="${f.stroke}"/>
+        </g>
         <line x1="0" y1="84" x2="260" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="0" y1="114" x2="260" y2="114" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
-        <line x1="30" y1="0" x2="30" y2="84" stroke="${f.stroke}"/>
         <line x1="60" y1="0" x2="60" y2="144" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
         <line x1="165" y1="0" x2="165" y2="144" stroke="${f.stroke}"/>
         <line x1="260" y1="84" x2="505" y2="84" stroke="${f.stroke}" stroke-width="${f.titleBlockLine}"/>
@@ -212,23 +218,21 @@
         <text x="112.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">更改文件号</text>
         <text x="190" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">签字</text>
         <text x="237.5" y="73.5" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">日期</text>
-        <text x="16" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">设计</text>
-        <text x="95" y="102" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
-        <text x="212.5" y="102" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
-        <text x="16" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">审核</text>
-        <text x="95" y="134" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
-        <text x="212.5" y="134" text-anchor="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
-        <text x="382" y="56" text-anchor="middle" font-size="${f.materialFont}" fill="${f.stroke}">${material}</text>
-        <text x="301" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">图样标记</text>
-        <text x="383" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">重量</text>
-        <text x="465" y="103" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">比例</text>
-        <text x="289" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">共</text>
-        <text x="313" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">页</text>
-        <text x="448" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">第</text>
-        <text x="482" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">页</text>
-        <text x="614" y="30" text-anchor="middle" font-size="${f.titleFont}" fill="${f.stroke}">浙江福兰特有限公司</text>
+        <text x="15" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">设计</text>
+        <text x="112.5" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="212.5" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
+        <text x="15" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">审核</text>
+        <text x="112.5" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">FRANTA</text>
+        <text x="212.5" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleSmallFont}" fill="${f.stroke}">${dateText}</text>
+        <text x="382.5" y="42" text-anchor="middle" dominant-baseline="middle" font-size="${f.materialFont}" fill="${f.stroke}">${material}</text>
+        <text x="301" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">图样标记</text>
+        <text x="383" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">重量</text>
+        <text x="465" y="99" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">比例</text>
+        <text x="465" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">NTS</text>
+        <text x="301" y="129" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleMetaFont}" fill="${f.stroke}">共 页</text>
+        <text x="613.5" y="24" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleFont}" fill="${f.stroke}">浙江福兰特有限公司</text>
         ${titleSvg}
-        <text x="614" y="126" text-anchor="middle" font-size="${f.titleProductFont}" fill="${f.stroke}">${productLabel}</text>
+        <text x="613.5" y="120" text-anchor="middle" dominant-baseline="middle" font-size="${f.titleProductFont}" fill="${f.stroke}">${productLabel}</text>
       </g>
     `;
   }
@@ -266,10 +270,8 @@
     } = options;
     const dx = Number(offset.dx) || 0;
     const dy = Number(offset.dy) || 0;
-    const wrapperStart = dimensionId
-      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
-      : "";
-    const wrapperEnd = dimensionId ? "</g>" : "";
+    const wrapperStart = `<g data-dimension-kind="horizontal"${dimensionId ? ` data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension"` : ""} transform="translate(${dx} ${dy})">`;
+    const wrapperEnd = "</g>";
     const startExtension = extensionStart
       ? `<line x1="${x1}" y1="${extensionStart.fromY}" x2="${x1}" y2="${extensionStart.toY}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
@@ -308,10 +310,8 @@
     } = options;
     const dx = Number(offset.dx) || 0;
     const dy = Number(offset.dy) || 0;
-    const wrapperStart = dimensionId
-      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
-      : "";
-    const wrapperEnd = dimensionId ? "</g>" : "";
+    const wrapperStart = `<g data-dimension-kind="vertical"${dimensionId ? ` data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension"` : ""} transform="translate(${dx} ${dy})">`;
+    const wrapperEnd = "</g>";
     const topExtension = extensionTop
       ? `<line x1="${extensionTop.fromX}" y1="${y1}" x2="${extensionTop.toX}" y2="${y1}" stroke="${color}" stroke-width="${extensionLineWidth}"/>`
       : "";
@@ -353,10 +353,8 @@
     } = options;
     const dx = Number(offset.dx) || 0;
     const dy = Number(offset.dy) || 0;
-    const wrapperStart = dimensionId
-      ? `<g data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension" transform="translate(${dx} ${dy})">`
-      : "";
-    const wrapperEnd = dimensionId ? "</g>" : "";
+    const wrapperStart = `<g data-dimension-kind="aligned"${dimensionId ? ` data-dimension-id="${dimensionId}" data-dimension-axis="${dragAxis}" class="draggable-dimension"` : ""} transform="translate(${dx} ${dy})">`;
+    const wrapperEnd = "</g>";
     const unit = 1 / Math.sqrt(2);
     const x1 = centerBaseX + dimensionOffset * unit;
     const y1 = centerBaseY + dimensionOffset * unit;

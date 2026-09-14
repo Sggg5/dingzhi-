@@ -240,6 +240,38 @@
             </div>
 
             <div class="settings-section-panel" data-settings-section-panel="quote-logic" hidden>
+              <div class="quote-logic-overview" aria-label="报价通用逻辑与当前取值">
+                <div class="section-title compact settings-subtitle">
+                  <h2>报价通用逻辑与当前取值</h2>
+                  <span>以下参数随保存的价格表实时更新；每份报价可追溯到对应价格修订。</span>
+                </div>
+                <div class="quote-logic-card quote-logic-common">
+                  <div class="logic-current-values">
+                    <div><span>当前价格修订</span><strong id="logicPricingRevision">-</strong></div>
+                    <div><span>材料去税系数</span><strong id="logicMaterialTax">-</strong></div>
+                    <div><span>配件去税系数</span><strong id="logicFittingTax">-</strong></div>
+                    <div><span>316L 配件系数</span><strong id="logic316FittingFactor">-</strong></div>
+                    <div><span>配件重量反推钢价</span><strong id="logicFittingWeightReference">-</strong></div>
+                    <div><span>成本含税系数</span><strong id="logicCostTaxMultiplier">1.13</strong></div>
+                    <div><span>分水器主管规格系数</span><strong id="logicManifoldProcessRule">≤55 ×1；&gt;55 ×3</strong></div>
+                    <div><span>退火 / 制造管理 / 包材</span><strong id="logicAfterTreatmentRates">-</strong></div>
+                  </div>
+                  <h3>1. 材料、配件与理论重量</h3>
+                  <ul>
+                    <li>管材重量按外径、实际壁厚、长度和不锈钢密度计算；管材去税成本 = 管材重量 ÷ 1000 ×（当前钢价 + 2000）÷ 材料去税系数。</li>
+                    <li>配件价格表为含税表价。304 配件去税成本 = 含税表价 ÷ 配件去税系数；316L 配件去税成本 = 含税表价 × 316L 配件系数 ÷ 配件去税系数。</li>
+                    <li>配件理论重量仅用于退火、管理、包材等重量项：配件去税成本 ÷（固定反推钢价 + 2000）÷ 1000 ÷ 配件重量系数。固定反推钢价不随本次报价钢价变化。</li>
+                    <li>法兰始终计入配件成本；但法兰不计入退火、包材及按重量计算的制造管理重量。</li>
+                    <li>国标插焊价格和长度默认取同规格环压的 0.75，加工费沿用环压；德标单卡在独立数据补齐前，价格、长度和加工费沿用同规格德标双卡，设置表中均保留独立行，可直接覆盖。</li>
+                  </ul>
+                  <h3>2. 报价与追溯</h3>
+                  <ul>
+                    <li>含税工厂成本 = 不含税成本小计 × 当前成本含税系数；面价折后 = 含税工厂成本 ÷ 成本率；单件面价 = 面价折后 ÷ 面价折扣；合计面价 = 单件面价 × 数量 + 运费。</li>
+                    <li>加入报价清单会记录价格修订号和指纹；保存报价版本会冻结当时产品配置、报价结果、清单和完整价格表快照。</li>
+                    <li>缺失配件价格、配件长度、加工费或必要尺寸时，系统会在成本拆分中提示风险，并阻止加入报价清单及保存报价版本。</li>
+                  </ul>
+                </div>
+              </div>
               <div class="settings-block active" data-settings-product="manifold">
                 <div class="section-title compact settings-subtitle">
                   <h2>分水器类报价逻辑</h2>
@@ -264,8 +296,9 @@
                   <h3>3. 加工与后处理</h3>
                   <ul>
                     <li>1口产品也按 2口基础加工费起算。</li>
-                    <li>分水器加工费 = (2口基础 + 增加支路 + 加高支路) x 规格系数 + 大规格开孔费，再乘难度系数。</li>
+                    <li>分水器加工费 =（2口基础 + 增加支路 + 加高支路）× 规格系数 + 大规格开孔费，再乘难度系数；主管外径 ≤ 55 mm 时规格系数为 1，> 55 mm 时为 3。</li>
                     <li>主管外径 D133/D159/D219 时，每个支路孔额外增加 15 元开孔费。</li>
+                    <li>自动难度系数基础为 1.00：支路规格、壁厚、配件、高度或正公差存在不同配置时 +0.05；双排 +0.05；任一支路加高 +0.03。手动填写难度系数时，以手动值为准。</li>
                     <li>退火、制造管理、包材、表面处理按管材总重量计算；法兰只计配件成本，不进入退火、制造管理和包材重量。</li>
                   </ul>
                   <p class="logic-formula">分水器不含税成本 = 主管材料 + 支管材料 + 配件 + 分水器加工费 + 退火 + 制造管理 + 包材 + 表面处理。</p>
@@ -288,6 +321,7 @@
                   <ul>
                     <li>对接加工费使用独立对接类加工费表，按配件类型 x 外径取值。</li>
                     <li>加工费 = A端加工 + B端加工 + A/B端中接加工，再乘成型加工系数和难度系数。</li>
+                    <li>自动难度系数基础为 1.00：A/B 外径或壁厚不同 +0.08；存在中接 +0.05；每增加 1 段中间段（从第 2 段起）+0.02。手动填写难度系数时，以手动值为准。</li>
                     <li>退火/包材重量 = 中间直管重量 + A/B端非法兰配件理论重量 + A/B端中接理论重量。</li>
                     <li>不带法兰：制造管理 = 加工费 x 2.14；带法兰：制造管理 = 扣除法兰后的产品重量 x 4.13。</li>
                     <li>表面处理只按中间直管材料重量计算，不按配件理论重量计算。</li>
@@ -313,6 +347,7 @@
                   <ul>
                     <li>三通加工费使用独立三通类加工费表，按配件类型 x 外径取值。</li>
                     <li>加工费 = A端加工 + B端加工 + C端加工 + 中接加工，再乘成型加工系数和难度系数。</li>
+                    <li>自动难度系数基础为 1.12：存在中接 +0.05；每增加 1 个非“无”的中间段（从第 2 个起）+0.02。手动填写难度系数时，以手动值为准。</li>
                     <li>退火/包材重量 = 三通体直管重量 + B端直管重量 + A/B/C端非法兰配件理论重量 + A/B/C中接理论重量。</li>
                     <li>不带法兰：制造管理 = 加工费 x 2.14；带法兰：制造管理 = 扣除法兰后的产品重量 x 4.13。</li>
                     <li>表面处理只按三通体直管和 B端直管等实际管材重量计算。</li>
@@ -338,6 +373,7 @@
                     <li>A/B端中间段支持无、直管、中接；直管按输入长度计管材，中接按配件计成本。</li>
                     <li>弯头加工费使用独立弯头类加工费表，按配件类型 x 外径取值。</li>
                     <li>加工费 = A/B端加工 + 中接加工，再乘角度系数、成型加工系数和难度系数。</li>
+                    <li>自动难度系数基础为 1.08：任一端存在中接 +0.05；手动填写难度系数时，以手动值为准。</li>
                     <li>退火/包材重量 = 弯头材料重量 + A/B端直管重量 + A/B端非法兰配件理论重量 + 中接理论重量。</li>
                     <li>不带法兰：制造管理 = 加工费 x 2.14；带法兰：制造管理 = 扣除法兰后的产品重量 x 4.13。</li>
                   </ul>
@@ -798,7 +834,7 @@
                   <select id="teeBodyThickness"></select>
                 </label>
                 <label>
-                  <span>三通直管长&nbsp;mm</span>
+                  <span class="field-label-with-status">三通直管长&nbsp;mm <em id="teeBodyLengthStatus" class="value-mode-badge" data-mode="auto">自动</em></span>
                   <input id="teeBodyLength" type="number" min="0" step="0.1" placeholder="按表自动">
                 </label>
               </div>
@@ -880,7 +916,7 @@
               </div>
 
               <label id="productLengthWrap" data-generic-product-field data-elbow-field>
-                <span>中心长度/展开长度 mm</span>
+                <span class="field-label-with-status"><span id="productLengthLabel">中心长度/展开长度 mm</span> <em id="elbowLengthStatus" class="value-mode-badge" data-mode="auto">自动</em></span>
                 <input id="productLength" type="number" min="1" step="1">
               </label>
 
@@ -1112,6 +1148,7 @@
   <script src="./quote-list-storage-core.js"></script>
   <script src="./product-draft-storage-core.js"></script>
   <script src="./quote-history-storage-core.js"></script>
+  <script src="./pricing-trace-core.js"></script>
   <script src="./workspace-backup-core.js"></script>
   <script src="./settings-password-core.js"></script>
   <script src="./dxf-export-core.js"></script>
@@ -1119,9 +1156,15 @@
   <script src="./cost-detail-core.js"></script>
   <script src="./drawing-core.js"></script>
   <script src="./drawing-content-core.js"></script>
-  <script src="./fitting-drawing.js"></script>
-  <script src="./fitting-visual-core.js"></script>
-  <script src="./fitting-renderer.js"></script>
+<script src="./fitting-drawing.js"></script>
+<script src="./fitting-visual-core.js"></script>
+<script src="./fitting-profile-core.js?v=20260729-cad1"></script>
+<script src="./cad-profile-data.js?v=20260729-cad1"></script>
+<script src="./fitting-renderer.js?v=20260729-cad1"></script>
+  <script src="./docking-cad-profile-data.js?v=20260801-cad8"></script>
+  <script src="./docking-cad-renderer.js?v=20260801-cad8"></script>
+  <script src="./product-body-cad-profile-data.js?v=20260731-body2"></script>
+  <script src="./product-body-cad-renderer.js?v=20260731-body2"></script>
   <script src="./branch-fitting-renderer.js"></script>
   <script src="./product-geometry-core.js"></script>
   <script src="./nx-param-export-core.js"></script>

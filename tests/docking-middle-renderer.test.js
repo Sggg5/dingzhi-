@@ -12,7 +12,8 @@ const h = {
 assert.deepStrictEqual(DockingMiddleRenderer.render({ middleItems: [] }, 100, 500, 200, h), { svg: "", leftX: 100, rightX: 500 });
 const mixed = DockingMiddleRenderer.render({ diameterA: 40, diameterB: 50, middleItems: [{ type: "直管", length: 100 }, { type: "中接" }] }, 100, 500, 200, h);
 assert(mixed.svg.includes("<rect") && mixed.svg.includes("<path"));
-assert(mixed.leftX >= 100 && mixed.rightX <= 500);
+assert.strictEqual(mixed.leftX, 100);
+assert.strictEqual(mixed.rightX, 500);
 const large = DockingMiddleRenderer.render({ diameterA: 133, diameterB: 159, middleItems: [{ type: "中接" }] }, 100, 500, 200, h);
 assert(!large.svg.includes("NaN"));
 const selectedMiddleDiameter = DockingMiddleRenderer.render({

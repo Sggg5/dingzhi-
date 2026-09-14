@@ -57,11 +57,14 @@ assert(titleBlock.includes("Test product"));
 assert(titleBlock.includes("Custom product"));
 assert(!titleBlock.includes("B36010104005000"));
 assert(titleBlock.includes("2026-06-18"));
-assert(titleBlock.includes('x="212.5" y="102"'));
-assert(titleBlock.includes('x="212.5" y="134"'));
+assert(titleBlock.includes('x="212.5" y="99" text-anchor="middle" dominant-baseline="middle"'));
+assert(titleBlock.includes('x="212.5" y="129" text-anchor="middle" dominant-baseline="middle"'));
+assert(titleBlock.includes('x="382.5" y="42" text-anchor="middle" dominant-baseline="middle"'));
+assert(titleBlock.includes('x="613.5" y="24" text-anchor="middle" dominant-baseline="middle"'));
 assert(titleBlock.includes('x1="165" y1="0" x2="165" y2="144"'));
 assert(!titleBlock.includes('x1="215" y1="0" x2="215" y2="144"'));
 assert(!titleBlock.includes("1:2"));
+assert(titleBlock.includes(">NTS</text>"));
 
 const requirements = DrawingCore.technicalRequirements({
   lines: ["First", { text: "Second", indent: 12 }]
@@ -144,5 +147,14 @@ assert(fitted.includes("<rect/>"));
 assert(fitted.includes("scale(1.0000)"));
 assert(fitted.includes("translate(100.00 100.00)"));
 assert(fitted.includes('data-layer-group="fitted"'));
+
+const enlarged = DrawingCore.fitContent({
+  bounds: { left: 0, right: 100, top: 0, bottom: 50 },
+  box: { left: 0, right: 400, top: 0, bottom: 200 },
+  content: "<path/>",
+  maxScale: 1.4
+});
+assert(enlarged.includes("scale(1.4000)"));
+assert(enlarged.includes("<path/>"));
 
 console.log("drawing core tests passed");

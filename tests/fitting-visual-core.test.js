@@ -18,6 +18,7 @@ assert.deepStrictEqual(FittingVisualCore.ringPressVisualSize(40, deps), { width:
 assert.strictEqual(FittingVisualCore.flangeVisualWidth(40, 40, deps.fittingLengthMm), 20);
 assert.strictEqual(FittingVisualCore.inletFittingLength({ mainFitting: "直管", mainDiameter: 40 }, 40, deps), 0);
 assert.strictEqual(FittingVisualCore.inletFittingLength({ mainFitting: "法兰", mainDiameter: 40 }, 40, deps), 20);
+assert.strictEqual(FittingVisualCore.inletFittingLength({ mainFitting: "堵头", mainDiameter: 40 }, 100, deps), 21);
 assert.strictEqual(FittingVisualCore.tailFittingLength({ tailFitting: "堵头" }, 100, deps), 21);
 assert.strictEqual(FittingVisualCore.inlineFittingLength("无配件", 40, 40, deps), 0);
 assert.strictEqual(FittingVisualCore.inlineFittingEnvelopeHeight("法兰", 40, 40, deps), 68);

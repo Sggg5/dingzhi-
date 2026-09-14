@@ -90,6 +90,23 @@
     return `${config.branchCount}路独立`;
   }
 
+  function productEndSpec(diameter, fitting, helpers) {
+    const diameterText = Number.isFinite(Number(diameter)) ? String(Number(diameter)) : String(diameter || "");
+    const noFitting = typeof helpers.isNoFitting === "function" && helpers.isNoFitting(fitting);
+    return `${diameterText}${noFitting ? "" : helpers.fittingLabel(fitting)}`;
+  }
+
+  function connectedProductName(config, helpers) {
+    const a = productEndSpec(config.diameterA, config.fittingA, helpers);
+    const b = productEndSpec(config.diameterB, config.fittingB, helpers);
+    if (config.productType === "三通类") {
+      const c = productEndSpec(config.diameterC, config.fittingC, helpers);
+      return `${a}x${b}x${c} 三通`;
+    }
+    if (config.productType === "弯头类") return `${a}x${b} ${config.angle}°弯头`;
+    return `${a}x${b} 对接`;
+  }
+
   function quoteItemName(config, helpers) {
     if (config.productType === "组合件") {
       const summary = (config.components || []).map(item => item.type).join(" + ");
@@ -100,14 +117,11 @@
         const middleText = (config.middleItems || []).length === 0
           ? "无中间"
           : config.middleItems.map(item => item.type === "直管" ? `直管L${helpers.drawingLengthValue(item.length)}` : "中接").join("+");
-        return `${config.material} 对接 A端D${config.diameterA}x${config.thicknessA}${config.fittingA}，B端D${config.diameterB}x${config.thicknessB}${config.fittingB}，${middleText}`;
+        return `${config.material} ${connectedProductName(config, helpers)}，${middleText}`;
       }
 
-      const angleText = config.productType === "弯头类" ? ` ${config.angle}°` : "";
-      const fittingText = config.productType === "三通类"
-        ? `${config.fittingA}/${config.fittingB}/${config.fittingC}`
-        : `${config.fittingA}/${config.fittingB}`;
-      return `${config.material} ${helpers.productKindName(config.productType)}${angleText} D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness} L${helpers.drawingLengthValue(config.length)}，${fittingText}`;
+      const bodyName = config.productType === "三通类" ? "三通直管L" : "中心高H";
+      return `${config.material} ${connectedProductName(config, helpers)}，${bodyName}${helpers.drawingLengthValue(config.length)}`;
     }
 
     const seriesText = helpers.tubeSeriesLabel[config.tubeSeries] || config.tubeSeries;
@@ -213,6 +227,8 @@
     costRowDisplay,
     costRowsDisplay,
     compactBranchSummary,
+    connectedProductName,
+    productEndSpec,
     quoteItemName,
     specItems,
     topProductTitle

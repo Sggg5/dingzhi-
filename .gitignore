@@ -17,3 +17,5 @@ Thumbs.db
 
 *.tmp
 *.temp
+
+tests/visual-artifacts/

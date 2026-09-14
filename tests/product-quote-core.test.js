@@ -260,6 +260,23 @@ const manifoldWithBlankBranch = ProductQuoteCore.calculateManifold({
 closeTo(manifoldWithBlankBranch.branchTubeWeightKg, 0.1);
 closeTo(manifoldWithBlankBranch.branchFittingCost, 10);
 
+const manifoldAt55Threshold = ProductQuoteCore.calculateManifold({
+  ...common,
+  productType: "分水器类",
+  manifoldType: "单排",
+  mainDiameter: 50.8,
+  wallThickness: 1.5,
+  mainPositiveTolerance: false,
+  branchCount: 1,
+  branchSpacing: 180,
+  inletAllowance: 100,
+  tailAllowance: 40,
+  mainFitting: "外丝",
+  tailFitting: "堵头",
+  branches: [{ diameter: 20, thickness: 1, fitting: "外丝", height: 0, positiveTolerance: false }]
+}, pricing, helpers);
+closeTo(manifoldAt55Threshold.processMultiplier, 1);
+
 const manifoldWithAdapters = ProductQuoteCore.calculateManifold({
   ...common,
   productType: "分水器类",

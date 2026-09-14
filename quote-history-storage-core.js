@@ -22,7 +22,7 @@
     };
   }
 
-  function createEntry({ config, result, items, columns, pricingVersion }) {
+  function createEntry({ config, result, items, columns, pricingVersion, pricingTrace }) {
     return {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       savedAt: new Date().toISOString(),
@@ -33,6 +33,11 @@
       tubeSeries: String(config.tubeSeries || "A"),
       steelTonPrice: Number(config.steelTonPrice) || 0,
       pricingVersion: Number(pricingVersion) || 0,
+      pricingRevision: Number(pricingTrace?.revision) || 0,
+      pricingFingerprint: String(pricingTrace?.fingerprint || ""),
+      // A saved quotation must retain the actual pricing table it used. The
+      // quote list itself keeps only a lightweight revision reference.
+      pricingSnapshot: pricingTrace?.snapshot ? JSON.parse(JSON.stringify(pricingTrace.snapshot)) : null,
       config,
       result: {
         factoryCost: Number(result.factoryCost ?? result.subtotal) || 0,

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1030" viewBox="0 0 1400 1030">
+<style>
+  text { font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #173432; }
+  .title { font-size: 28px; font-weight: 700; }
+  .subtitle { font-size: 15px; fill: #5b6f6d; }
+  .size { font-size: 18px; font-weight: 700; }
+  .datum { font-size: 12px; fill: #d63f3f; dominant-baseline: middle; }
+  .length { font-size: 12px; fill: #5b6f6d; }
+</style>
+<rect width="100%" height="100%" fill="#f3f7f6"/>
+<text x="28" y="45" class="title">国I 16-101.6 直管 DXF 完整轮廓提取</text>
+<text x="28" y="76" class="subtitle">排除原图尺寸标注，仅保留双线管体轮廓。左右红色虚线分别为 A、B 连接基准面。</text>
+<text x="28" y="101" class="subtitle">D101.6: 4实体 / D88.9: 4实体 / D76.1: 4实体 / D50.8: 4实体 / D40: 4实体 / D32: 4实体 / D25.4: 4实体 / D20: 4实体 / D16: 5实体</text>
+<rect x="28" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="155" class="size">D101.6 直管</text>
+<polyline points="147.53,179.00 338.47,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="147.53,373.00 338.47,373.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="147.53,373.00 147.53,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="338.47,373.00 338.47,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="147.53" y1="172.00" x2="147.53" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="338.47" y1="172.00" x2="338.47" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="147.53" y="165.00" text-anchor="middle" class="datum">A</text>
+<text x="338.47" y="165.00" text-anchor="middle" class="datum">B</text>
+<text x="243.00" y="397.00" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="482" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="155" class="size">D88.9 直管</text>
+<polyline points="587.89,179.00 806.11,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="587.89,373.00 806.11,373.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="587.89,373.00 587.89,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="806.11,373.00 806.11,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="587.89" y1="172.00" x2="587.89" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="806.11" y1="172.00" x2="806.11" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="587.89" y="165.00" text-anchor="middle" class="datum">A</text>
+<text x="806.11" y="165.00" text-anchor="middle" class="datum">B</text>
+<text x="697.00" y="397.00" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="936" y="130" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="155" class="size">D76.1 直管</text>
+<polyline points="1023.54,179.00 1278.46,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1023.54,373.00 1278.46,373.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1023.54,373.00 1023.54,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1278.46,373.00 1278.46,179.00" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="1023.54" y1="172.00" x2="1023.54" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="1278.46" y1="172.00" x2="1278.46" y2="380.00" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="1023.54" y="165.00" text-anchor="middle" class="datum">A</text>
+<text x="1278.46" y="165.00" text-anchor="middle" class="datum">B</text>
+<text x="1151.00" y="397.00" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="28" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="447" class="size">D50.8 直管</text>
+<polyline points="70.00,480.12 416.00,480.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="70.00,655.88 416.00,655.88" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="70.00,655.88 70.00,480.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="416.00,655.88 416.00,480.12" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="70.00" y1="473.12" x2="70.00" y2="662.88" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="416.00" y1="473.12" x2="416.00" y2="662.88" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="70.00" y="466.12" text-anchor="middle" class="datum">A</text>
+<text x="416.00" y="466.12" text-anchor="middle" class="datum">B</text>
+<text x="243.00" y="679.88" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="482" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="447" class="size">D40 直管</text>
+<polyline points="524.00,498.80 870.00,498.80" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="524.00,637.20 870.00,637.20" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="524.00,637.20 524.00,498.80" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="870.00,637.20 870.00,498.80" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="524.00" y1="491.80" x2="524.00" y2="644.20" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="870.00" y1="491.80" x2="870.00" y2="644.20" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="524.00" y="484.80" text-anchor="middle" class="datum">A</text>
+<text x="870.00" y="484.80" text-anchor="middle" class="datum">B</text>
+<text x="697.00" y="661.20" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="936" y="422" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="447" class="size">D32 直管</text>
+<polyline points="978.00,512.64 1324.00,512.64" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="978.00,623.36 1324.00,623.36" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="978.00,623.36 978.00,512.64" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1324.00,623.36 1324.00,512.64" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="978.00" y1="505.64" x2="978.00" y2="630.36" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="1324.00" y1="505.64" x2="1324.00" y2="630.36" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="978.00" y="498.64" text-anchor="middle" class="datum">A</text>
+<text x="1324.00" y="498.64" text-anchor="middle" class="datum">B</text>
+<text x="1151.00" y="647.36" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="28" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="44" y="739" class="size">D25.4 直管</text>
+<polyline points="70.00,816.06 416.00,816.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="70.00,903.94 416.00,903.94" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="70.00,903.94 70.00,816.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="416.00,903.94 416.00,816.06" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="70.00" y1="809.06" x2="70.00" y2="910.94" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="416.00" y1="809.06" x2="416.00" y2="910.94" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="70.00" y="802.06" text-anchor="middle" class="datum">A</text>
+<text x="416.00" y="802.06" text-anchor="middle" class="datum">B</text>
+<text x="243.00" y="927.94" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="482" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="498" y="739" class="size">D20 直管</text>
+<polyline points="524.00,825.40 870.00,825.40" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="524.00,894.60 870.00,894.60" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="524.00,894.60 524.00,825.40" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="870.00,894.60 870.00,825.40" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="524.00" y1="818.40" x2="524.00" y2="901.60" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="870.00" y1="818.40" x2="870.00" y2="901.60" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="524.00" y="811.40" text-anchor="middle" class="datum">A</text>
+<text x="870.00" y="811.40" text-anchor="middle" class="datum">B</text>
+<text x="697.00" y="918.60" text-anchor="middle" class="length">源图管长 100 mm</text><rect x="936" y="714" width="430" height="270" rx="6" fill="#ffffff" stroke="#cbd8d5"/>
+<text x="952" y="739" class="size">D16 直管</text>
+<polyline points="978.00,832.32 978.00,887.68" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="978.00,887.68 1324.00,887.68" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="978.00,832.32 1324.00,832.32" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1324.00,887.68 1324.00,832.32" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="978.00,887.68 978.00,832.32" fill="none" stroke="#203c39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="978.00" y1="825.32" x2="978.00" y2="894.68" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="1324.00" y1="825.32" x2="1324.00" y2="894.68" stroke="#e04b4b" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="978.00" y="818.32" text-anchor="middle" class="datum">A</text>
+<text x="1324.00" y="818.32" text-anchor="middle" class="datum">B</text>
+<text x="1151.00" y="911.68" text-anchor="middle" class="length">源图管长 100 mm</text>
+</svg>

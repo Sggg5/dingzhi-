@@ -6,16 +6,26 @@
   function render(config, helpers) {
     const {
       DrawingCore, clamp, compressedStraightVisualLength, drawingColors, drawingTotalLengthText,
-      fittingLabel, inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter,
+      cadFittingEnvelopeHeight, cadFittingLength, cadFittingSvg, fittingLabel, inlineFittingLength, inlineFittingSvg, isNoFitting, pipeVisualDiameter,
       reducerSegmentSvg, teeBMiddleVisualLengthMm, teeHorizontalTotalLengthMm, teeMiddleLengthMm,
-      verticalInlineFittingSvg,
+      teeCadBodyGeometry, verticalCadFittingSvg, verticalInlineFittingSvg,
       showInfoPanels = true
     } = helpers;
-    const pipeA = pipeVisualDiameter(config.diameterA);
-    const pipeB = pipeVisualDiameter(config.diameterB);
-    const pipeC = pipeVisualDiameter(config.diameterC);
-    const bodyHeight = pipeVisualDiameter(config.bodyDiameter || config.diameter);
-    const lengthVisual = clamp((config.bodyLength || config.length) * 2.1, 140, 310);
+    const visualFittingLength = cadFittingLength || inlineFittingLength;
+    const visualFittingSvg = cadFittingSvg || inlineFittingSvg;
+    const verticalVisualFittingSvg = verticalCadFittingSvg || verticalInlineFittingSvg;
+    const bodyDiameter = Number(config.bodyDiameter || config.diameter) || 0;
+    const detailScale = bodyDiameter <= 20 ? 2.4 : bodyDiameter <= 54 ? 1.8 : bodyDiameter <= 108 ? 1.25 : 1;
+    const logicalPipeB = pipeVisualDiameter(config.diameterB);
+    const pipeA = pipeVisualDiameter(config.diameterA) * detailScale;
+    const pipeB = logicalPipeB * detailScale;
+    const pipeC = pipeVisualDiameter(config.diameterC) * detailScale;
+    const bodyHeight = pipeVisualDiameter(config.bodyDiameter || config.diameter) * detailScale;
+    const fallbackLengthVisual = clamp((config.bodyLength || config.length) * 2.1, 140, 310);
+    const cadBody = typeof teeCadBodyGeometry === "function"
+      ? teeCadBodyGeometry(config.bodyDiameter || config.diameter, 600, 300, bodyHeight)
+      : null;
+    const lengthVisual = cadBody ? cadBody.width : fallbackLengthVisual;
     const pxPerMm = lengthVisual / Math.max(1, config.bodyLength || config.length);
     const sideMiddleVisualWidth = (type, diameter) => {
       const logicalLength = teeMiddleLengthMm(type, Math.max(config.bodyDiameter || config.diameter, diameter));
@@ -31,31 +41,40 @@
       : 0;
     const middleBWidth = compressedStraightVisualLength(middleBLogicalLength) * pxPerMm * 0.5 * (config.middleB === "中接" && middleBReducerDiameter >= 133 ? 0.5 : 1);
     const middleCWidth = sideMiddleVisualWidth(config.middleC, config.diameterC);
-    const leftX = 600 - lengthVisual / 2;
-    const rightX = 600 + lengthVisual / 2;
-    const centerX = 600;
+    const leftX = cadBody ? cadBody.leftX : 600 - lengthVisual / 2;
+    const rightX = cadBody ? cadBody.rightX : 600 + lengthVisual / 2;
+    const centerX = cadBody ? cadBody.branchX : 600;
+    const bodyCenterX = (leftX + rightX) / 2;
     const mainY = 300;
-    const branchTopY = mainY - bodyHeight / 2;
+    const branchTopY = cadBody ? cadBody.branchY : mainY - bodyHeight / 2;
     const fittingAX = leftX - middleAWidth;
     const fittingBX = centerX;
-    const bFittingHeight = inlineFittingLength(config.fittingB, config.diameterB, pipeB);
-    const bSeatAdjustY = ["外丝", "内丝", "双卡", "环压", "插焊"].includes(config.fittingB) ? -6 : 0;
-    const fittingBY = (["直管", "中接"].includes(config.middleB) ? branchTopY - middleBWidth : branchTopY) + bSeatAdjustY;
+    const bFittingHeight = visualFittingLength(config.fittingB, config.diameterB, pipeB);
+    const fittingBY = ["直管", "中接"].includes(config.middleB) ? branchTopY - middleBWidth : branchTopY;
     const fittingCX = rightX + middleCWidth;
-    const fittingALength = inlineFittingLength(config.fittingA, config.diameterA, pipeA);
-    const fittingCLength = inlineFittingLength(config.fittingC, config.diameterC, pipeC);
+    const fittingALength = visualFittingLength(config.fittingA, config.diameterA, pipeA);
+    const fittingCLength = visualFittingLength(config.fittingC, config.diameterC, pipeC);
+    const fittingAEnvelopeHeight = typeof cadFittingEnvelopeHeight === "function"
+      ? cadFittingEnvelopeHeight(config.fittingA, config.diameterA, pipeA)
+      : pipeA;
+    const fittingCEnvelopeHeight = typeof cadFittingEnvelopeHeight === "function"
+      ? cadFittingEnvelopeHeight(config.fittingC, config.diameterC, pipeC)
+      : pipeC;
     const dimensionLeft = fittingAX - fittingALength;
     const dimensionRight = fittingCX + fittingCLength;
     const fittingACenterX = dimensionLeft + fittingALength / 2;
     const fittingCCenterX = dimensionRight - fittingCLength / 2;
     const fittingBCenterY = fittingBY - bFittingHeight / 2;
-    const branchHeightMm = (Number(config.bodyDiameter || config.diameter) || 0) / 2
+    const branchHeightMm = (cadBody ? cadBody.branchHeightMm : (Number(config.bodyDiameter || config.diameter) || 0) / 2)
       + middleBLogicalLength
-      + (isNoFitting(config.fittingB) ? 0 : inlineFittingLength(config.fittingB, config.diameterB, pipeB));
+      + (isNoFitting(config.fittingB) ? 0 : inlineFittingLength(config.fittingB, config.diameterB, logicalPipeB));
     const branchDimensionX = dimensionRight + Math.max(58, Math.max(pipeB, bodyHeight) * 0.18);
     const branchDimensionTopY = fittingBY - (isNoFitting(config.fittingB) ? 0 : bFittingHeight);
     const branchDimensionBottomY = mainY;
-    const sideSpecY = Math.min(246, mainY - Math.max(pipeA, pipeC, bodyHeight) / 2 - 28);
+    const sideSpecY = Math.min(
+      246,
+      mainY - Math.max(bodyHeight, fittingAEnvelopeHeight, fittingCEnvelopeHeight) / 2 - 20
+    );
     const bSpecY = fittingBY - bFittingHeight - 20;
     const labelFontSize = drawingColors.labelFontSize || 15;
     const bodyLabelFontSize = drawingColors.bodyLabelFontSize || 14;
@@ -77,14 +96,14 @@
         Z" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}" stroke-linejoin="round"/>` : ""}
     `;
     const objectLayer = `
-      <rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>
+      ${cadBody ? cadBody.svg : `<rect x="${leftX}" y="${mainY - bodyHeight / 2}" width="${lengthVisual}" height="${bodyHeight}" rx="0" fill="${drawingColors.pipeFill}" stroke="${drawingColors.stroke}" stroke-width="${drawingColors.objectLineWidth}"/>`}
       ${middleSvg}
-      ${inlineFittingSvg(config.fittingA, config.diameterA, fittingAX, mainY, pipeA, "left")}
-      ${inlineFittingSvg(config.fittingC, config.diameterC, fittingCX, mainY, pipeC, "right")}
-      ${verticalInlineFittingSvg(config.fittingB, config.diameterB, fittingBX, fittingBY, pipeB, "top")}
+      ${visualFittingSvg(config.fittingA, config.diameterA, fittingAX, mainY, pipeA, "left")}
+      ${visualFittingSvg(config.fittingC, config.diameterC, fittingCX, mainY, pipeC, "right")}
+      ${verticalVisualFittingSvg(config.fittingB, config.diameterB, fittingBX, fittingBY, pipeB, "top")}
     `;
     const labelLayer = `
-      <text x="${centerX}" y="${mainY + 5}" text-anchor="middle" dominant-baseline="middle" font-size="${bodyLabelFontSize}" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness}</text>
+      <text x="${bodyCenterX}" y="${mainY + 5}" text-anchor="middle" dominant-baseline="middle" font-size="${bodyLabelFontSize}" fill="${drawingColors.label}">D${config.bodyDiameter || config.diameter}x${config.bodyThickness || config.thickness}</text>
       ${!isNoFitting(config.fittingA) ? `
         <text x="${fittingACenterX}" y="${mainY}" text-anchor="middle" dominant-baseline="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">A端</text>
         <text x="${fittingACenterX}" y="${sideSpecY}" text-anchor="middle" font-size="${labelFontSize}" fill="${drawingColors.label}">${config.diameterA} ${fittingLabel(config.fittingA)}</text>
@@ -138,7 +157,8 @@
           ? { left: 145, right: 1055, top: 130, bottom: 455 }
           : { left: 145, right: 1055, top: 120, bottom: 585 },
         content,
-        minScale: 0.58
+        minScale: 0.58,
+        maxScale: 1
       })
       : content;
   }

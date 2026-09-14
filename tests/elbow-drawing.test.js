@@ -2,6 +2,9 @@ const assert = require("assert");
 const ElbowDrawing = require("../elbow-drawing");
 
 const helpers = {
+  cadFittingEnvelopeHeight: () => 44,
+  cadFittingLength: () => 36,
+  cadFittingSvg: name => `<cad-fitting name="${name}"/>`,
   DrawingCore: {
     horizontalDimension: ({ label }) => `<horizontal>${label}</horizontal>`,
     projected45Dimension: ({ label }) => `<projected45>${label}</projected45>`,
@@ -30,14 +33,18 @@ const base = {
 
 const angle45 = ElbowDrawing.render({ ...base, angle: 45 }, helpers);
 assert(angle45.includes('<body angle="45"/>'));
+assert(angle45.includes("<cad-fitting"));
 assert(angle45.includes("<projected45>H="));
 assert(!angle45.includes("<vertical>"));
 assert(angle45.includes("A端") && angle45.includes("B端"));
 assert(angle45.includes("<reducer/>"));
+assert(angle45.includes("<horizontal>H=140 mm</horizontal>"));
+assert(angle45.includes("<projected45>H=110 mm</projected45>"));
 
 const angle90 = ElbowDrawing.render({ ...base, angle: 90 }, helpers);
 assert(angle90.includes('<body angle="90"/>'));
 assert(angle90.includes("<vertical>H="));
+assert(angle90.includes("<vertical>H=110 mm</vertical>"));
 assert(!angle90.includes("<projected45>"));
 
 const noFittings = ElbowDrawing.render({ ...base, angle: 90, fittingA: "无配件", fittingB: "无配件" }, helpers);

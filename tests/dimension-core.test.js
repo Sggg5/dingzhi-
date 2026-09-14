@@ -63,12 +63,13 @@ closeTo(DimensionCore.teeHorizontalTotalLengthMm(tee, fittingLengthMm), 152.8);
 
 const pricing = {
   elbowCenterHeightBySeries: { A: { 40: 60 } },
-  teeStraightLengthBySeries: { A: { 40: 52 } }
+  teeStraightLengthBySeries: { A: { 40: 52, 219: 182 } }
 };
 assert.strictEqual(DimensionCore.productDefaultLength({ productType: "对接类", diameter: 40, pricing }), 100);
 assert.strictEqual(DimensionCore.productDefaultLength({ productType: "弯头类", diameter: 40, angle: 90, pricing }), 60);
 assert.strictEqual(DimensionCore.productDefaultLength({ productType: "弯头类", diameter: 40, angle: 45, pricing }), 39);
 assert.strictEqual(DimensionCore.productDefaultLength({ productType: "三通类", diameter: 40, pricing }), 52);
+assert.strictEqual(DimensionCore.productDefaultLength({ productType: "三通类", diameter: 219, pricing }), 182);
 assert.strictEqual(DimensionCore.productDefaultLength({ productType: "分水器类", diameter: 40, pricing }), 120);
 
 console.log("dimension core tests passed");

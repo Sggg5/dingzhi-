@@ -16,8 +16,11 @@
     { name: "09_PHANTOM", color: 6, lineType: "PHANTOM4" },
     { name: "10_OUTLINE_HIDDEN", color: 7, lineType: "DASHED2" },
     { name: "11_SECTION", color: 5, lineType: "CONTINUOUS" },
-    { name: "12_FRAME", color: 7, lineType: "CONTINUOUS" },
-    { name: "13_NO_PLOT", color: 5, lineType: "CONTINUOUS" }
+    // Cyan is reserved for frame accents: outer border, registration grid and
+    // title-block fine grid. The primary inner frame remains white below.
+    { name: "12_FRAME", color: 4, lineType: "CONTINUOUS" },
+    { name: "13_NO_PLOT", color: 5, lineType: "CONTINUOUS" },
+    { name: "14_FRAME_MAIN", color: 7, lineType: "CONTINUOUS" }
   ];
 
   function number(value) {
@@ -116,19 +119,81 @@
     }
     if (entity.type === "TEXT") {
       const angle = Number(entity.angle) || 0;
+      const horizontalAlignment = entity.align === "center" ? 1 : 0;
+      const verticalAlignment = entity.verticalAlign === "middle" ? 2 : 0;
+      const needsAlignmentPoint = horizontalAlignment !== 0 || verticalAlignment !== 0;
       return [
         pair(0, "TEXT"), pair(8, layer), pair(10, number(entity.x)), pair(20, number(entity.y)),
         pair(40, number(entity.height || 3)), pair(1, text(entity.text)), pair(7, "STANDARD"),
-        pair(50, number(angle)), pair(72, entity.align === "center" ? 1 : 0), pair(73, 0),
-        ...(entity.align === "center" ? [pair(11, number(entity.x)), pair(21, number(entity.y))] : [])
+        pair(50, number(angle)), pair(72, horizontalAlignment), pair(73, verticalAlignment),
+        ...(needsAlignmentPoint ? [pair(11, number(entity.x)), pair(21, number(entity.y))] : [])
+      ].join("");
+    }
+    if (entity.type === "INSERT") {
+      return [
+        pair(0, "INSERT"), pair(8, layer), pair(2, entity.block || "DIM_0"),
+        pair(10, number(entity.x || 0)), pair(20, number(entity.y || 0)), pair(30, 0),
+        pair(41, number(entity.scaleX || 1)), pair(42, number(entity.scaleY || 1)), pair(50, number(entity.angle || 0))
+      ].join("");
+    }
+    if (entity.type === "SOLID") {
+      const points = entity.points || [];
+      if (points.length < 3) return "";
+      const p1 = points[0];
+      const p2 = points[1];
+      const p3 = points[2];
+      const p4 = points[3] || p3;
+      return [
+        pair(0, "SOLID"), pair(8, layer),
+        pair(10, number(p1.x)), pair(20, number(p1.y)), pair(30, 0),
+        pair(11, number(p2.x)), pair(21, number(p2.y)), pair(31, 0),
+        pair(12, number(p3.x)), pair(22, number(p3.y)), pair(32, 0),
+        pair(13, number(p4.x)), pair(23, number(p4.y)), pair(33, 0)
+      ].join("");
+    }
+    if (entity.type === "DIMENSION") {
+      return [
+        pair(0, "DIMENSION"), pair(8, layer), pair(2, entity.block || "*D0"),
+        pair(10, number(entity.x)), pair(20, number(entity.y)),
+        pair(11, number(entity.textX ?? entity.x)), pair(21, number(entity.textY ?? entity.y)),
+        pair(70, Number(entity.dimensionType) || 0), pair(13, number(entity.x1)), pair(23, number(entity.y1)),
+        pair(14, number(entity.x2)), pair(24, number(entity.y2)), pair(50, number(entity.angle || 0)),
+        pair(1, text(entity.text || "")), pair(3, "STANDARD")
       ].join("");
     }
     return "";
   }
 
-  function document(entities) {
+  function blockDxf(block) {
+    const name = block?.name || "*D0";
+    return [
+      pair(0, "BLOCK"), pair(8, block?.layer || "07_DIMENSION"), pair(2, name), pair(70, 1),
+      pair(10, 0), pair(20, 0), pair(30, 0), pair(3, name), pair(1, ""),
+      ...(block?.entities || []).map(entityDxf),
+      pair(0, "ENDBLK"), pair(8, block?.layer || "07_DIMENSION")
+    ].join("");
+  }
+
+  function closedFilledArrowBlock() {
+    return {
+      name: "_CLOSEDFILLED",
+      layer: "07_DIMENSION",
+      entities: [{
+        type: "SOLID", layer: "07_DIMENSION",
+        // Standard closed-filled arrow, with the insertion point at its tip.
+        points: [{ x: -1, y: 0.1644 }, { x: 0, y: 0 }, { x: -1, y: -0.1644 }]
+      }]
+    };
+  }
+
+  function document(entities, options = {}) {
     const items = (entities || []).filter(Boolean);
     const layers = items.map(item => item.layer).filter(Boolean);
+    const blocks = (options.blocks || []).filter(Boolean);
+    if (items.some(item => item.type === "DIMENSION") && !blocks.some(block => block.name === "_CLOSEDFILLED")) {
+      blocks.push(closedFilledArrowBlock());
+    }
+    blocks.forEach(block => (block.entities || []).forEach(item => layers.push(item.layer)));
     return [
       pair(0, "SECTION"), pair(2, "HEADER"),
       // R12 is the broadest compatible DXF dialect for the factory CAD tools.
@@ -144,7 +209,18 @@
       pair(9, "$TEXTSIZE"), pair(40, 3.5),
       pair(9, "$DIMASZ"), pair(40, 2.5),
       pair(9, "$DIMTXT"), pair(40, 3.5),
+      pair(9, "$DIMBLK"), pair(1, "_CLOSEDFILLED"),
+      pair(9, "$DIMBLK1"), pair(1, ""),
+      pair(9, "$DIMBLK2"), pair(1, ""),
+      pair(9, "$DIMSAH"), pair(70, 0),
+      pair(9, "$DIMASO"), pair(70, 1),
+      pair(9, "$DIMEXO"), pair(40, 0.625),
+      pair(9, "$DIMEXE"), pair(40, 1.25),
+      pair(9, "$DIMDLE"), pair(40, 0),
+      pair(9, "$DIMTAD"), pair(70, 1),
+      pair(9, "$DIMTOFL"), pair(70, 1),
       pair(9, "$DIMCLRD"), pair(70, 4),
+      pair(9, "$DIMCLRE"), pair(70, 4),
       pair(9, "$DIMCLRT"), pair(70, 3),
       // Fixed A3 landscape bounds make older CAD viewers open the drawing in view.
       pair(9, "$EXTMIN"), pair(10, 0), pair(20, 0), pair(30, 0),
@@ -153,12 +229,12 @@
       pair(9, "$LIMMAX"), pair(10, 420), pair(20, 297),
       pair(0, "ENDSEC"),
       pair(0, "SECTION"), pair(2, "TABLES"), lineTypeTable(), textStyleTable(), layerTable(layers), pair(0, "ENDSEC"),
-      pair(0, "SECTION"), pair(2, "BLOCKS"), pair(0, "ENDSEC"),
+      pair(0, "SECTION"), pair(2, "BLOCKS"), blocks.map(blockDxf).join(""), pair(0, "ENDSEC"),
       pair(0, "SECTION"), pair(2, "ENTITIES"),
       items.map(entityDxf).join(""),
       pair(0, "ENDSEC"), pair(0, "EOF")
     ].join("");
   }
 
-  return { DEFAULT_LAYERS, document, entityDxf, number, text };
+  return { DEFAULT_LAYERS, document, entityDxf, number, text, blockDxf };
 });
